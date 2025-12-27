@@ -1,0 +1,149 @@
+/* Color Design Tokens */
+/* Based on GitHub Primer Design System */
+
+:root {
+  /* Canvas colors (backgrounds) */
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #f6f8fa;
+  --color-canvas-inset: #eff2f5;
+
+  /* Foreground colors (text) */
+  --color-fg-default: #1f2328;
+  --color-fg-muted: #656d76;
+  --color-fg-subtle: #6e7781;
+  --color-fg-on-emphasis: #ffffff;
+
+  /* Border colors */
+  --color-border-default: #d0d7de;
+  --color-border-muted: #d8dee4;
+  --color-border-subtle: rgba(27, 31, 36, 0.15);
+
+  /* Accent colors (primary/brand) */
+  --color-accent-fg: #0969da;
+  --color-accent-emphasis: #0969da;
+  --color-accent-muted: rgba(84, 174, 255, 0.4);
+  --color-accent-subtle: #ddf4ff;
+
+  /* Success colors */
+  --color-success-fg: #1a7f37;
+  --color-success-emphasis: #1f883d;
+  --color-success-subtle: #dafbe1;
+
+  /* Warning colors */
+  --color-warning-fg: #9a6700;
+  --color-warning-emphasis: #bf8700;
+  --color-warning-subtle: #fff8c5;
+
+  /* Danger colors */
+  --color-danger-fg: #d1242f;
+  --color-danger-emphasis: #cf222e;
+  --color-danger-subtle: #ffebe9;
+
+  /* ACMG Classification colors */
+  --color-acmg-pathogenic: #cf222e;
+  --color-acmg-pathogenic-subtle: #ffebe9;
+  --color-acmg-likely-pathogenic: #fb8f44;
+  --color-acmg-likely-pathogenic-subtle: #fff1e5;
+  --color-acmg-vus: #bf8700;
+  --color-acmg-vus-subtle: #fff8c5;
+  --color-acmg-likely-benign: #54aeff;
+  --color-acmg-likely-benign-subtle: #ddf4ff;
+  --color-acmg-benign: #1f883d;
+  --color-acmg-benign-subtle: #dafbe1;
+
+  /* AMP Tier colors */
+  --color-amp-tier-1: #cf222e;
+  --color-amp-tier-1-subtle: #ffebe9;
+  --color-amp-tier-2: #fb8f44;
+  --color-amp-tier-2-subtle: #fff1e5;
+  --color-amp-tier-3: #bf8700;
+  --color-amp-tier-3-subtle: #fff8c5;
+  --color-amp-tier-4: #656d76;
+  --color-amp-tier-4-subtle: #f6f8fa;
+
+  /* Variant type colors */
+  --color-variant-snv: #8250df;
+  --color-variant-snv-subtle: #fbefff;
+  --color-variant-indel: #0969da;
+  --color-variant-indel-subtle: #ddf4ff;
+  --color-variant-cnv-gain: #cf222e;
+  --color-variant-cnv-gain-subtle: #ffebe9;
+  --color-variant-cnv-loss: #0969da;
+  --color-variant-cnv-loss-subtle: #ddf4ff;
+  --color-variant-fusion: #bf8700;
+  --color-variant-fusion-subtle: #fff8c5;
+}
+
+/* Dark mode colors */
+[data-theme='dark'] {
+  /* Canvas colors (backgrounds) */
+  --color-canvas-default: #0d1117;
+  --color-canvas-subtle: #161b22;
+  --color-canvas-inset: #010409;
+
+  /* Foreground colors (text) */
+  --color-fg-default: #e6edf3;
+  --color-fg-muted: #8b949e;
+  --color-fg-subtle: #6e7681;
+  --color-fg-on-emphasis: #ffffff;
+
+  /* Border colors */
+  --color-border-default: #30363d;
+  --color-border-muted: #21262d;
+  --color-border-subtle: rgba(240, 246, 252, 0.1);
+
+  /* Accent colors (primary/brand) */
+  --color-accent-fg: #58a6ff;
+  --color-accent-emphasis: #1f6feb;
+  --color-accent-muted: rgba(56, 139, 253, 0.4);
+  --color-accent-subtle: rgba(56, 139, 253, 0.15);
+
+  /* Success colors */
+  --color-success-fg: #3fb950;
+  --color-success-emphasis: #238636;
+  --color-success-subtle: rgba(46, 160, 67, 0.15);
+
+  /* Warning colors */
+  --color-warning-fg: #d29922;
+  --color-warning-emphasis: #9e6a03;
+  --color-warning-subtle: rgba(187, 128, 9, 0.15);
+
+  /* Danger colors */
+  --color-danger-fg: #f85149;
+  --color-danger-emphasis: #da3633;
+  --color-danger-subtle: rgba(248, 81, 73, 0.15);
+
+  /* ACMG Classification colors (dark mode) */
+  --color-acmg-pathogenic: #f85149;
+  --color-acmg-pathogenic-subtle: rgba(248, 81, 73, 0.15);
+  --color-acmg-likely-pathogenic: #f0883e;
+  --color-acmg-likely-pathogenic-subtle: rgba(240, 136, 62, 0.15);
+  --color-acmg-vus: #d29922;
+  --color-acmg-vus-subtle: rgba(187, 128, 9, 0.15);
+  --color-acmg-likely-benign: #58a6ff;
+  --color-acmg-likely-benign-subtle: rgba(56, 139, 253, 0.15);
+  --color-acmg-benign: #3fb950;
+  --color-acmg-benign-subtle: rgba(46, 160, 67, 0.15);
+
+  /* AMP Tier colors (dark mode) */
+  --color-amp-tier-1: #f85149;
+  --color-amp-tier-1-subtle: rgba(248, 81, 73, 0.15);
+  --color-amp-tier-2: #f0883e;
+  --color-amp-tier-2-subtle: rgba(240, 136, 62, 0.15);
+  --color-amp-tier-3: #d29922;
+  --color-amp-tier-3-subtle: rgba(187, 128, 9, 0.15);
+  --color-amp-tier-4: #8b949e;
+  --color-amp-tier-4-subtle: rgba(139, 148, 158, 0.15);
+
+  /* Variant type colors (dark mode) */
+  --color-variant-snv: #a371f7;
+  --color-variant-snv-subtle: rgba(163, 113, 247, 0.15);
+  --color-variant-indel: #58a6ff;
+  --color-variant-indel-subtle: rgba(56, 139, 253, 0.15);
+  --color-variant-cnv-gain: #f85149;
+  --color-variant-cnv-gain-subtle: rgba(248, 81, 73, 0.15);
+  --color-variant-cnv-loss: #58a6ff;
+  --color-variant-cnv-loss-subtle: rgba(56, 139, 253, 0.15);
+  --color-variant-fusion: #d29922;
+  --color-variant-fusion-subtle: rgba(187, 128, 9, 0.15);
+}

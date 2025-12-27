@@ -1,0 +1,7 @@
+/* Design Tokens Entry Point */
+/* Import all token files */
+
+@import './colors.css';
+@import './typography.css';
+@import './spacing.css';
+@import './effects.css';

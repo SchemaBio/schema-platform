@@ -1,0 +1,58 @@
+/* Effects Design Tokens */
+/* Border radius, shadows, and animations */
+
+:root {
+  /* Border radius */
+  --radius-small: 4px;
+  --radius-medium: 6px;
+  --radius-large: 8px;
+  --radius-full: 9999px;
+
+  /* Box shadows */
+  --shadow-small: 0 1px 0 rgba(27, 31, 36, 0.04);
+  --shadow-medium: 0 3px 6px rgba(140, 149, 159, 0.15);
+  --shadow-large: 0 8px 24px rgba(140, 149, 159, 0.2);
+  --shadow-extra-large: 0 12px 28px rgba(140, 149, 159, 0.3);
+
+  /* Animation durations */
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+
+  /* Animation easing */
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-in: cubic-bezier(0.4, 0, 1, 1);
+  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Focus ring styles for accessibility */
+  --focus-ring-color: var(--color-accent-emphasis);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+/* Dark mode shadows */
+[data-theme='dark'] {
+  --shadow-small: 0 0 transparent;
+  --shadow-medium: 0 3px 6px rgba(0, 0, 0, 0.4);
+  --shadow-large: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-extra-large: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+/* Reduced motion support - Requirements 11.7 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
