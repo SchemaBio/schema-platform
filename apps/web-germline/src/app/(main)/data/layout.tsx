@@ -1,4 +1,4 @@
-export default function ReportsLayout({
+export default function DataLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { Breadcrumb, type BreadcrumbItem } from '@schema/ui-kit';
 
 interface PageHeaderProps {
   /** Page title */
@@ -10,24 +9,15 @@ interface PageHeaderProps {
   description?: string;
   /** Optional action buttons on the right */
   actions?: React.ReactNode;
-  /** Breadcrumb items */
-  breadcrumbs?: BreadcrumbItem[];
 }
 
 /**
- * PageHeader displays the page title, description, breadcrumbs, and action buttons.
- * Used at the top of each page within the main content area.
+ * PageHeader displays the page title, description, and action buttons.
+ * Breadcrumbs are now shown in the top bar (AppShell).
  */
-export function PageHeader({ title, description, actions, breadcrumbs }: PageHeaderProps) {
+export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
     <div className="border-b border-border bg-canvas px-6 py-4">
-      {/* Breadcrumbs */}
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <div className="mb-3">
-          <Breadcrumb items={breadcrumbs} />
-        </div>
-      )}
-
       {/* Title row */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">

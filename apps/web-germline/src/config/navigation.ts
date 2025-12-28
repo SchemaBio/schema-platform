@@ -1,27 +1,19 @@
 import {
-  Folder,
-  Dna,
-  FileText,
-  BookOpen,
-  Settings,
-  List,
-  Plus,
   Users,
-  Layers,
-  Table,
-  CheckSquare,
+  Plus,
   GitBranch,
-  Eye,
-  File,
-  FilePlus,
-  ClipboardCheck,
-  Layout,
-  Link,
-  Database,
-  Tag,
+  HardDrive,
+  FolderOpen,
+  Upload,
+  FlaskConical,
+  List,
+  Play,
+  Clock,
+  CheckCircle,
+  Settings,
   User,
-  Filter,
-  History,
+  Bell,
+  Shield,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,21 +33,19 @@ export interface SidebarNavItem {
 
 export interface SidebarNavConfig {
   samples: SidebarNavItem[];
+  data: SidebarNavItem[];
   analysis: SidebarNavItem[];
-  reports: SidebarNavItem[];
-  knowledge: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
 /**
- * Main navigation items displayed in the header.
+ * Main navigation items displayed in the sidebar.
+ * 核心业务流程：样本管理 → 数据管理 → 分析中心
  */
 export const mainNavItems: NavItem[] = [
-  { label: '样本管理', href: '/samples', icon: Folder },
-  { label: '变异分析', href: '/analysis', icon: Dna },
-  { label: '报告中心', href: '/reports', icon: FileText },
-  { label: '知识库', href: '/knowledge', icon: BookOpen },
-  { label: '设置', href: '/settings', icon: Settings },
+  { label: '样本管理', href: '/samples', icon: Users },
+  { label: '数据管理', href: '/data', icon: HardDrive },
+  { label: '分析中心', href: '/analysis', icon: FlaskConical },
 ];
 
 /**
@@ -65,32 +55,23 @@ export const sidebarNavConfig: SidebarNavConfig = {
   samples: [
     { label: '样本列表', href: '/samples', icon: List },
     { label: '新建样本', href: '/samples/new', icon: Plus },
-    { label: '家系管理', href: '/samples/pedigree', icon: Users },
-    { label: '批次管理', href: '/samples/batches', icon: Layers },
+    { label: '家系管理', href: '/samples/pedigree', icon: GitBranch },
+  ],
+  data: [
+    { label: '数据列表', href: '/data', icon: List },
+    { label: '数据源配置', href: '/data/sources', icon: FolderOpen },
+    { label: '数据导入', href: '/data/import', icon: Upload },
   ],
   analysis: [
-    { label: '变异列表', href: '/analysis', icon: Table },
-    { label: 'ACMG 打分', href: '/analysis/acmg', icon: CheckSquare },
-    { label: '家系分析', href: '/analysis/pedigree', icon: GitBranch },
-    { label: 'IGV 浏览器', href: '/analysis/igv', icon: Eye },
-  ],
-  reports: [
-    { label: '报告列表', href: '/reports', icon: File },
-    { label: '新建报告', href: '/reports/new', icon: FilePlus },
-    { label: '审核队列', href: '/reports/review', icon: ClipboardCheck },
-    { label: '模板管理', href: '/reports/templates', icon: Layout },
-  ],
-  knowledge: [
-    { label: '基因-疾病', href: '/knowledge', icon: Link },
-    { label: '本地变异库', href: '/knowledge/variants', icon: Database },
-    { label: 'HPO 表型', href: '/knowledge/hpo', icon: Tag },
-    { label: '解读模板', href: '/knowledge/templates', icon: FileText },
+    { label: '任务列表', href: '/analysis', icon: List },
+    { label: '新建任务', href: '/analysis/new', icon: Play },
+    { label: '进行中', href: '/analysis/running', icon: Clock },
+    { label: '已完成', href: '/analysis/completed', icon: CheckCircle },
   ],
   settings: [
     { label: '个人设置', href: '/settings', icon: User },
-    { label: '团队管理', href: '/settings/team', icon: Users },
-    { label: '筛选策略', href: '/settings/filters', icon: Filter },
-    { label: '审计日志', href: '/settings/audit', icon: History },
+    { label: '通知设置', href: '/settings/notifications', icon: Bell },
+    { label: '权限管理', href: '/settings/permissions', icon: Shield },
   ],
 };
 

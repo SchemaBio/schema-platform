@@ -3,17 +3,17 @@
 import { PageContent } from '@/components/layout';
 import { Button } from '@schema/ui-kit';
 
-export default function AnalysisPage() {
+export default function DataPage() {
   return (
     <PageContent>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium text-fg-default">任务列表</h2>
+        <h2 className="text-lg font-medium text-fg-default">数据列表</h2>
         <Button variant="primary" size="medium">
-          新建任务
+          导入数据
         </Button>
       </div>
       <div className="rounded-lg border border-border bg-canvas-subtle p-8 text-center">
-        <p className="text-fg-muted">分析任务列表将在这里显示</p>
+        <p className="text-fg-muted">数据列表将在这里显示</p>
       </div>
     </PageContent>
   );
