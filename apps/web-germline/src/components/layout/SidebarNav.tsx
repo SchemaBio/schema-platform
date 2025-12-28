@@ -4,7 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Tooltip } from '@schema/ui-kit';
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserMenu } from './UserMenu';
 import { mainNavItems, sidebarNavConfig, isNavItemActive, type SidebarNavItem, type NavItem } from '@/config/navigation';
 
 interface SidebarNavProps {
@@ -127,41 +128,9 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
         </ul>
       </nav>
 
-      {/* Bottom section: About */}
-      <div className="border-t border-border p-2 mt-auto">
-        {/* About link */}
-        {collapsed ? (
-          <Tooltip content="关于" placement="right">
-            <Link
-              href="/about"
-              className={`
-                flex items-center justify-center w-full h-9 rounded-md
-                transition-colors duration-fast
-                ${pathname === '/about'
-                  ? 'bg-canvas-inset text-fg-default'
-                  : 'text-fg-muted hover:text-fg-default hover:bg-canvas-inset'
-                }
-              `}
-            >
-              <Info className="w-4 h-4" />
-            </Link>
-          </Tooltip>
-        ) : (
-          <Link
-            href="/about"
-            className={`
-              flex items-center gap-3 px-3 py-2 rounded-md text-sm
-              transition-colors duration-fast
-              ${pathname === '/about'
-                ? 'bg-canvas-inset text-fg-default font-medium'
-                : 'text-fg-muted hover:text-fg-default hover:bg-canvas-inset'
-              }
-            `}
-          >
-            <Info className="w-4 h-4" />
-            <span>关于</span>
-          </Link>
-        )}
+      {/* Bottom section: User Menu */}
+      <div className="border-t border-border p-2 mt-auto flex justify-center">
+        <UserMenu collapsed={collapsed} />
       </div>
     </aside>
   );

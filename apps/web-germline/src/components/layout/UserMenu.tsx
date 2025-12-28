@@ -3,13 +3,17 @@
 import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import Link from 'next/link';
-import { Avatar } from '@schema/ui-kit';
+import { Avatar, Tooltip } from '@schema/ui-kit';
 import { LogOut, Settings, User } from 'lucide-react';
+
+interface UserMenuProps {
+  collapsed?: boolean;
+}
 
 /**
  * UserMenu displays user avatar and dropdown menu with account options.
  */
-export function UserMenu() {
+export function UserMenu({ collapsed = false }: UserMenuProps) {
   const [open, setOpen] = React.useState(false);
 
   // Mock user data - to be replaced with actual auth
@@ -26,24 +30,41 @@ export function UserMenu() {
     setOpen(false);
   };
 
+  const triggerButton = (
+    <button
+      className={`
+        flex items-center gap-2 rounded-md transition-all duration-fast
+        hover:bg-canvas-inset p-1.5
+        ${collapsed ? 'justify-center' : 'w-full'}
+      `}
+      aria-label="用户菜单"
+    >
+      <Avatar
+        src={user.avatar}
+        name={user.name}
+        size="small"
+      />
+      {!collapsed && (
+        <span className="text-sm text-fg-default truncate">{user.name}</span>
+      )}
+    </button>
+  );
+
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger asChild>
-        <button
-          className="rounded-full hover:ring-2 hover:ring-accent-muted transition-all duration-fast"
-          aria-label="用户菜单"
-        >
-          <Avatar
-            src={user.avatar}
-            name={user.name}
-            size="medium"
-          />
-        </button>
+        {collapsed ? (
+          <Tooltip content={user.name} placement="right">
+            {triggerButton}
+          </Tooltip>
+        ) : (
+          triggerButton
+        )}
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
-          side="bottom"
-          align="end"
+          side={collapsed ? 'right' : 'top'}
+          align={collapsed ? 'start' : 'center'}
           sideOffset={4}
           className="z-50 w-56 rounded-md border border-border bg-canvas shadow-md"
         >

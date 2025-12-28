@@ -3,11 +3,10 @@
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { Settings, Info } from 'lucide-react';
 import { Breadcrumb, type BreadcrumbItem } from '@schema/ui-kit';
 import { SidebarNav } from './SidebarNav';
 import { SearchInput } from './SearchInput';
-import { UserMenu } from './UserMenu';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobileNav } from './MobileNav';
@@ -189,7 +188,7 @@ export function AppShell({ children }: AppShellProps) {
             {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
           </div>
 
-          {/* Right: Search + Settings + User */}
+          {/* Right: Search + Settings + About */}
           <div className="flex items-center gap-2 shrink-0">
             <SearchInput />
             <Link
@@ -199,7 +198,13 @@ export function AppShell({ children }: AppShellProps) {
             >
               <Settings className="w-5 h-5" />
             </Link>
-            <UserMenu />
+            <Link
+              href="/about"
+              className="p-2 rounded-md text-fg-muted hover:text-fg-default hover:bg-canvas-inset transition-colors"
+              aria-label="关于"
+            >
+              <Info className="w-5 h-5" />
+            </Link>
           </div>
         </header>
 
