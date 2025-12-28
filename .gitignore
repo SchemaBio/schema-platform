@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+**/node_modules
+
 /.pnp
 .pnp.js
 
@@ -9,11 +10,13 @@
 /coverage
 
 # next.js
-/.next/
+**/.next
+
 /out/
 
 # production
 /build
+**/dist
 
 # misc
 .DS_Store
@@ -37,11 +40,3 @@ next-env.d.ts
 
 .kiro/
 .vscode/
-
-packages/*/node_modules/*
-packages/ui-kit/node_modules
-packages/feature-user/node_modules
-packages/feature-sample/node_modules
-packages/types/node_modules
-packages/duckdb-client/node_modules
-packages/types/dist
