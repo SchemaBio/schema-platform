@@ -11,7 +11,7 @@ import { UserMenu } from './UserMenu';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobileNav } from './MobileNav';
-import { mainNavItems } from '@/config/navigation';
+import { mainNavItems, sidebarNavConfig } from '@/config/navigation';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -36,6 +36,16 @@ const pathLabelMap: Record<string, string> = {
 };
 
 /**
+ * 一级路径对应的默认子页面标签
+ */
+const defaultSubPageMap: Record<string, string> = {
+  '/samples': '样本列表',
+  '/data': '数据列表',
+  '/analysis': '任务列表',
+  '/settings': '个人设置',
+};
+
+/**
  * Generate breadcrumbs from pathname
  */
 function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
@@ -53,9 +63,10 @@ function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
     items.push({ label, href: currentPath });
   }
 
-  // 特殊处理：/settings 页面显示为 "系统设置/个人设置"
-  if (pathname === '/settings') {
-    items.push({ label: '个人设置' });
+  // 如果是一级路径，添加默认子页面标签
+  const defaultSubPage = defaultSubPageMap[pathname];
+  if (defaultSubPage) {
+    items.push({ label: defaultSubPage });
   }
 
   // Last item should not have href (current page)
