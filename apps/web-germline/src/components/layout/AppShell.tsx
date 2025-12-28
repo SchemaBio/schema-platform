@@ -53,6 +53,11 @@ function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
     items.push({ label, href: currentPath });
   }
 
+  // 特殊处理：/settings 页面显示为 "系统设置/个人设置"
+  if (pathname === '/settings') {
+    items.push({ label: '个人设置' });
+  }
+
   // Last item should not have href (current page)
   if (items.length > 0) {
     delete items[items.length - 1].href;
