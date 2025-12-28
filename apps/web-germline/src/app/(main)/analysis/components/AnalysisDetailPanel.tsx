@@ -6,9 +6,11 @@ import { useTabState } from '../[uuid]/hooks/useTabState';
 import type { AnalysisTaskDetail, TabType, AnalysisStatus } from '../[uuid]/types';
 import { TAB_CONFIGS } from '../[uuid]/types';
 import {
+  SampleInfoTab,
   QCResultTab,
   SNVIndelTab,
-  CNVTab,
+  CNVSegmentTab,
+  CNVExonTab,
   STRTab,
   MTTab,
   UPDTab,
@@ -30,12 +32,13 @@ const statusConfig: Record<AnalysisStatus, { label: string; variant: 'neutral' |
 export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   const [task, setTask] = React.useState<AnalysisTaskDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState<TabType>('qc');
+  const [activeTab, setActiveTab] = React.useState<TabType>('sample-info');
 
   // 各标签页的筛选状态
   const [tabStates, setTabStates] = React.useState({
     'snv-indel': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
-    'cnv': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
+    'cnv-segment': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
+    'cnv-exon': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'str': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'mt': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'upd': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
@@ -77,6 +80,8 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   // 渲染当前标签页内容
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'sample-info':
+        return <SampleInfoTab taskId={taskId} />;
       case 'qc':
         return <QCResultTab taskId={taskId} />;
       case 'snv-indel':
@@ -87,12 +92,20 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             onFilterChange={(state) => setFilterState('snv-indel', state)}
           />
         );
-      case 'cnv':
+      case 'cnv-segment':
         return (
-          <CNVTab
+          <CNVSegmentTab
             taskId={taskId}
-            filterState={getFilterState('cnv')}
-            onFilterChange={(state) => setFilterState('cnv', state)}
+            filterState={getFilterState('cnv-segment')}
+            onFilterChange={(state) => setFilterState('cnv-segment', state)}
+          />
+        );
+      case 'cnv-exon':
+        return (
+          <CNVExonTab
+            taskId={taskId}
+            filterState={getFilterState('cnv-exon')}
+            onFilterChange={(state) => setFilterState('cnv-exon', state)}
           />
         );
       case 'str':

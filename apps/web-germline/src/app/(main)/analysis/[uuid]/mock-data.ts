@@ -6,7 +6,9 @@ import type {
   AnalysisTaskDetail,
   QCResult,
   SNVIndel,
-  CNV,
+  CNVSegment,
+  CNVExon,
+  SampleInfo,
   STR,
   MitochondrialVariant,
   UPDRegion,
@@ -167,8 +169,37 @@ const mockSNVIndels: SNVIndel[] = [
   },
 ];
 
-// ============ Mock CNV数据 ============
-const mockCNVs: CNV[] = [
+// ============ Mock 样本信息数据 ============
+const mockSampleInfo: Record<string, SampleInfo> = {
+  'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
+    sampleId: 'S2024120001',
+    sampleName: '张**',
+    gender: 'Male',
+    age: 35,
+    clinicalDiagnosis: '疑似遗传性心肌病',
+    phenotypes: ['心肌肥厚', '心律不齐', '运动后晕厥'],
+    familyHistory: '父亲有心脏病史',
+    sampleType: '外周血',
+    collectionDate: '2024-12-18',
+    receivedDate: '2024-12-19',
+    reportDate: '2024-12-25',
+  },
+  'b2c3d4e5-f6a7-8901-bcde-f12345678901': {
+    sampleId: 'S2024120001',
+    sampleName: '张**',
+    gender: 'Male',
+    age: 35,
+    clinicalDiagnosis: '疑似遗传性心肌病',
+    phenotypes: ['心肌肥厚', '心律不齐', '运动后晕厥'],
+    familyHistory: '父亲有心脏病史',
+    sampleType: '外周血',
+    collectionDate: '2024-12-18',
+    receivedDate: '2024-12-19',
+  },
+};
+
+// ============ Mock CNV数据(片段级别) ============
+const mockCNVSegments: CNVSegment[] = [
   {
     id: 'cnv-001',
     chromosome: 'chr17',
@@ -201,6 +232,58 @@ const mockCNVs: CNV[] = [
     copyNumber: 1,
     genes: ['TBX1', 'COMT', 'DGCR8'],
     confidence: 0.92,
+  },
+];
+
+// ============ Mock CNV数据(外显子级别) ============
+const mockCNVExons: CNVExon[] = [
+  {
+    id: 'cnv-exon-001',
+    gene: 'BRCA1',
+    exon: 'Exon 11-13',
+    chromosome: 'chr17',
+    startPosition: 43091434,
+    endPosition: 43104956,
+    type: 'Deletion',
+    copyNumber: 1,
+    ratio: 0.52,
+    confidence: 0.94,
+  },
+  {
+    id: 'cnv-exon-002',
+    gene: 'EGFR',
+    exon: 'Exon 18-21',
+    chromosome: 'chr7',
+    startPosition: 55211070,
+    endPosition: 55249071,
+    type: 'Amplification',
+    copyNumber: 5,
+    ratio: 2.45,
+    confidence: 0.91,
+  },
+  {
+    id: 'cnv-exon-003',
+    gene: 'DMD',
+    exon: 'Exon 45-50',
+    chromosome: 'chrX',
+    startPosition: 31792164,
+    endPosition: 31838705,
+    type: 'Deletion',
+    copyNumber: 0,
+    ratio: 0.05,
+    confidence: 0.98,
+  },
+  {
+    id: 'cnv-exon-004',
+    gene: 'SMN1',
+    exon: 'Exon 7',
+    chromosome: 'chr5',
+    startPosition: 70924941,
+    endPosition: 70925030,
+    type: 'Deletion',
+    copyNumber: 1,
+    ratio: 0.48,
+    confidence: 0.89,
   },
 ];
 
@@ -405,16 +488,34 @@ export async function getSNVIndels(
   );
 }
 
-export async function getCNVs(
+export async function getSampleInfo(uuid: string): Promise<SampleInfo | null> {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return mockSampleInfo[uuid] ?? mockSampleInfo['a1b2c3d4-e5f6-7890-abcd-ef1234567890'];
+}
+
+export async function getCNVSegments(
   _uuid: string,
   filterState: TableFilterState
-): Promise<PaginatedResult<CNV>> {
+): Promise<PaginatedResult<CNVSegment>> {
   await new Promise(resolve => setTimeout(resolve, 150));
   return applyFilterAndPagination(
-    mockCNVs,
+    mockCNVSegments,
     filterState,
     ['chromosome'],
     ['chromosome', 'startPosition', 'length', 'type', 'copyNumber', 'confidence']
+  );
+}
+
+export async function getCNVExons(
+  _uuid: string,
+  filterState: TableFilterState
+): Promise<PaginatedResult<CNVExon>> {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  return applyFilterAndPagination(
+    mockCNVExons,
+    filterState,
+    ['gene', 'exon', 'chromosome'],
+    ['gene', 'chromosome', 'startPosition', 'type', 'copyNumber', 'ratio', 'confidence']
   );
 }
 

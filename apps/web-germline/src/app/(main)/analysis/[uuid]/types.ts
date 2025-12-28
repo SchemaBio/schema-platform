@@ -70,8 +70,23 @@ export interface SNVIndel {
   consequence: string;           // 变异后果
 }
 
-// ============ CNV变异 ============
-export interface CNV {
+// ============ 样本信息 ============
+export interface SampleInfo {
+  sampleId: string;
+  sampleName: string;
+  gender: 'Male' | 'Female' | 'Unknown';
+  age?: number;
+  clinicalDiagnosis?: string;
+  phenotypes?: string[];
+  familyHistory?: string;
+  sampleType: string;
+  collectionDate: string;
+  receivedDate: string;
+  reportDate?: string;
+}
+
+// ============ CNV变异(片段级别) ============
+export interface CNVSegment {
   id: string;
   chromosome: string;
   startPosition: number;
@@ -79,8 +94,22 @@ export interface CNV {
   length: number;
   type: 'Amplification' | 'Deletion';
   copyNumber: number;
-  genes: string[];               // 涉及基因列表
-  confidence: number;            // 置信度
+  genes: string[];
+  confidence: number;
+}
+
+// ============ CNV变异(外显子级别) ============
+export interface CNVExon {
+  id: string;
+  gene: string;
+  exon: string;
+  chromosome: string;
+  startPosition: number;
+  endPosition: number;
+  type: 'Amplification' | 'Deletion';
+  copyNumber: number;
+  ratio: number;
+  confidence: number;
 }
 
 // ============ 动态突变（STR） ============
@@ -133,7 +162,7 @@ export interface UPDRegion {
 }
 
 // ============ 标签页类型 ============
-export type TabType = 'qc' | 'snv-indel' | 'cnv' | 'str' | 'mt' | 'upd';
+export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd';
 
 export interface TabConfig {
   id: TabType;
@@ -141,9 +170,11 @@ export interface TabConfig {
 }
 
 export const TAB_CONFIGS: TabConfig[] = [
+  { id: 'sample-info', label: '样本信息' },
   { id: 'qc', label: '质控结果' },
   { id: 'snv-indel', label: 'SNV/Indel检出表' },
-  { id: 'cnv', label: 'CNV检出表' },
+  { id: 'cnv-segment', label: 'CNV检出表(片段)' },
+  { id: 'cnv-exon', label: 'CNV检出表(外显子)' },
   { id: 'str', label: '动态突变检出表' },
   { id: 'mt', label: '线粒体检出表' },
   { id: 'upd', label: 'UPD检出表' },

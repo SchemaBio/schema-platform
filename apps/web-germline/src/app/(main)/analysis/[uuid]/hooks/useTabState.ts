@@ -7,7 +7,8 @@ import { DEFAULT_FILTER_STATE } from '../types';
 
 interface TabStates {
   'snv-indel': TableFilterState;
-  'cnv': TableFilterState;
+  'cnv-segment': TableFilterState;
+  'cnv-exon': TableFilterState;
   'str': TableFilterState;
   'mt': TableFilterState;
   'upd': TableFilterState;
@@ -25,12 +26,13 @@ export function useTabState(uuid: string): UseTabStateReturn {
   const searchParams = useSearchParams();
 
   // 从URL获取当前标签页
-  const activeTab = (searchParams.get('tab') as TabType) || 'qc';
+  const activeTab = (searchParams.get('tab') as TabType) || 'sample-info';
 
   // 各标签页的筛选状态（保存在内存中）
   const [tabStates, setTabStates] = React.useState<TabStates>({
     'snv-indel': { ...DEFAULT_FILTER_STATE },
-    'cnv': { ...DEFAULT_FILTER_STATE },
+    'cnv-segment': { ...DEFAULT_FILTER_STATE },
+    'cnv-exon': { ...DEFAULT_FILTER_STATE },
     'str': { ...DEFAULT_FILTER_STATE },
     'mt': { ...DEFAULT_FILTER_STATE },
     'upd': { ...DEFAULT_FILTER_STATE },

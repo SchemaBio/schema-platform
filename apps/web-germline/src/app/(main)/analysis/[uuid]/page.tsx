@@ -9,9 +9,11 @@ import type { AnalysisTaskDetail } from './types';
 import {
   TaskHeader,
   ResultTabs,
+  SampleInfoTab,
   QCResultTab,
   SNVIndelTab,
-  CNVTab,
+  CNVSegmentTab,
+  CNVExonTab,
   STRTab,
   MTTab,
   UPDTab,
@@ -85,6 +87,8 @@ export default function AnalysisDetailPage() {
   // 渲染当前标签页内容
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'sample-info':
+        return <SampleInfoTab taskId={uuid} />;
       case 'qc':
         return <QCResultTab taskId={uuid} />;
       case 'snv-indel':
@@ -95,12 +99,20 @@ export default function AnalysisDetailPage() {
             onFilterChange={(state) => setFilterState('snv-indel', state)}
           />
         );
-      case 'cnv':
+      case 'cnv-segment':
         return (
-          <CNVTab
+          <CNVSegmentTab
             taskId={uuid}
-            filterState={getFilterState('cnv')}
-            onFilterChange={(state) => setFilterState('cnv', state)}
+            filterState={getFilterState('cnv-segment')}
+            onFilterChange={(state) => setFilterState('cnv-segment', state)}
+          />
+        );
+      case 'cnv-exon':
+        return (
+          <CNVExonTab
+            taskId={uuid}
+            filterState={getFilterState('cnv-exon')}
+            onFilterChange={(state) => setFilterState('cnv-exon', state)}
           />
         );
       case 'str':

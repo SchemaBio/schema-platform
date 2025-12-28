@@ -2,7 +2,7 @@
 
 import { PageContent } from '@/components/layout';
 import { Tag } from '@schema/ui-kit';
-import { History, Library, TrendingUp, FileText } from 'lucide-react';
+import { History, Library, TrendingUp, FileText, List } from 'lucide-react';
 import Link from 'next/link';
 
 interface StatCard {
@@ -32,17 +32,18 @@ const stats: StatCard[] = [
     trend: { value: 156, label: '本月新增' },
   },
   {
+    title: '基因列表',
+    value: '24',
+    description: '管理Panel、疾病相关基因列表',
+    icon: <List className="w-5 h-5" />,
+    href: '/knowledge/gene-lists',
+    trend: { value: 3, label: '本月新增' },
+  },
+  {
     title: '关联文献',
     value: '3,891',
     description: '位点相关的参考文献',
     icon: <FileText className="w-5 h-5" />,
-    href: '/knowledge/variants',
-  },
-  {
-    title: '覆盖基因',
-    value: '2,156',
-    description: '知识库覆盖的基因数量',
-    icon: <TrendingUp className="w-5 h-5" />,
     href: '/knowledge/variants',
   },
 ];

@@ -4,23 +4,23 @@ import * as React from 'react';
 import { DataTable, Tag, Input } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search } from 'lucide-react';
-import type { CNV, TableFilterState, PaginatedResult } from '../types';
+import type { CNVExon, TableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
-import { getCNVs } from '../mock-data';
+import { getCNVExons } from '../mock-data';
 
-interface CNVTabProps {
+interface CNVExonTabProps {
   taskId: string;
   filterState?: TableFilterState;
   onFilterChange?: (state: TableFilterState) => void;
 }
 
-export function CNVTab({ 
+export function CNVExonTab({ 
   taskId, 
   filterState: externalFilterState,
   onFilterChange 
-}: CNVTabProps) {
+}: CNVExonTabProps) {
   const [internalFilterState, setInternalFilterState] = React.useState<TableFilterState>(DEFAULT_FILTER_STATE);
-  const [result, setResult] = React.useState<PaginatedResult<CNV> | null>(null);
+  const [result, setResult] = React.useState<PaginatedResult<CNVExon> | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   const filterState = externalFilterState ?? internalFilterState;
@@ -29,7 +29,7 @@ export function CNVTab({
   React.useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await getCNVs(taskId, filterState);
+      const data = await getCNVExons(taskId, filterState);
       setResult(data);
       setLoading(false);
     }
@@ -58,7 +58,20 @@ export function CNVTab({
     setFilterState({ ...filterState, filters: newFilters, page: 1 });
   }, [filterState, setFilterState]);
 
-  const columns: Column<CNV>[] = [
+  const columns: Column<CNVExon>[] = [
+    {
+      id: 'gene',
+      header: '基因',
+      accessor: 'gene',
+      width: 100,
+      sortable: true,
+    },
+    {
+      id: 'exon',
+      header: '外显子',
+      accessor: 'exon',
+      width: 100,
+    },
     {
       id: 'chromosome',
       header: '染色体',
@@ -78,17 +91,6 @@ export function CNVTab({
       header: '终止位置',
       accessor: (row) => row.endPosition.toLocaleString(),
       width: 120,
-    },
-    {
-      id: 'length',
-      header: '长度',
-      accessor: (row) => {
-        if (row.length >= 1000000) return `${(row.length / 1000000).toFixed(2)}Mb`;
-        if (row.length >= 1000) return `${(row.length / 1000).toFixed(1)}kb`;
-        return `${row.length}bp`;
-      },
-      width: 100,
-      sortable: true,
     },
     {
       id: 'type',
@@ -112,10 +114,11 @@ export function CNVTab({
       sortable: true,
     },
     {
-      id: 'genes',
-      header: '涉及基因',
-      accessor: (row) => row.genes.join(', '),
-      width: 200,
+      id: 'ratio',
+      header: '比值',
+      accessor: (row) => row.ratio.toFixed(2),
+      width: 80,
+      sortable: true,
     },
     {
       id: 'confidence',
@@ -134,7 +137,7 @@ export function CNVTab({
         <div className="flex items-center gap-4">
           <div className="w-64">
             <Input
-              placeholder="搜索染色体..."
+              placeholder="搜索基因、外显子..."
               value={filterState.searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               leftElement={<Search className="w-4 h-4" />}
@@ -153,7 +156,7 @@ export function CNVTab({
         </div>
 
         <div className="text-sm text-fg-muted">
-          共 {result?.total ?? 0} 条CNV
+          共 {result?.total ?? 0} 条外显子CNV
         </div>
       </div>
 
@@ -200,7 +203,7 @@ export function CNVTab({
         </>
       ) : (
         <div className="text-center py-12 text-fg-muted">
-          暂无CNV变异数据
+          暂无外显子CNV变异数据
         </div>
       )}
     </div>

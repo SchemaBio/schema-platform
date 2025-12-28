@@ -1,8 +1,10 @@
 export { TaskHeader } from './TaskHeader';
 export { ResultTabs } from './ResultTabs';
 export { QCResultTab } from './QCResultTab';
+export { SampleInfoTab } from './SampleInfoTab';
 export { SNVIndelTab } from './SNVIndelTab';
-export { CNVTab } from './CNVTab';
+export { CNVSegmentTab } from './CNVSegmentTab';
+export { CNVExonTab } from './CNVExonTab';
 export { STRTab } from './STRTab';
 export { MTTab } from './MTTab';
 export { UPDTab } from './UPDTab';
