@@ -43,4 +43,5 @@ packages/ui-kit/node_modules
 packages/feature-user/node_modules
 packages/feature-sample/node_modules
 packages/types/node_modules
+packages/duckdb-client/node_modules
 packages/types/dist
