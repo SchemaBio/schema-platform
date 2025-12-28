@@ -2,8 +2,9 @@
 
 import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
+import Link from 'next/link';
 import { Avatar } from '@schema/ui-kit';
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings, User } from 'lucide-react';
 
 /**
  * UserMenu displays user avatar and dropdown menu with account options.
@@ -16,6 +17,7 @@ export function UserMenu() {
     name: '张医生',
     email: 'zhang@example.com',
     avatar: undefined as string | undefined,
+    role: 'admin' as const,
   };
 
   const handleLogout = () => {
@@ -51,7 +53,37 @@ export function UserMenu() {
             <p className="text-xs text-fg-muted">{user.email}</p>
           </div>
 
-          {/* Actions */}
+          {/* Menu items */}
+          <div className="py-1 border-b border-border">
+            <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className={`
+                flex items-center gap-2 w-full px-3 py-2 text-sm text-left
+                text-fg-default hover:bg-canvas-subtle
+                transition-colors duration-fast
+              `}
+            >
+              <User className="w-4 h-4" />
+              个人设置
+            </Link>
+            {user.role === 'admin' && (
+              <Link
+                href="/settings"
+                onClick={() => setOpen(false)}
+                className={`
+                  flex items-center gap-2 w-full px-3 py-2 text-sm text-left
+                  text-fg-default hover:bg-canvas-subtle
+                  transition-colors duration-fast
+                `}
+              >
+                <Settings className="w-4 h-4" />
+                系统设置
+              </Link>
+            )}
+          </div>
+
+          {/* Logout */}
           <div className="py-1">
             <button
               onClick={handleLogout}
