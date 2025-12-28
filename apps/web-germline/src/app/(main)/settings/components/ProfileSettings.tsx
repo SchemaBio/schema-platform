@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button, Input, FormItem, Modal, ModalHeader, ModalBody, ModalFooter } from '@schema/ui-kit';
-import { Camera, Lock, Save } from 'lucide-react';
+import { Camera, Lock, Save, Loader2 } from 'lucide-react';
 
 interface User {
   id: string;
@@ -17,6 +17,84 @@ interface ProfileSettingsProps {
   user: User;
 }
 
+/**
+ * 移除图片背景（适用于白底/浅色底签名）
+ * 使用 Canvas 进行颜色阈值处理，将浅色背景变为透明
+ */
+async function removeBackground(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('无法创建 Canvas 上下文'));
+            return;
+          }
+
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+
+          // 阈值：RGB 值都大于此值的像素视为背景（白色/浅色）
+          const threshold = 240;
+          // 边缘平滑阈值
+          const edgeThreshold = 200;
+
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+
+            // 计算亮度
+            const brightness = (r + g + b) / 3;
+
+            if (r > threshold && g > threshold && b > threshold) {
+              // 完全透明（白色背景）
+              data[i + 3] = 0;
+            } else if (brightness > edgeThreshold) {
+              // 半透明过渡（边缘平滑）
+              const alpha = Math.round(255 * (1 - (brightness - edgeThreshold) / (255 - edgeThreshold)));
+              data[i + 3] = Math.min(data[i + 3], alpha);
+            }
+            // 其他像素保持不变
+          }
+
+          ctx.putImageData(imageData, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = e.target?.result as string;
+    };
+
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * 读取文件为 DataURL（不处理背景）
+ */
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [formData, setFormData] = React.useState({
     name: user.name,
@@ -24,6 +102,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     phone: user.phone,
   });
   const [signatureImage, setSignatureImage] = React.useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = React.useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = React.useState(false);
   const [passwordForm, setPasswordForm] = React.useState({
     currentPassword: '',
@@ -36,14 +115,29 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSignatureImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setIsProcessing(true);
+
+    try {
+      // 尝试移除背景
+      const processedImage = await removeBackground(file);
+      setSignatureImage(processedImage);
+    } catch (error) {
+      console.warn('背景移除失败，使用原图:', error);
+      // 失败时使用原图
+      try {
+        const originalImage = await readFileAsDataURL(file);
+        setSignatureImage(originalImage);
+      } catch {
+        alert('图片处理失败，请重试');
+      }
+    } finally {
+      setIsProcessing(false);
+      // 重置 input 以便可以重新选择同一文件
+      e.target.value = '';
     }
   };
 
@@ -106,26 +200,51 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       <section>
         <h3 className="text-base font-medium text-fg-default mb-4">签名图片</h3>
         <div className="flex items-start gap-4">
-          <div className="w-48 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-canvas-subtle overflow-hidden">
-            {signatureImage ? (
+          <div 
+            className="w-48 h-24 border-2 border-dashed border-border rounded-lg flex items-center justify-center overflow-hidden"
+            style={{ 
+              backgroundColor: signatureImage ? 'transparent' : undefined,
+              backgroundImage: signatureImage ? 'linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)' : undefined,
+              backgroundSize: '10px 10px',
+              backgroundPosition: '0 0, 0 5px, 5px -5px, -5px 0px',
+            }}
+          >
+            {isProcessing ? (
+              <div className="flex flex-col items-center gap-2 text-fg-muted">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-xs">处理中...</span>
+              </div>
+            ) : signatureImage ? (
               <img src={signatureImage} alt="签名" className="max-w-full max-h-full object-contain" />
             ) : (
               <span className="text-fg-muted text-sm">暂无签名</span>
             )}
           </div>
           <div>
-            <label className="cursor-pointer">
+            <label className="cursor-pointer inline-block">
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleSignatureUpload}
                 className="hidden"
+                disabled={isProcessing}
               />
-              <Button variant="secondary" leftIcon={<Camera className="w-4 h-4" />} type="button">
-                上传签名
-              </Button>
+              <span
+                className={`
+                  inline-flex items-center justify-center gap-1.5
+                  h-8 px-4 text-sm font-medium
+                  rounded-md border
+                  bg-canvas-subtle text-fg-default border-border-default
+                  ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-canvas-inset cursor-pointer'}
+                  transition-colors duration-150
+                `}
+              >
+                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                {isProcessing ? '处理中...' : '上传签名'}
+              </span>
             </label>
             <p className="text-xs text-fg-muted mt-2">支持 JPG、PNG 格式，建议尺寸 200x100</p>
+            <p className="text-xs text-fg-muted">系统会自动去除白色/浅色背景</p>
           </div>
         </div>
       </section>
