@@ -1,0 +1,27 @@
+# Schema Platform Backend API Configuration
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: "debug"  # debug, release, test
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  dbname: "schema_platform"
+  sslmode: "disable"
+  max_idle_conns: 10
+  max_open_conns: 100
+  max_lifetime: "1h"
+
+jwt:
+  secret: "change-me-in-production"
+  access_expires_in: "15m"
+  refresh_expires_in: "168h"  # 7 days
+  issuer: "schema-platform"
+
+ratelimit:
+  requests_per_second: 100
+  burst: 200
