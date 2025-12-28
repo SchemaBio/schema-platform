@@ -118,27 +118,17 @@ export default function AnalysisPage() {
 
   const columns: Column<AnalysisTask>[] = [
     {
-      id: 'id',
-      header: '任务ID',
-      accessor: (row) => (
-        <span className="font-mono text-xs" title={row.id}>
-          {row.id.substring(0, 8)}...
-        </span>
-      ),
-      width: 100,
-    },
-    { id: 'name', header: '任务名称', accessor: 'name', width: 200 },
-    {
       id: 'sample',
-      header: '样本',
+      header: '样本编号',
       accessor: (row) => (
         <div>
-          <div className="text-fg-default">{row.sampleId}</div>
+          <span className="text-accent-fg hover:underline cursor-pointer">{row.sampleId}</span>
           <div className="text-xs text-fg-muted">{row.sampleName}</div>
         </div>
       ),
       width: 140,
     },
+    { id: 'name', header: '任务名称', accessor: 'name', width: 220 },
     {
       id: 'pipeline',
       header: '分析流程',
