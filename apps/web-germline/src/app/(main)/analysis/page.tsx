@@ -1,14 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
-import { PageContent } from '@/components/layout';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, Eye, RotateCcw } from 'lucide-react';
+import { Search, Plus, Eye, RotateCcw, X } from 'lucide-react';
+import { AnalysisDetailPanel } from './components/AnalysisDetailPanel';
 
 interface AnalysisTask {
-  id: string; // UUID
+  id: string;
   name: string;
   sampleId: string;
   sampleName: string;
@@ -21,7 +20,7 @@ interface AnalysisTask {
   completedAt?: string;
 }
 
-// Mock data - 注意同一个样本可以有多个任务
+// Mock data
 const mockTasks: AnalysisTask[] = [
   {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
@@ -39,7 +38,7 @@ const mockTasks: AnalysisTask[] = [
   {
     id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
     name: 'S2024120001 重新分析',
-    sampleId: 'S2024120001', // 同一样本的第二次分析
+    sampleId: 'S2024120001',
     sampleName: '张**',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
@@ -95,14 +94,52 @@ const statusConfig: Record<AnalysisTask['status'], { label: string; variant: 'ne
   pending_interpretation: { label: '待解读', variant: 'warning' },
 };
 
-export default function AnalysisPage() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = React.useState('');
+// 打开的标签页信息
+interface OpenTab {
+  id: string;
+  taskId: string;
+  sampleId: string;
+  name: string;
+}
 
-  // 导航到任务详情页
-  const handleTaskClick = React.useCallback((task: AnalysisTask) => {
-    router.push(`/analysis/${task.id}`);
-  }, [router]);
+export default function AnalysisPage() {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
+  const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
+
+  // 打开新标签页
+  const handleOpenTab = React.useCallback((task: AnalysisTask) => {
+    // 检查是否已经打开
+    const existingTab = openTabs.find(t => t.taskId === task.id);
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      return;
+    }
+
+    const newTab: OpenTab = {
+      id: `tab-${Date.now()}`,
+      taskId: task.id,
+      sampleId: task.sampleId,
+      name: task.sampleId,
+    };
+    setOpenTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+  }, [openTabs]);
+
+  // 关闭标签页
+  const handleCloseTab = React.useCallback((tabId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setOpenTabs(prev => {
+      const newTabs = prev.filter(t => t.id !== tabId);
+      // 如果关闭的是当前激活的标签，切换到最后一个
+      if (activeTabId === tabId && newTabs.length > 0) {
+        setActiveTabId(newTabs[newTabs.length - 1].id);
+      } else if (newTabs.length === 0) {
+        setActiveTabId(null);
+      }
+      return newTabs;
+    });
+  }, [activeTabId]);
 
   const filteredTasks = React.useMemo(() => {
     if (!searchQuery) return mockTasks;
@@ -121,14 +158,14 @@ export default function AnalysisPage() {
       id: 'sample',
       header: '样本编号',
       accessor: (row) => (
-        <div>
+        <div onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }}>
           <span className="text-accent-fg hover:underline cursor-pointer">{row.sampleId}</span>
           <div className="text-xs text-fg-muted">{row.sampleName}</div>
         </div>
       ),
       width: 140,
     },
-    { id: 'name', header: '任务名称', accessor: 'name', width: 220 },
+    { id: 'name', header: '任务名称', accessor: 'name', width: 200 },
     {
       id: 'pipeline',
       header: '分析流程',
@@ -138,7 +175,7 @@ export default function AnalysisPage() {
           <div className="text-xs text-fg-muted">{row.pipelineVersion}</div>
         </div>
       ),
-      width: 150,
+      width: 140,
     },
     {
       id: 'status',
@@ -147,7 +184,7 @@ export default function AnalysisPage() {
         const config = statusConfig[row.status];
         return <Tag variant={config.variant}>{config.label}</Tag>;
       },
-      width: 100,
+      width: 90,
     },
     {
       id: 'progress',
@@ -162,13 +199,13 @@ export default function AnalysisPage() {
               style={{ width: `${row.progress}%` }}
             />
           </div>
-          <span className="text-xs text-fg-muted w-10">{row.progress}%</span>
+          <span className="text-xs text-fg-muted w-8">{row.progress}%</span>
         </div>
       ),
-      width: 150,
+      width: 120,
     },
-    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 140 },
-    { id: 'createdBy', header: '创建者', accessor: 'createdBy', width: 80 },
+    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 130 },
+    { id: 'createdBy', header: '创建者', accessor: 'createdBy', width: 70 },
     {
       id: 'actions',
       header: '操作',
@@ -179,7 +216,7 @@ export default function AnalysisPage() {
             size="small" 
             iconOnly 
             aria-label="查看"
-            onClick={() => handleTaskClick(row)}
+            onClick={() => handleOpenTab(row)}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -190,37 +227,85 @@ export default function AnalysisPage() {
           )}
         </div>
       ),
-      width: 80,
+      width: 70,
     },
   ];
 
-  return (
-    <PageContent>
-      <h2 className="text-lg font-medium text-fg-default mb-4">任务列表</h2>
+  const activeTab = openTabs.find(t => t.id === activeTabId);
+  const hasOpenTabs = openTabs.length > 0;
 
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-72">
-          <Input
-            placeholder="搜索任务ID、样本编号..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            leftElement={<Search className="w-4 h-4" />}
+  return (
+    <div className="flex h-full">
+      {/* 左侧任务列表 */}
+      <div className={`flex-shrink-0 transition-all duration-300 ${hasOpenTabs ? 'w-[55%]' : 'w-full'}`}>
+        <div className="p-6 h-full overflow-auto">
+          <h2 className="text-lg font-medium text-fg-default mb-4">任务列表</h2>
+
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-64">
+              <Input
+                placeholder="搜索样本编号、任务名称..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                leftElement={<Search className="w-4 h-4" />}
+              />
+            </div>
+            <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
+              新建任务
+            </Button>
+          </div>
+
+          <DataTable
+            data={filteredTasks}
+            columns={columns}
+            rowKey="id"
+            striped
+            density="compact"
           />
         </div>
-        <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
-          新建任务
-        </Button>
       </div>
 
-      <DataTable
-        data={filteredTasks}
-        columns={columns}
-        rowKey="id"
-        striped
-        density="default"
-        onRowClick={handleTaskClick}
-        className="cursor-pointer"
-      />
-    </PageContent>
+      {/* 右侧详情面板 */}
+      {hasOpenTabs && (
+        <div className="flex-1 border-l border-border-default flex flex-col min-w-0">
+          {/* 标签栏 */}
+          <div className="flex items-center border-b border-border-default bg-canvas-subtle overflow-x-auto">
+            {openTabs.map((tab) => (
+              <div
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-border-default
+                  text-sm whitespace-nowrap transition-colors
+                  ${activeTabId === tab.id 
+                    ? 'bg-canvas-default text-fg-default' 
+                    : 'text-fg-muted hover:bg-canvas-inset hover:text-fg-default'
+                  }
+                `}
+              >
+                <span>{tab.name}</span>
+                <button
+                  onClick={(e) => handleCloseTab(tab.id, e)}
+                  className="p-0.5 rounded hover:bg-canvas-inset"
+                  aria-label="关闭标签"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* 详情内容 */}
+          <div className="flex-1 overflow-auto">
+            {activeTab && (
+              <AnalysisDetailPanel 
+                key={activeTab.taskId}
+                taskId={activeTab.taskId} 
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
