@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { PageContent } from '@/components/layout';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
@@ -95,7 +96,13 @@ const statusConfig: Record<AnalysisTask['status'], { label: string; variant: 'ne
 };
 
 export default function AnalysisPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = React.useState('');
+
+  // 导航到任务详情页
+  const handleTaskClick = React.useCallback((task: AnalysisTask) => {
+    router.push(`/analysis/${task.id}`);
+  }, [router]);
 
   const filteredTasks = React.useMemo(() => {
     if (!searchQuery) return mockTasks;
@@ -176,8 +183,14 @@ export default function AnalysisPage() {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="small" iconOnly aria-label="查看">
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <Button 
+            variant="ghost" 
+            size="small" 
+            iconOnly 
+            aria-label="查看"
+            onClick={() => handleTaskClick(row)}
+          >
             <Eye className="w-4 h-4" />
           </Button>
           {row.status === 'failed' && (
@@ -215,6 +228,8 @@ export default function AnalysisPage() {
         rowKey="id"
         striped
         density="default"
+        onRowClick={handleTaskClick}
+        className="cursor-pointer"
       />
     </PageContent>
   );
