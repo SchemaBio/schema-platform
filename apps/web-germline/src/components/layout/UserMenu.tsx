@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
-import { useTheme } from '@schema/ui-kit';
-import { User, LogOut, Moon, Sun, Monitor } from 'lucide-react';
+import { useTheme, Avatar } from '@schema/ui-kit';
+import { LogOut, Moon, Sun, Monitor } from 'lucide-react';
 
 /**
  * UserMenu displays user avatar and dropdown menu with account options.
@@ -17,7 +17,7 @@ export function UserMenu() {
   const user = {
     name: '张医生',
     email: 'zhang@example.com',
-    avatar: undefined,
+    avatar: undefined as string | undefined,
   };
 
   const handleLogout = () => {
@@ -36,22 +36,14 @@ export function UserMenu() {
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger asChild>
         <button
-          className={`
-            flex items-center justify-center w-8 h-8 rounded-full
-            bg-accent-subtle text-accent-fg
-            hover:bg-accent-muted transition-colors duration-fast
-          `}
+          className="rounded-full hover:ring-2 hover:ring-accent-muted transition-all duration-fast"
           aria-label="用户菜单"
         >
-          {user.avatar ? (
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-full h-full rounded-full object-cover"
-            />
-          ) : (
-            <User className="w-4 h-4" />
-          )}
+          <Avatar
+            src={user.avatar}
+            name={user.name}
+            size="medium"
+          />
         </button>
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
