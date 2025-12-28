@@ -18,6 +18,24 @@ interface AppShellProps {
 }
 
 /**
+ * 路径段到中文标签的映射
+ */
+const pathLabelMap: Record<string, string> = {
+  samples: '样本管理',
+  data: '数据管理',
+  analysis: '分析中心',
+  settings: '系统设置',
+  new: '新建',
+  pedigree: '家系管理',
+  sources: '数据源配置',
+  import: '数据导入',
+  running: '进行中',
+  completed: '已完成',
+  notifications: '通知设置',
+  permissions: '权限管理',
+};
+
+/**
  * Generate breadcrumbs from pathname
  */
 function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
@@ -29,9 +47,9 @@ function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
 
   for (const segment of segments) {
     currentPath += `/${segment}`;
-    // Find label from navigation config
+    // Find label from navigation config or path label map
     const navItem = mainNavItems.find(item => item.href === `/${segment}`);
-    const label = navItem?.label || segment;
+    const label = navItem?.label || pathLabelMap[segment] || segment;
     items.push({ label, href: currentPath });
   }
 

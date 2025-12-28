@@ -12,12 +12,18 @@ interface SidebarNavProps {
   onCollapsedChange: (collapsed: boolean) => void;
 }
 
+// 模拟当前用户 - 实际应从认证上下文获取
+const mockCurrentUser = {
+  role: 'admin' as const,
+};
+
 /**
  * SidebarNav displays main navigation and contextual sub-navigation.
  * Supports collapsed mode with icon-only display and tooltips.
  */
 export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
   const pathname = usePathname();
+  const isAdmin = mockCurrentUser.role === 'admin';
   
   // Determine current section from pathname
   const currentSection = React.useMemo(() => {
@@ -25,7 +31,17 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
     return segments[0] || 'samples';
   }, [pathname]);
 
-  const subItems = sidebarNavConfig[currentSection as keyof typeof sidebarNavConfig] || [];
+  // 获取子导航项，并根据权限过滤
+  const subItems = React.useMemo(() => {
+    const items = sidebarNavConfig[currentSection as keyof typeof sidebarNavConfig] || [];
+    
+    // 对于设置页面，非管理员隐藏权限管理
+    if (currentSection === 'settings' && !isAdmin) {
+      return items.filter(item => item.href !== '/settings/permissions');
+    }
+    
+    return items;
+  }, [currentSection, isAdmin]);
 
   return (
     <aside
@@ -70,7 +86,8 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
         {!collapsed && subItems.length > 0 && (
           <div className="px-3 mb-2">
             <span className="text-xs font-medium text-fg-muted uppercase tracking-wider">
-              {mainNavItems.find(item => item.href.includes(currentSection))?.label || '子菜单'}
+              {mainNavItems.find(item => item.href.includes(currentSection))?.label || 
+                (currentSection === 'settings' ? '系统设置' : '子菜单')}
             </span>
           </div>
         )}

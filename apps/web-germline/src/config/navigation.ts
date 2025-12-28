@@ -12,7 +12,6 @@ import {
   CheckCircle,
   Settings,
   User,
-  Bell,
   Shield,
   type LucideIcon,
 } from 'lucide-react';
@@ -70,7 +69,6 @@ export const sidebarNavConfig: SidebarNavConfig = {
   ],
   settings: [
     { label: '个人设置', href: '/settings', icon: User },
-    { label: '通知设置', href: '/settings/notifications', icon: Bell },
     { label: '权限管理', href: '/settings/permissions', icon: Shield },
   ],
 };
