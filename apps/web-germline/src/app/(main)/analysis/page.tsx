@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, Eye, RotateCcw, X } from 'lucide-react';
+import { Search, Plus, Eye, RotateCcw, X, ChevronRight, ChevronLeft, List } from 'lucide-react';
 import { AnalysisDetailPanel } from './components/AnalysisDetailPanel';
 
 interface AnalysisTask {
@@ -94,7 +94,14 @@ const statusConfig: Record<AnalysisTask['status'], { label: string; variant: 'ne
   pending_interpretation: { label: '待解读', variant: 'warning' },
 };
 
-// 打开的标签页信息
+const statusDotColors: Record<AnalysisTask['status'], string> = {
+  queued: 'bg-neutral-emphasis',
+  running: 'bg-accent-emphasis',
+  completed: 'bg-success-emphasis',
+  failed: 'bg-danger-emphasis',
+  pending_interpretation: 'bg-attention-emphasis',
+};
+
 interface OpenTab {
   id: string;
   taskId: string;
@@ -106,10 +113,9 @@ export default function AnalysisPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
   const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true); // 默认收起
 
-  // 打开新标签页
   const handleOpenTab = React.useCallback((task: AnalysisTask) => {
-    // 检查是否已经打开
     const existingTab = openTabs.find(t => t.taskId === task.id);
     if (existingTab) {
       setActiveTabId(existingTab.id);
@@ -126,12 +132,10 @@ export default function AnalysisPage() {
     setActiveTabId(newTab.id);
   }, [openTabs]);
 
-  // 关闭标签页
   const handleCloseTab = React.useCallback((tabId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setOpenTabs(prev => {
       const newTabs = prev.filter(t => t.id !== tabId);
-      // 如果关闭的是当前激活的标签，切换到最后一个
       if (activeTabId === tabId && newTabs.length > 0) {
         setActiveTabId(newTabs[newTabs.length - 1].id);
       } else if (newTabs.length === 0) {
@@ -237,48 +241,133 @@ export default function AnalysisPage() {
   return (
     <div className="flex h-full">
       {/* 左侧任务列表 */}
-      <div className={`flex-shrink-0 transition-all duration-300 ${hasOpenTabs ? 'w-[55%]' : 'w-full'}`}>
-        <div className="p-6 h-full overflow-auto">
-          <h2 className="text-lg font-medium text-fg-default mb-4">任务列表</h2>
+      {hasOpenTabs ? (
+        // 收起/展开状态
+        sidebarCollapsed ? (
+          // 完全收起：只显示展开按钮
+          <div className="w-10 flex-shrink-0 border-r border-border-default bg-canvas-subtle flex flex-col items-center py-2">
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="p-2 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default transition-colors"
+              title="展开任务列表"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="mt-2 text-xs text-fg-muted writing-mode-vertical">
+              任务
+            </div>
+            {/* 显示打开的任务数量 */}
+            <div className="mt-auto mb-2 w-5 h-5 rounded-full bg-accent-emphasis text-white text-xs flex items-center justify-center">
+              {openTabs.length}
+            </div>
+          </div>
+        ) : (
+          // 展开状态：窄边栏显示样本列表
+          <div className="w-56 flex-shrink-0 border-r border-border-default bg-canvas-subtle flex flex-col">
+            {/* 标题栏 */}
+            <div className="px-3 py-2 border-b border-border-default flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <List className="w-4 h-4 text-fg-muted" />
+                <span className="text-sm font-medium text-fg-default">任务列表</span>
+              </div>
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                className="p-1 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default transition-colors"
+                title="收起"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
 
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-64">
+            {/* 搜索框 */}
+            <div className="p-2 border-b border-border-default">
               <Input
-                placeholder="搜索样本编号、任务名称..."
+                placeholder="搜索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                leftElement={<Search className="w-4 h-4" />}
+                leftElement={<Search className="w-3.5 h-3.5" />}
+                className="text-xs"
               />
             </div>
-            <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
-              新建任务
-            </Button>
-          </div>
 
-          <DataTable
-            data={filteredTasks}
-            columns={columns}
-            rowKey="id"
-            striped
-            density="compact"
-          />
+            {/* 任务列表 */}
+            <div className="flex-1 overflow-auto">
+              {filteredTasks.map((task) => {
+                const isOpen = openTabs.some(t => t.taskId === task.id);
+                const isActive = activeTab?.taskId === task.id;
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => handleOpenTab(task)}
+                    className={`
+                      px-3 py-2 cursor-pointer border-b border-border-muted
+                      transition-colors
+                      ${isActive 
+                        ? 'bg-accent-subtle border-l-2 border-l-accent-emphasis' 
+                        : isOpen 
+                          ? 'bg-canvas-inset' 
+                          : 'hover:bg-canvas-inset'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${statusDotColors[task.status]}`} />
+                      <span className={`text-sm ${isActive ? 'text-accent-fg font-medium' : 'text-fg-default'}`}>
+                        {task.sampleId}
+                      </span>
+                    </div>
+                    <div className="text-xs text-fg-muted ml-4 truncate">{task.name}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
+      ) : (
+        // 展开状态：完整表格
+        <div className="flex-1">
+          <div className="p-6 h-full overflow-auto">
+            <h2 className="text-lg font-medium text-fg-default mb-4">任务列表</h2>
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-64">
+                <Input
+                  placeholder="搜索样本编号、任务名称..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  leftElement={<Search className="w-4 h-4" />}
+                />
+              </div>
+              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
+                新建任务
+              </Button>
+            </div>
+
+            <DataTable
+              data={filteredTasks}
+              columns={columns}
+              rowKey="id"
+              striped
+              density="compact"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 右侧详情面板 */}
       {hasOpenTabs && (
-        <div className="flex-1 border-l border-border-default flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* 标签栏 */}
-          <div className="flex items-center border-b border-border-default bg-canvas-subtle overflow-x-auto">
+          <div className="flex items-center border-b border-border-default bg-canvas-subtle overflow-x-auto flex-shrink-0">
             {openTabs.map((tab) => (
               <div
                 key={tab.id}
                 onClick={() => setActiveTabId(tab.id)}
                 className={`
-                  flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-border-default
+                  flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-border-muted
                   text-sm whitespace-nowrap transition-colors
                   ${activeTabId === tab.id 
-                    ? 'bg-canvas-default text-fg-default' 
+                    ? 'bg-canvas-default text-fg-default border-b-2 border-b-accent-emphasis -mb-px' 
                     : 'text-fg-muted hover:bg-canvas-inset hover:text-fg-default'
                   }
                 `}
