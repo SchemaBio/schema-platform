@@ -27,6 +27,7 @@ const pathLabelMap: Record<string, string> = {
   pipeline: '流程中心',
   analysis: '分析中心',
   reports: '报告中心',
+  knowledge: '知识中心',
   settings: '系统设置',
   about: '关于',
   // 样本管理子页面
@@ -48,6 +49,9 @@ const pathLabelMap: Record<string, string> = {
   // 报告中心子页面
   review: '待审核',
   released: '已发放',
+  // 知识中心子页面
+  history: '历史检出位点',
+  variants: '位点收录库',
   // 系统设置子页面
   permissions: '权限管理',
   ai: 'AI 设置',
@@ -62,6 +66,7 @@ const defaultSubPageMap: Record<string, string> = {
   '/pipeline': '流程列表',
   '/analysis': '任务列表',
   '/reports': '报告列表',
+  '/knowledge': '知识库概览',
   '/settings': '个人设置',
 };
 

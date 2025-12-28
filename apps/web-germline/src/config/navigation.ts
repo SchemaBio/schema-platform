@@ -23,6 +23,9 @@ import {
   FileCode,
   Server,
   TrendingUp,
+  BookOpen,
+  History,
+  Library,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -46,6 +49,7 @@ export interface SidebarNavConfig {
   pipeline: SidebarNavItem[];
   analysis: SidebarNavItem[];
   reports: SidebarNavItem[];
+  knowledge: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
@@ -59,6 +63,7 @@ export const mainNavItems: NavItem[] = [
   { label: '流程中心', href: '/pipeline', icon: Workflow },
   { label: '分析中心', href: '/analysis', icon: FlaskConical },
   { label: '报告中心', href: '/reports', icon: FileText },
+  { label: '知识中心', href: '/knowledge', icon: BookOpen },
 ];
 
 /**
@@ -100,6 +105,13 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '生成报告', href: '/reports/new', icon: FilePlus },
     { label: '待审核', href: '/reports/review', icon: FileCheck },
     { label: '已发放', href: '/reports/released', icon: Send },
+  ],
+  // 知识中心 - 位点知识库
+  knowledge: [
+    { label: '知识库概览', href: '/knowledge', icon: List },
+    { label: '历史检出位点', href: '/knowledge/history', icon: History },
+    { label: '位点收录库', href: '/knowledge/variants', icon: Library },
+    { label: '新增位点', href: '/knowledge/new', icon: Plus },
   ],
   // 系统设置
   settings: [
