@@ -35,9 +35,11 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
   const subItems = React.useMemo(() => {
     const items = sidebarNavConfig[currentSection as keyof typeof sidebarNavConfig] || [];
     
-    // 对于设置页面，非管理员隐藏权限管理
+    // 对于设置页面，非管理员隐藏权限管理和AI设置
     if (currentSection === 'settings' && !isAdmin) {
-      return items.filter(item => item.href !== '/settings/permissions');
+      return items.filter(item => 
+        item.href !== '/settings/permissions' && item.href !== '/settings/ai'
+      );
     }
     
     return items;

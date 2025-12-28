@@ -33,6 +33,7 @@ const pathLabelMap: Record<string, string> = {
   completed: '已完成',
   notifications: '通知设置',
   permissions: '权限管理',
+  ai: 'AI 设置',
 };
 
 /**

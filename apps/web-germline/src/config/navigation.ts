@@ -13,6 +13,7 @@ import {
   Settings,
   User,
   Shield,
+  Bot,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -69,6 +70,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
   ],
   settings: [
     { label: '个人设置', href: '/settings', icon: User },
+    { label: 'AI 设置', href: '/settings/ai', icon: Bot },
     { label: '权限管理', href: '/settings/permissions', icon: Shield },
   ],
 };
