@@ -21,6 +21,7 @@ interface AppShellProps {
  */
 const pathLabelMap: Record<string, string> = {
   // 主模块
+  dashboard: '概览',
   samples: '样本管理',
   data: '数据管理',
   pipeline: '流程中心',

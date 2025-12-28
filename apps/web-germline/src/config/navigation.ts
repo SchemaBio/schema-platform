@@ -26,6 +26,7 @@ import {
   BookOpen,
   History,
   Library,
+  LayoutDashboard,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -44,6 +45,7 @@ export interface SidebarNavItem {
 }
 
 export interface SidebarNavConfig {
+  dashboard: SidebarNavItem[];
   samples: SidebarNavItem[];
   data: SidebarNavItem[];
   pipeline: SidebarNavItem[];
@@ -55,9 +57,10 @@ export interface SidebarNavConfig {
 
 /**
  * Main navigation items displayed in the sidebar.
- * 业务流程：样本管理 → 数据管理 → 流程中心 → 分析中心 → 报告中心
+ * 业务流程：概览 → 样本管理 → 数据管理 → 流程中心 → 分析中心 → 报告中心 → 知识中心
  */
 export const mainNavItems: NavItem[] = [
+  { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   { label: '样本管理', href: '/samples', icon: Users },
   { label: '数据管理', href: '/data', icon: HardDrive },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
@@ -70,6 +73,8 @@ export const mainNavItems: NavItem[] = [
  * Sidebar navigation configuration for each section.
  */
 export const sidebarNavConfig: SidebarNavConfig = {
+  // 概览 - 无子菜单
+  dashboard: [],
   // 样本管理 - 实验员操作
   samples: [
     { label: '样本列表', href: '/samples', icon: List },
