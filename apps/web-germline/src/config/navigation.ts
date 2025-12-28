@@ -85,7 +85,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
   // 数据管理 - 实验员操作
   data: [
     { label: '数据列表', href: '/data', icon: List },
-    { label: 'Sample Sheet', href: '/data/samplesheet', icon: FileSpreadsheet },
+    { label: '上机表', href: '/data/samplesheet', icon: FileSpreadsheet },
     { label: '数据匹配', href: '/data/matching', icon: Database },
   ],
   // 流程中心 - 生信工程师操作

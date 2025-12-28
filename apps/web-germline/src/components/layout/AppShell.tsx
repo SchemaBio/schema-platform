@@ -35,7 +35,7 @@ const pathLabelMap: Record<string, string> = {
   import: '批量导入',
   pedigree: '家系管理',
   // 数据管理子页面
-  samplesheet: 'Sample Sheet',
+  samplesheet: '上机表',
   matching: '数据匹配',
   // 流程中心子页面
   bed: 'BED 文件',
