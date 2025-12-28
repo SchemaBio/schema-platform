@@ -1,8 +1,9 @@
 /* Typography Design Tokens */
 
 :root {
-  /* Font families */
-  --font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial,
+  /* Font families - 使用系统原生字体栈，根据操作系统自动选择最佳字体 */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, 
     sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   --font-family-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, 'Liberation Mono',
     monospace;

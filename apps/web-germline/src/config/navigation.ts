@@ -2,18 +2,27 @@ import {
   Users,
   Plus,
   GitBranch,
-  HardDrive,
-  FolderOpen,
-  Upload,
-  FlaskConical,
   List,
+  Upload,
+  FileSpreadsheet,
+  Database,
+  HardDrive,
+  FlaskConical,
   Play,
   Clock,
   CheckCircle,
+  FileText,
+  FilePlus,
+  FileCheck,
+  Send,
   Settings,
   User,
   Shield,
   Bot,
+  Workflow,
+  FileCode,
+  Server,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -34,40 +43,65 @@ export interface SidebarNavItem {
 export interface SidebarNavConfig {
   samples: SidebarNavItem[];
   data: SidebarNavItem[];
+  pipeline: SidebarNavItem[];
   analysis: SidebarNavItem[];
+  reports: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
 /**
  * Main navigation items displayed in the sidebar.
- * 核心业务流程：样本管理 → 数据管理 → 分析中心
+ * 业务流程：样本管理 → 数据管理 → 流程中心 → 分析中心 → 报告中心
  */
 export const mainNavItems: NavItem[] = [
   { label: '样本管理', href: '/samples', icon: Users },
   { label: '数据管理', href: '/data', icon: HardDrive },
+  { label: '流程中心', href: '/pipeline', icon: Workflow },
   { label: '分析中心', href: '/analysis', icon: FlaskConical },
+  { label: '报告中心', href: '/reports', icon: FileText },
 ];
 
 /**
  * Sidebar navigation configuration for each section.
  */
 export const sidebarNavConfig: SidebarNavConfig = {
+  // 样本管理 - 实验员操作
   samples: [
     { label: '样本列表', href: '/samples', icon: List },
     { label: '新建样本', href: '/samples/new', icon: Plus },
+    { label: '批量导入', href: '/samples/import', icon: Upload },
     { label: '家系管理', href: '/samples/pedigree', icon: GitBranch },
   ],
+  // 数据管理 - 实验员操作
   data: [
     { label: '数据列表', href: '/data', icon: List },
-    { label: '数据源配置', href: '/data/sources', icon: FolderOpen },
-    { label: '数据导入', href: '/data/import', icon: Upload },
+    { label: 'Sample Sheet', href: '/data/samplesheet', icon: FileSpreadsheet },
+    { label: '数据匹配', href: '/data/matching', icon: Database },
   ],
+  // 流程中心 - 生信工程师操作
+  pipeline: [
+    { label: '流程列表', href: '/pipeline', icon: List },
+    { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
+    { label: '数据库管理', href: '/pipeline/database', icon: Server },
+    { label: '基线文件', href: '/pipeline/baseline', icon: TrendingUp },
+    { label: '流程配置', href: '/pipeline/config', icon: Settings },
+  ],
+  // 分析中心 - 解读工程师操作
   analysis: [
     { label: '任务列表', href: '/analysis', icon: List },
     { label: '新建任务', href: '/analysis/new', icon: Play },
     { label: '进行中', href: '/analysis/running', icon: Clock },
+    { label: '待解读', href: '/analysis/pending', icon: FlaskConical },
     { label: '已完成', href: '/analysis/completed', icon: CheckCircle },
   ],
+  // 报告中心 - 解读工程师/审核操作
+  reports: [
+    { label: '报告列表', href: '/reports', icon: List },
+    { label: '生成报告', href: '/reports/new', icon: FilePlus },
+    { label: '待审核', href: '/reports/review', icon: FileCheck },
+    { label: '已发放', href: '/reports/released', icon: Send },
+  ],
+  // 系统设置
   settings: [
     { label: '个人设置', href: '/settings', icon: User },
     { label: 'AI 设置', href: '/settings/ai', icon: Bot },

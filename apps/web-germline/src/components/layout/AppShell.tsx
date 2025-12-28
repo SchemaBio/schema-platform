@@ -21,17 +21,34 @@ interface AppShellProps {
  * 路径段到中文标签的映射
  */
 const pathLabelMap: Record<string, string> = {
+  // 主模块
   samples: '样本管理',
   data: '数据管理',
+  pipeline: '流程中心',
   analysis: '分析中心',
+  reports: '报告中心',
   settings: '系统设置',
+  about: '关于',
+  // 样本管理子页面
   new: '新建',
+  import: '批量导入',
   pedigree: '家系管理',
-  sources: '数据源配置',
-  import: '数据导入',
+  // 数据管理子页面
+  samplesheet: 'Sample Sheet',
+  matching: '数据匹配',
+  // 流程中心子页面
+  bed: 'BED 文件',
+  database: '数据库管理',
+  baseline: '基线文件',
+  config: '流程配置',
+  // 分析中心子页面
   running: '进行中',
+  pending: '待解读',
   completed: '已完成',
-  notifications: '通知设置',
+  // 报告中心子页面
+  review: '待审核',
+  released: '已发放',
+  // 系统设置子页面
   permissions: '权限管理',
   ai: 'AI 设置',
 };
@@ -42,7 +59,9 @@ const pathLabelMap: Record<string, string> = {
 const defaultSubPageMap: Record<string, string> = {
   '/samples': '样本列表',
   '/data': '数据列表',
+  '/pipeline': '流程列表',
   '/analysis': '任务列表',
+  '/reports': '报告列表',
   '/settings': '个人设置',
 };
 

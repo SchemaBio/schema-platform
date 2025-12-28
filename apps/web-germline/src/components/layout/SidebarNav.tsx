@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Tooltip } from '@schema/ui-kit';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { mainNavItems, sidebarNavConfig, isNavItemActive, type SidebarNavItem, type NavItem } from '@/config/navigation';
 
 interface SidebarNavProps {
@@ -54,18 +54,40 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
       `}
       data-collapsed={collapsed}
     >
-      {/* Logo */}
+      {/* Logo + Collapse Button */}
       <div className={`
         flex items-center h-12 border-b border-border px-3
-        ${collapsed ? 'justify-center' : ''}
+        ${collapsed ? 'justify-center' : 'justify-between'}
       `}>
-        <div className="w-8 h-8 bg-accent-emphasis rounded-md flex items-center justify-center shrink-0">
-          <span className="text-fg-on-emphasis font-bold text-sm">🧬</span>
+        <div className="flex items-center min-w-0">
+          <div className="w-8 h-8 bg-accent-emphasis rounded-md flex items-center justify-center shrink-0">
+            <span className="text-fg-on-emphasis font-bold text-sm">🧬</span>
+          </div>
+          {!collapsed && (
+            <span className="ml-2 font-semibold text-fg-default truncate">
+              绳墨生物
+            </span>
+          )}
         </div>
         {!collapsed && (
-          <span className="ml-2 font-semibold text-fg-default truncate">
-            绳墨生物
-          </span>
+          <button
+            onClick={() => onCollapsedChange(true)}
+            className="p-1.5 rounded-md text-fg-muted hover:text-fg-default hover:bg-canvas-inset transition-colors duration-fast shrink-0"
+            aria-label="折叠侧边栏"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+        {collapsed && (
+          <Tooltip content="展开侧边栏" placement="right">
+            <button
+              onClick={() => onCollapsedChange(false)}
+              className="p-1.5 rounded-md text-fg-muted hover:text-fg-default hover:bg-canvas-inset transition-colors duration-fast"
+              aria-label="展开侧边栏"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </Tooltip>
         )}
       </div>
 
@@ -105,27 +127,41 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
         </ul>
       </nav>
 
-      {/* Collapse toggle button */}
+      {/* Bottom section: About */}
       <div className="border-t border-border p-2 mt-auto">
-        <button
-          onClick={() => onCollapsedChange(!collapsed)}
-          className={`
-            flex items-center justify-center w-full h-9 rounded-md
-            text-fg-muted hover:text-fg-default hover:bg-canvas-inset
-            transition-colors duration-fast
-          `}
-          aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
-          aria-expanded={!collapsed}
-        >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <>
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              <span className="text-sm">折叠</span>
-            </>
-          )}
-        </button>
+        {/* About link */}
+        {collapsed ? (
+          <Tooltip content="关于" placement="right">
+            <Link
+              href="/about"
+              className={`
+                flex items-center justify-center w-full h-9 rounded-md
+                transition-colors duration-fast
+                ${pathname === '/about'
+                  ? 'bg-canvas-inset text-fg-default'
+                  : 'text-fg-muted hover:text-fg-default hover:bg-canvas-inset'
+                }
+              `}
+            >
+              <Info className="w-4 h-4" />
+            </Link>
+          </Tooltip>
+        ) : (
+          <Link
+            href="/about"
+            className={`
+              flex items-center gap-3 px-3 py-2 rounded-md text-sm
+              transition-colors duration-fast
+              ${pathname === '/about'
+                ? 'bg-canvas-inset text-fg-default font-medium'
+                : 'text-fg-muted hover:text-fg-default hover:bg-canvas-inset'
+              }
+            `}
+          >
+            <Info className="w-4 h-4" />
+            <span>关于</span>
+          </Link>
+        )}
       </div>
     </aside>
   );
