@@ -40,3 +40,7 @@ next-env.d.ts
 
 packages/*/node_modules/*
 packages/ui-kit/node_modules
+packages/feature-user/node_modules
+packages/feature-sample/node_modules
+packages/types/node_modules
+packages/types/dist
