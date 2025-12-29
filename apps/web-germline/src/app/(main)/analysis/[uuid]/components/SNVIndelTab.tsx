@@ -84,6 +84,24 @@ export function SNVIndelTab({
     return reviewStatus[variant.id] ?? { reviewed: variant.reviewed, reported: variant.reported };
   }, [reviewStatus]);
 
+  // 按审核/回报状态排序的数据
+  const sortedData = React.useMemo(() => {
+    if (!result?.data) return [];
+    return [...result.data].sort((a, b) => {
+      const stateA = getReviewState(a);
+      const stateB = getReviewState(b);
+      // 回报的排最前
+      if (stateA.reported !== stateB.reported) {
+        return stateA.reported ? -1 : 1;
+      }
+      // 审核的排其次
+      if (stateA.reviewed !== stateB.reviewed) {
+        return stateA.reviewed ? -1 : 1;
+      }
+      return 0;
+    });
+  }, [result?.data, getReviewState]);
+
   // 加载基因列表
   React.useEffect(() => {
     async function loadGeneLists() {
@@ -329,7 +347,7 @@ export function SNVIndelTab({
       ) : result && result.data.length > 0 ? (
         <>
           <DataTable
-            data={result.data}
+            data={sortedData}
             columns={columns}
             rowKey="id"
             striped

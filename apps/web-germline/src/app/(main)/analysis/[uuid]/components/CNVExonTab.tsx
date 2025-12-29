@@ -99,6 +99,18 @@ export function CNVExonTab({
     return reviewStatus[variant.id] ?? { reviewed: variant.reviewed, reported: variant.reported };
   }, [reviewStatus]);
 
+  // 按审核/回报状态排序的数据
+  const sortedData = React.useMemo(() => {
+    if (!result?.data) return [];
+    return [...result.data].sort((a, b) => {
+      const stateA = getReviewState(a);
+      const stateB = getReviewState(b);
+      if (stateA.reported !== stateB.reported) return stateA.reported ? -1 : 1;
+      if (stateA.reviewed !== stateB.reviewed) return stateA.reviewed ? -1 : 1;
+      return 0;
+    });
+  }, [result?.data, getReviewState]);
+
   const selectedGeneList = React.useMemo(() => {
     if (!filterState.geneListId) return null;
     return geneLists.find(list => list.id === filterState.geneListId);
@@ -269,7 +281,7 @@ export function CNVExonTab({
       ) : result && result.data.length > 0 ? (
         <>
           <DataTable
-            data={result.data}
+            data={sortedData}
             columns={columns}
             rowKey="id"
             striped
