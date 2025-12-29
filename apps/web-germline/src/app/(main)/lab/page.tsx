@@ -2,7 +2,7 @@
 
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Upload, Search, FileSpreadsheet, Download, Info, X, ChevronRight, ChevronLeft, List } from 'lucide-react';
+import { Upload, Search, FileSpreadsheet, Download, Info, X, ChevronRight, ChevronLeft, List, AlertTriangle } from 'lucide-react';
 import * as React from 'react';
 
 type Platform = 'illumina' | 'bgi';
@@ -48,7 +48,7 @@ const mockSampleSheets: SampleSheet[] = [
       { id: '1-2', sampleId: 'S2024120002', sampleName: '李**', lane: '1', index5: 'CGATGT', index7: 'TGACCA', matched: true },
       { id: '1-3', sampleId: 'S2024120003', sampleName: '王**', lane: '1', index5: 'TTAGGC', index7: 'ACAGTG', matched: true },
       { id: '1-4', sampleId: 'S2024120004', sampleName: '赵**', lane: '1', index5: 'TGACCA', index7: 'GCCAAT', matched: false },
-      { id: '1-5', sampleId: 'S2024120005', sampleName: '钱**', lane: '2', index5: 'ACAGTG', index7: 'CAGATC', matched: true },
+      { id: '1-5', sampleId: 'S2024120005', sampleName: '钱**', lane: '1', index5: 'ATCACG', index7: 'TTAGGC', matched: true }, // 与 1-1 重复
       { id: '1-6', sampleId: 'S2024120006', sampleName: '孙**', lane: '2', index5: 'GCCAAT', index7: 'ACTTGA', matched: true },
     ],
   },
@@ -374,37 +374,313 @@ export default function LabPage() {
 
 function SampleSheetDetail({ sheet }: { sheet: SampleSheet }) {
   const [sampleSearch, setSampleSearch] = React.useState('');
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editedRunId, setEditedRunId] = React.useState(sheet.runId);
+  const [editedPlatform, setEditedPlatform] = React.useState<Platform>(sheet.platform);
+  const [editedSamples, setEditedSamples] = React.useState<SampleIndex[]>(sheet.samples);
+
+  // 检测重复的 i5+i7 组合（同一 Lane 内）
+  const duplicateIndexKeys = React.useMemo(() => {
+    const samples = isEditing ? editedSamples : sheet.samples;
+    const indexMap = new Map<string, string[]>();
+    samples.forEach(sample => {
+      const key = `${sample.lane}-${sample.index5}-${sample.index7}`;
+      if (!indexMap.has(key)) {
+        indexMap.set(key, []);
+      }
+      indexMap.get(key)!.push(sample.id);
+    });
+    const duplicates = new Set<string>();
+    indexMap.forEach((ids) => {
+      if (ids.length > 1) {
+        ids.forEach(id => duplicates.add(id));
+      }
+    });
+    return duplicates;
+  }, [sheet.samples, editedSamples, isEditing]);
 
   const filteredSamples = React.useMemo(() => {
-    if (!sampleSearch) return sheet.samples;
+    const samples = isEditing ? editedSamples : sheet.samples;
+    if (!sampleSearch) return samples;
     const query = sampleSearch.toLowerCase();
-    return sheet.samples.filter(s => s.sampleId.toLowerCase().includes(query) || s.sampleName.includes(query));
-  }, [sheet.samples, sampleSearch]);
+    return samples.filter(s => s.sampleId.toLowerCase().includes(query) || s.sampleName.includes(query));
+  }, [sheet.samples, editedSamples, sampleSearch, isEditing]);
 
-  const sampleColumns: Column<SampleIndex>[] = [
+  const handleSave = () => {
+    // TODO: 保存修改到后端
+    console.log('Save:', { runId: editedRunId, platform: editedPlatform, samples: editedSamples });
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditedRunId(sheet.runId);
+    setEditedPlatform(sheet.platform);
+    setEditedSamples(sheet.samples);
+    setIsEditing(false);
+  };
+
+  const handleSampleChange = (sampleId: string, field: keyof SampleIndex, value: string) => {
+    setEditedSamples(prev => prev.map(s => 
+      s.id === sampleId ? { ...s, [field]: value } : s
+    ));
+  };
+
+  // 检查必填字段是否为空
+  const getEmptyRequiredFields = (sample: SampleIndex) => {
+    const empty: string[] = [];
+    if (!sample.sampleId.trim()) empty.push('sampleId');
+    if (!sample.index5.trim()) empty.push('index5');
+    if (!sample.index7.trim()) empty.push('index7');
+    return empty;
+  };
+
+  const sampleColumns: Column<SampleIndex>[] = isEditing ? [
+    { 
+      id: 'sampleId', 
+      header: <span>样本编号 <span className="text-danger-fg">*</span></span>, 
+      accessor: (row) => {
+        const isEmpty = !row.sampleId.trim();
+        return (
+          <input
+            type="text"
+            value={row.sampleId}
+            onChange={(e) => handleSampleChange(row.id, 'sampleId', e.target.value)}
+            placeholder="必填"
+            className={`w-full h-7 px-2 text-sm border rounded focus:outline-none focus:border-accent-emphasis ${
+              isEmpty ? 'border-danger-emphasis bg-danger-subtle' : 'border-border-default bg-canvas-default'
+            }`}
+          />
+        );
+      },
+      width: 140 
+    },
+    { 
+      id: 'sampleName', 
+      header: '样本名称', 
+      accessor: (row) => (
+        <input
+          type="text"
+          value={row.sampleName}
+          onChange={(e) => handleSampleChange(row.id, 'sampleName', e.target.value)}
+          placeholder="选填"
+          className="w-full h-7 px-2 text-sm border border-border-default rounded bg-canvas-default focus:outline-none focus:border-accent-emphasis"
+        />
+      ),
+      width: 100 
+    },
+    { 
+      id: 'lane', 
+      header: 'Lane', 
+      accessor: (row) => (
+        <input
+          type="text"
+          value={row.lane}
+          onChange={(e) => handleSampleChange(row.id, 'lane', e.target.value)}
+          placeholder="选填"
+          className="w-full h-7 px-2 text-sm border border-border-default rounded bg-canvas-default focus:outline-none focus:border-accent-emphasis"
+        />
+      ),
+      width: 80 
+    },
+    { 
+      id: 'index5', 
+      header: <span>Index 5 (i5) <span className="text-danger-fg">*</span></span>, 
+      accessor: (row) => {
+        const isDuplicate = duplicateIndexKeys.has(row.id);
+        const isEmpty = !row.index5.trim();
+        const hasError = isDuplicate || isEmpty;
+        return (
+          <input
+            type="text"
+            value={row.index5}
+            onChange={(e) => handleSampleChange(row.id, 'index5', e.target.value.toUpperCase())}
+            placeholder="必填"
+            className={`w-full h-7 px-2 text-sm font-mono border rounded focus:outline-none focus:border-accent-emphasis ${
+              hasError ? 'border-danger-emphasis bg-danger-subtle text-danger-fg' : 'border-border-default bg-canvas-default'
+            }`}
+          />
+        );
+      }, 
+      width: 140 
+    },
+    { 
+      id: 'index7', 
+      header: <span>Index 7 (i7) <span className="text-danger-fg">*</span></span>, 
+      accessor: (row) => {
+        const isDuplicate = duplicateIndexKeys.has(row.id);
+        const isEmpty = !row.index7.trim();
+        const hasError = isDuplicate || isEmpty;
+        return (
+          <input
+            type="text"
+            value={row.index7}
+            onChange={(e) => handleSampleChange(row.id, 'index7', e.target.value.toUpperCase())}
+            placeholder="必填"
+            className={`w-full h-7 px-2 text-sm font-mono border rounded focus:outline-none focus:border-accent-emphasis ${
+              hasError ? 'border-danger-emphasis bg-danger-subtle text-danger-fg' : 'border-border-default bg-canvas-default'
+            }`}
+          />
+        );
+      }, 
+      width: 140 
+    },
+    { 
+      id: 'status', 
+      header: '状态', 
+      accessor: (row) => {
+        const isDuplicate = duplicateIndexKeys.has(row.id);
+        const emptyFields = getEmptyRequiredFields(row);
+        if (emptyFields.length > 0) {
+          return <Tag variant="danger">必填项为空</Tag>;
+        }
+        if (isDuplicate) {
+          return <Tag variant="danger">Index 重复</Tag>;
+        }
+        return <Tag variant={row.matched ? 'success' : 'warning'}>{row.matched ? '已匹配' : '未匹配'}</Tag>;
+      }, 
+      width: 100 
+    },
+  ] : [
     { id: 'sampleId', header: '样本编号', accessor: 'sampleId', width: 140 },
     { id: 'sampleName', header: '样本名称', accessor: 'sampleName', width: 100 },
     { id: 'lane', header: 'Lane', accessor: 'lane', width: 80 },
-    { id: 'index5', header: 'Index 5 (i5)', accessor: (row) => <code className="text-xs bg-canvas-subtle px-1.5 py-0.5 rounded">{row.index5}</code>, width: 140 },
-    { id: 'index7', header: 'Index 7 (i7)', accessor: (row) => <code className="text-xs bg-canvas-subtle px-1.5 py-0.5 rounded">{row.index7}</code>, width: 140 },
-    { id: 'matched', header: '匹配状态', accessor: (row) => <Tag variant={row.matched ? 'success' : 'warning'}>{row.matched ? '已匹配' : '未匹配'}</Tag>, width: 100 },
+    { 
+      id: 'index5', 
+      header: 'Index 5 (i5)', 
+      accessor: (row) => {
+        const isDuplicate = duplicateIndexKeys.has(row.id);
+        return (
+          <code className={`text-xs px-1.5 py-0.5 rounded ${isDuplicate ? 'bg-danger-subtle text-danger-fg' : 'bg-canvas-subtle'}`}>
+            {row.index5}
+          </code>
+        );
+      }, 
+      width: 140 
+    },
+    { 
+      id: 'index7', 
+      header: 'Index 7 (i7)', 
+      accessor: (row) => {
+        const isDuplicate = duplicateIndexKeys.has(row.id);
+        return (
+          <code className={`text-xs px-1.5 py-0.5 rounded ${isDuplicate ? 'bg-danger-subtle text-danger-fg' : 'bg-canvas-subtle'}`}>
+            {row.index7}
+          </code>
+        );
+      }, 
+      width: 140 
+    },
+    { 
+      id: 'status', 
+      header: '状态', 
+      accessor: (row) => {
+        const isDuplicate = duplicateIndexKeys.has(row.id);
+        if (isDuplicate) {
+          return <Tag variant="danger">Index 重复</Tag>;
+        }
+        return <Tag variant={row.matched ? 'success' : 'warning'}>{row.matched ? '已匹配' : '未匹配'}</Tag>;
+      }, 
+      width: 100 
+    },
   ];
 
   return (
     <div>
+      {/* 基本信息 */}
       <div className="mb-6">
-        <h3 className="text-lg font-medium text-fg-default mb-4">{sheet.fileName}</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-canvas-subtle rounded-lg border border-border">
-          <div><div className="text-xs text-fg-muted mb-1">测序批次</div><div className="text-sm font-medium text-fg-default">{sheet.runId}</div></div>
-          <div><div className="text-xs text-fg-muted mb-1">测序平台</div><div className="text-sm font-medium text-fg-default">{platformLabels[sheet.platform]}</div></div>
-          <div><div className="text-xs text-fg-muted mb-1">样本数量</div><div className="text-sm font-medium text-fg-default">{sheet.sampleCount} 个</div></div>
-          <div><div className="text-xs text-fg-muted mb-1">匹配情况</div><div className="text-sm font-medium"><span className="text-success-fg">{sheet.matchedCount} 匹配</span>{sheet.unmatchedCount > 0 && <span className="text-warning-fg ml-2">{sheet.unmatchedCount} 未匹配</span>}</div></div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-fg-default">{sheet.fileName}</h3>
+          {!isEditing ? (
+            <Button variant="secondary" size="small" onClick={() => setIsEditing(true)}>
+              编辑信息
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="small" onClick={handleCancel}>取消</Button>
+              <Button variant="primary" size="small" onClick={handleSave}>保存</Button>
+            </div>
+          )}
         </div>
+
+        {isEditing ? (
+          <div className="p-4 bg-canvas-subtle rounded-lg border border-border space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-fg-muted mb-1">测序批次 / 芯片号</label>
+                <Input 
+                  value={editedRunId} 
+                  onChange={(e) => setEditedRunId(e.target.value)} 
+                  placeholder="输入测序批次或芯片号"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-fg-muted mb-1">测序平台</label>
+                <select 
+                  value={editedPlatform} 
+                  onChange={(e) => setEditedPlatform(e.target.value as Platform)}
+                  className="w-full h-8 px-3 text-sm border border-border-default rounded-md bg-canvas-default focus:outline-none focus:border-accent-emphasis focus:ring-1 focus:ring-accent-emphasis"
+                >
+                  <option value="illumina">Illumina</option>
+                  <option value="bgi">BGI/MGI</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-fg-muted mb-1">样本数量</div>
+                <div className="text-sm font-medium text-fg-default">{sheet.sampleCount} 个</div>
+              </div>
+              <div>
+                <div className="text-xs text-fg-muted mb-1">匹配情况</div>
+                <div className="text-sm font-medium">
+                  <span className="text-success-fg">{sheet.matchedCount} 匹配</span>
+                  {sheet.unmatchedCount > 0 && <span className="text-warning-fg ml-2">{sheet.unmatchedCount} 未匹配</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-canvas-subtle rounded-lg border border-border">
+            <div>
+              <div className="text-xs text-fg-muted mb-1">测序批次</div>
+              <div className="text-sm font-medium text-fg-default">{sheet.runId}</div>
+            </div>
+            <div>
+              <div className="text-xs text-fg-muted mb-1">测序平台</div>
+              <div className="text-sm font-medium text-fg-default">{platformLabels[sheet.platform]}</div>
+            </div>
+            <div>
+              <div className="text-xs text-fg-muted mb-1">样本数量</div>
+              <div className="text-sm font-medium text-fg-default">{sheet.sampleCount} 个</div>
+            </div>
+            <div>
+              <div className="text-xs text-fg-muted mb-1">匹配情况</div>
+              <div className="text-sm font-medium">
+                <span className="text-success-fg">{sheet.matchedCount} 匹配</span>
+                {sheet.unmatchedCount > 0 && <span className="text-warning-fg ml-2">{sheet.unmatchedCount} 未匹配</span>}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* 重复 Index 警告 */}
+      {duplicateIndexKeys.size > 0 && (
+        <div className="mb-4 p-3 bg-danger-subtle rounded-lg border border-danger-muted flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-danger-fg mt-0.5 shrink-0" />
+          <div className="text-sm text-danger-fg">
+            检测到 {duplicateIndexKeys.size} 个样本存在 Index 重复（同一 Lane 内 i5+i7 组合相同），请检查并修正。
+          </div>
+        </div>
+      )}
+
+      {/* 样本列表 */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-base font-medium text-fg-default">样本 Index 配置</h4>
-          <div className="w-64"><Input placeholder="搜索样本..." value={sampleSearch} onChange={(e) => setSampleSearch(e.target.value)} leftElement={<Search className="w-4 h-4" />} /></div>
+          <div className="w-64">
+            <Input placeholder="搜索样本..." value={sampleSearch} onChange={(e) => setSampleSearch(e.target.value)} leftElement={<Search className="w-4 h-4" />} />
+          </div>
         </div>
         {sheet.samples.length > 0 ? (
           <DataTable data={filteredSamples} columns={sampleColumns} rowKey="id" density="compact" striped />
