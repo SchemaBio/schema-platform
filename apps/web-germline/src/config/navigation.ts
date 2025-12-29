@@ -88,6 +88,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
   // 实验中心 - 实验员操作
   lab: [
     { label: '上机表', href: '/lab', icon: FileSpreadsheet },
+    { label: '测序仪', href: '/lab/sequencers', icon: Server },
   ],
   // 数据管理 - 生信工程师操作
   data: [

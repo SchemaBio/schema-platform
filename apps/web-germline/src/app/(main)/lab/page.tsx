@@ -2,10 +2,26 @@
 
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Upload, Search, FileSpreadsheet, Download, Info, X, ChevronRight, ChevronLeft, List, AlertTriangle } from 'lucide-react';
+import { Upload, Search, FileSpreadsheet, Download, Info, X, ChevronRight, ChevronLeft, List, AlertTriangle, Server } from 'lucide-react';
 import * as React from 'react';
 
 type Platform = 'illumina' | 'bgi';
+
+interface Sequencer {
+  id: string;
+  name: string;
+  serialNumber: string;
+  platform: Platform;
+  model: string;
+}
+
+// 模拟测序仪数据（实际应从后端获取或共享状态）
+const mockSequencers: Sequencer[] = [
+  { id: '1', name: 'NovaSeq-01', serialNumber: 'NS500001', platform: 'illumina', model: 'NovaSeq 6000' },
+  { id: '2', name: 'NextSeq-01', serialNumber: 'NX200001', platform: 'illumina', model: 'NextSeq 2000' },
+  { id: '3', name: 'DNBSEQ-01', serialNumber: 'T7-001', platform: 'bgi', model: 'DNBSEQ-T7' },
+  { id: '4', name: 'MiSeq-01', serialNumber: 'MS100001', platform: 'illumina', model: 'MiSeq' },
+];
 
 interface SampleIndex {
   id: string;
@@ -21,7 +37,7 @@ interface SampleSheet {
   id: string;
   fileName: string;
   runId: string;
-  platform: Platform;
+  sequencerId: string; // 关联测序仪
   sampleCount: number;
   matchedCount: number;
   unmatchedCount: number;
@@ -36,7 +52,7 @@ const mockSampleSheets: SampleSheet[] = [
     id: '1',
     fileName: 'SampleSheet_Run001.csv',
     runId: 'RUN-2024120001',
-    platform: 'illumina',
+    sequencerId: '1', // NovaSeq-01
     sampleCount: 48,
     matchedCount: 45,
     unmatchedCount: 3,
@@ -56,7 +72,7 @@ const mockSampleSheets: SampleSheet[] = [
     id: '2',
     fileName: 'lane1_barcode.csv',
     runId: 'V350012345',
-    platform: 'bgi',
+    sequencerId: '3', // DNBSEQ-01
     sampleCount: 96,
     matchedCount: 96,
     unmatchedCount: 0,
@@ -73,7 +89,7 @@ const mockSampleSheets: SampleSheet[] = [
     id: '3',
     fileName: 'SampleSheet_Run003.csv',
     runId: 'RUN-2024120003',
-    platform: 'illumina',
+    sequencerId: '2', // NextSeq-01
     sampleCount: 24,
     matchedCount: 0,
     unmatchedCount: 0,
@@ -84,14 +100,20 @@ const mockSampleSheets: SampleSheet[] = [
   },
 ];
 
-const platformLabels: Record<Platform, string> = {
-  illumina: 'Illumina',
-  bgi: 'BGI/MGI',
+// 获取测序仪信息的辅助函数
+const getSequencer = (sequencerId: string): Sequencer | undefined => {
+  return mockSequencers.find(s => s.id === sequencerId);
 };
 
+// 平台颜色配置
 const platformColors: Record<Platform, string> = {
-  illumina: 'bg-blue-100 text-blue-700',
-  bgi: 'bg-green-100 text-green-700',
+  illumina: 'text-blue-700',
+  bgi: 'text-green-700',
+};
+
+const platformBgColors: Record<Platform, string> = {
+  illumina: 'bg-blue-50',
+  bgi: 'bg-green-50',
 };
 
 interface OpenTab {
@@ -104,9 +126,9 @@ interface OpenTab {
 
 export default function LabPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [platformFilter, setPlatformFilter] = React.useState<Platform | 'all'>('all');
+  const [sequencerFilter, setSequencerFilter] = React.useState<string>('all');
   const [showUploadModal, setShowUploadModal] = React.useState(false);
-  const [selectedPlatform, setSelectedPlatform] = React.useState<Platform>('illumina');
+  const [selectedSequencerId, setSelectedSequencerId] = React.useState<string>(mockSequencers[0]?.id || '');
   const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
   const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
@@ -145,10 +167,10 @@ export default function LabPage() {
       const matchesSearch = !searchQuery ||
         s.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.runId.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesPlatform = platformFilter === 'all' || s.platform === platformFilter;
-      return matchesSearch && matchesPlatform;
+      const matchesSequencer = sequencerFilter === 'all' || s.sequencerId === sequencerFilter;
+      return matchesSearch && matchesSequencer;
     });
-  }, [searchQuery, platformFilter]);
+  }, [searchQuery, sequencerFilter]);
 
   const getStatusTag = (sheet: SampleSheet) => {
     switch (sheet.status) {
@@ -183,14 +205,19 @@ export default function LabPage() {
     },
     { id: 'runId', header: '测序批次', accessor: 'runId', width: 140 },
     {
-      id: 'platform',
-      header: '平台',
-      accessor: (row) => (
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${platformColors[row.platform]}`}>
-          {platformLabels[row.platform]}
-        </span>
-      ),
-      width: 100,
+      id: 'sequencer',
+      header: '测序仪',
+      accessor: (row) => {
+        const sequencer = getSequencer(row.sequencerId);
+        if (!sequencer) return <span className="text-fg-muted">-</span>;
+        return (
+          <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded ${platformBgColors[sequencer.platform]}`}>
+            <Server className={`w-3.5 h-3.5 ${platformColors[sequencer.platform]}`} />
+            <span className={`text-sm font-medium ${platformColors[sequencer.platform]}`}>{sequencer.name}</span>
+          </div>
+        );
+      },
+      width: 150,
     },
     {
       id: 'sampleCount',
@@ -298,33 +325,16 @@ export default function LabPage() {
         <div className="flex-1">
           <div className="p-6 h-full overflow-auto">
             <h2 className="text-lg font-medium text-fg-default mb-4">上机表管理</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Illumina</span>
-                  <span className="text-sm font-medium text-blue-900">Sample Sheet 格式</span>
-                </div>
-                <p className="text-xs text-blue-700 mb-2">支持 Illumina 测序仪标准 Sample Sheet (CSV) 格式。</p>
-                <div className="text-xs text-blue-600 font-mono bg-blue-100 p-2 rounded">必需字段: Sample_ID, index, index2</div>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">BGI/MGI</span>
-                  <span className="text-sm font-medium text-green-900">Barcode 表格式</span>
-                </div>
-                <p className="text-xs text-green-700 mb-2">支持 BGI/MGI 测序平台的 Barcode 配置表格式。</p>
-                <div className="text-xs text-green-600 font-mono bg-green-100 p-2 rounded">必需字段: SampleID, Barcode, Lane</div>
-              </div>
-            </div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-64">
                   <Input placeholder="搜索文件名或批次号..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftElement={<Search className="w-4 h-4" />} />
                 </div>
-                <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value as Platform | 'all')} className="h-8 px-3 py-0 text-sm border border-border-default rounded-md bg-canvas-default focus:outline-none focus:border-accent-emphasis focus:ring-1 focus:ring-accent-emphasis">
-                  <option value="all">全部平台</option>
-                  <option value="illumina">Illumina</option>
-                  <option value="bgi">BGI/MGI</option>
+                <select value={sequencerFilter} onChange={(e) => setSequencerFilter(e.target.value)} className="h-8 px-3 py-0 text-sm border border-border-default rounded-md bg-canvas-default focus:outline-none focus:border-accent-emphasis focus:ring-1 focus:ring-accent-emphasis">
+                  <option value="all">全部测序仪</option>
+                  {mockSequencers.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex items-center gap-2">
@@ -363,8 +373,8 @@ export default function LabPage() {
 
       {showUploadModal && (
         <UploadModal
-          selectedPlatform={selectedPlatform}
-          onPlatformChange={setSelectedPlatform}
+          selectedSequencerId={selectedSequencerId}
+          onSequencerChange={setSelectedSequencerId}
           onClose={() => setShowUploadModal(false)}
         />
       )}
@@ -376,8 +386,10 @@ function SampleSheetDetail({ sheet }: { sheet: SampleSheet }) {
   const [sampleSearch, setSampleSearch] = React.useState('');
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedRunId, setEditedRunId] = React.useState(sheet.runId);
-  const [editedPlatform, setEditedPlatform] = React.useState<Platform>(sheet.platform);
+  const [editedSequencerId, setEditedSequencerId] = React.useState(sheet.sequencerId);
   const [editedSamples, setEditedSamples] = React.useState<SampleIndex[]>(sheet.samples);
+
+  const sequencer = getSequencer(sheet.sequencerId);
 
   // 检测重复的 i5+i7 组合（同一 Lane 内）
   const duplicateIndexKeys = React.useMemo(() => {
@@ -408,13 +420,13 @@ function SampleSheetDetail({ sheet }: { sheet: SampleSheet }) {
 
   const handleSave = () => {
     // TODO: 保存修改到后端
-    console.log('Save:', { runId: editedRunId, platform: editedPlatform, samples: editedSamples });
+    console.log('Save:', { runId: editedRunId, sequencerId: editedSequencerId, samples: editedSamples });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditedRunId(sheet.runId);
-    setEditedPlatform(sheet.platform);
+    setEditedSequencerId(sheet.sequencerId);
     setEditedSamples(sheet.samples);
     setIsEditing(false);
   };
@@ -614,14 +626,15 @@ function SampleSheetDetail({ sheet }: { sheet: SampleSheet }) {
                 />
               </div>
               <div>
-                <label className="block text-xs text-fg-muted mb-1">测序平台</label>
+                <label className="block text-xs text-fg-muted mb-1">测序仪</label>
                 <select 
-                  value={editedPlatform} 
-                  onChange={(e) => setEditedPlatform(e.target.value as Platform)}
+                  value={editedSequencerId} 
+                  onChange={(e) => setEditedSequencerId(e.target.value)}
                   className="w-full h-8 px-3 text-sm border border-border-default rounded-md bg-canvas-default focus:outline-none focus:border-accent-emphasis focus:ring-1 focus:ring-accent-emphasis"
                 >
-                  <option value="illumina">Illumina</option>
-                  <option value="bgi">BGI/MGI</option>
+                  {mockSequencers.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} ({s.model})</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -646,8 +659,11 @@ function SampleSheetDetail({ sheet }: { sheet: SampleSheet }) {
               <div className="text-sm font-medium text-fg-default">{sheet.runId}</div>
             </div>
             <div>
-              <div className="text-xs text-fg-muted mb-1">测序平台</div>
-              <div className="text-sm font-medium text-fg-default">{platformLabels[sheet.platform]}</div>
+              <div className="text-xs text-fg-muted mb-1">测序仪</div>
+              <div className="text-sm font-medium text-fg-default flex items-center gap-1">
+                <Server className="w-3.5 h-3.5 text-fg-muted" />
+                {sequencer ? `${sequencer.name} (${sequencer.model})` : '-'}
+              </div>
             </div>
             <div>
               <div className="text-xs text-fg-muted mb-1">样本数量</div>
@@ -695,37 +711,42 @@ function SampleSheetDetail({ sheet }: { sheet: SampleSheet }) {
 }
 
 
-function UploadModal({ selectedPlatform, onPlatformChange, onClose }: { selectedPlatform: Platform; onPlatformChange: (p: Platform) => void; onClose: () => void }) {
+function UploadModal({ selectedSequencerId, onSequencerChange, onClose }: { selectedSequencerId: string; onSequencerChange: (id: string) => void; onClose: () => void }) {
+  const selectedSequencer = getSequencer(selectedSequencerId);
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-canvas-default rounded-lg shadow-lg w-full max-w-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md p-6">
         <h3 className="text-lg font-medium text-fg-default mb-4">上传上机表</h3>
         <div className="mb-4">
-          <label className="block text-sm text-fg-muted mb-2">选择测序平台</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => onPlatformChange('illumina')} className={`p-3 rounded-lg border-2 text-left transition-colors ${selectedPlatform === 'illumina' ? 'border-blue-500 bg-blue-50' : 'border-border hover:border-blue-300'}`}>
-              <div className="font-medium text-fg-default">Illumina</div>
-              <div className="text-xs text-fg-muted mt-1">NovaSeq, NextSeq, MiSeq 等</div>
-            </button>
-            <button type="button" onClick={() => onPlatformChange('bgi')} className={`p-3 rounded-lg border-2 text-left transition-colors ${selectedPlatform === 'bgi' ? 'border-green-500 bg-green-50' : 'border-border hover:border-green-300'}`}>
-              <div className="font-medium text-fg-default">BGI/MGI</div>
-              <div className="text-xs text-fg-muted mt-1">DNBSEQ-T7, G400 等</div>
-            </button>
-          </div>
+          <label className="block text-sm text-fg-muted mb-2">选择测序仪</label>
+          <select 
+            value={selectedSequencerId} 
+            onChange={(e) => onSequencerChange(e.target.value)}
+            className="w-full h-8 px-3 text-sm border border-border-default rounded-md bg-canvas-default focus:outline-none focus:border-accent-emphasis focus:ring-1 focus:ring-accent-emphasis"
+          >
+            {mockSequencers.map(s => (
+              <option key={s.id} value={s.id}>{s.name} ({s.model})</option>
+            ))}
+          </select>
         </div>
         <div className="mb-4">
           <label className="block text-sm text-fg-muted mb-2">上传文件</label>
           <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-accent-muted transition-colors cursor-pointer">
             <Upload className="w-8 h-8 mx-auto text-fg-muted mb-2" />
             <p className="text-sm text-fg-default">点击或拖拽文件到此处</p>
-            <p className="text-xs text-fg-muted mt-1">{selectedPlatform === 'illumina' ? '支持 .csv 格式的 Sample Sheet' : '支持 .csv 或 .txt 格式的 Barcode 表'}</p>
+            <p className="text-xs text-fg-muted mt-1">
+              {selectedSequencer?.platform === 'illumina' 
+                ? '支持 .csv 格式的 Sample Sheet' 
+                : '支持 .csv 或 .txt 格式的 Barcode 表'}
+            </p>
           </div>
         </div>
         <div className="mb-4 p-3 bg-canvas-subtle rounded-md">
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-fg-muted mt-0.5" />
             <div className="text-xs text-fg-muted">
-              {selectedPlatform === 'illumina' ? (
+              {selectedSequencer?.platform === 'illumina' ? (
                 <>
                   <p className="font-medium mb-1">Illumina Sample Sheet 格式要求：</p>
                   <ul className="list-disc list-inside space-y-0.5">
