@@ -12,24 +12,20 @@ import {
   ModalBody,
   ModalFooter,
   FormItem,
-  Select,
   TextArea,
   type Column,
 } from '@schema/ui-kit';
-import { Plus, Search, Pencil, Trash2, Copy, Eye, FileText, Upload, X, Link, TestTube2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileText, Link, TestTube2, CheckCircle, XCircle, Loader2, Eye, EyeOff, AlertTriangle, Power, PowerOff } from 'lucide-react';
 
-type TemplateType = 'wes' | 'wgs' | 'panel' | 'cnv';
 type TemplateStatus = 'active' | 'draft' | 'archived';
 
 interface ReportTemplate {
   id: string;
   name: string;
-  type: TemplateType;
   description: string;
-  version: string;
+  apiEndpoint: string;
+  apiToken?: string;
   status: TemplateStatus;
-  templateFile?: string;      // docx 文件名
-  apiEndpoint?: string;       // RESTful API 端点
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -38,88 +34,47 @@ interface ReportTemplate {
 const mockTemplates: ReportTemplate[] = [
   {
     id: 'TPL001',
-    name: '全外显子遗传病报告',
-    type: 'wes',
-    description: '适用于WES遗传病检测的标准报告模板',
-    version: 'v2.1',
-    status: 'active',
-    templateFile: 'wes_germline_report_v2.docx',
+    name: 'wes-germline-report',
+    description: '全外显子遗传病检测报告模板',
     apiEndpoint: 'https://api.example.com/reports/wes/generate',
+    apiToken: 'sk-xxxx****xxxx',
+    status: 'active',
     createdBy: '张三',
     createdAt: '2024-06-15',
     updatedAt: '2024-12-01',
   },
   {
     id: 'TPL002',
-    name: '心血管Panel报告',
-    type: 'panel',
-    description: '心血管疾病基因检测专用报告模板',
-    version: 'v1.3',
-    status: 'active',
-    templateFile: 'cardio_panel_report.docx',
+    name: 'cardio-panel-report',
+    description: '心血管疾病基因检测专用报告',
     apiEndpoint: 'https://api.example.com/reports/panel/cardio',
+    status: 'active',
     createdBy: '李四',
     createdAt: '2024-08-20',
     updatedAt: '2024-11-15',
   },
   {
     id: 'TPL003',
-    name: 'CNV检测报告',
-    type: 'cnv',
-    description: '拷贝数变异检测报告模板',
-    version: 'v1.0',
-    status: 'active',
-    templateFile: 'cnv_report_template.docx',
+    name: 'cnv-detection-report',
+    description: '拷贝数变异检测报告',
     apiEndpoint: 'https://api.example.com/reports/cnv/generate',
+    apiToken: 'token-yyyy****yyyy',
+    status: 'active',
     createdBy: '王五',
     createdAt: '2024-10-01',
     updatedAt: '2024-10-01',
   },
   {
     id: 'TPL004',
-    name: 'WGS全基因组报告',
-    type: 'wgs',
-    description: '全基因组测序报告模板（草稿）',
-    version: 'v0.1',
+    name: 'wgs-full-report',
+    description: '全基因组测序报告（开发中）',
+    apiEndpoint: 'https://api.example.com/reports/wgs',
     status: 'draft',
     createdBy: '张三',
     createdAt: '2024-12-10',
     updatedAt: '2024-12-10',
   },
-  {
-    id: 'TPL005',
-    name: '旧版WES报告',
-    type: 'wes',
-    description: '已归档的旧版报告模板',
-    version: 'v1.0',
-    status: 'archived',
-    templateFile: 'wes_report_legacy.docx',
-    apiEndpoint: 'https://api.example.com/reports/wes/legacy',
-    createdBy: '李四',
-    createdAt: '2023-01-01',
-    updatedAt: '2024-01-15',
-  },
 ];
-
-const typeOptions = [
-  { value: 'wes', label: 'WES (全外显子)' },
-  { value: 'wgs', label: 'WGS (全基因组)' },
-  { value: 'panel', label: 'Panel (基因包)' },
-  { value: 'cnv', label: 'CNV (拷贝数变异)' },
-];
-
-const statusOptions = [
-  { value: 'active', label: '启用' },
-  { value: 'draft', label: '草稿' },
-  { value: 'archived', label: '归档' },
-];
-
-const typeConfig: Record<TemplateType, { label: string; variant: 'info' | 'success' | 'warning' | 'neutral' }> = {
-  wes: { label: 'WES', variant: 'info' },
-  wgs: { label: 'WGS', variant: 'success' },
-  panel: { label: 'Panel', variant: 'warning' },
-  cnv: { label: 'CNV', variant: 'neutral' },
-};
 
 const statusConfig: Record<TemplateStatus, { label: string; variant: 'success' | 'warning' | 'neutral' }> = {
   active: { label: '启用', variant: 'success' },
@@ -129,22 +84,16 @@ const statusConfig: Record<TemplateStatus, { label: string; variant: 'success' |
 
 interface FormData {
   name: string;
-  type: TemplateType;
   description: string;
-  status: TemplateStatus;
-  templateFile: File | null;
-  templateFileName: string;
   apiEndpoint: string;
+  apiToken: string;
 }
 
 const initialFormData: FormData = {
   name: '',
-  type: 'wes',
   description: '',
-  status: 'draft',
-  templateFile: null,
-  templateFileName: '',
   apiEndpoint: '',
+  apiToken: '',
 };
 
 export default function ReportTemplatesPage() {
@@ -155,7 +104,9 @@ export default function ReportTemplatesPage() {
   const [formData, setFormData] = React.useState<FormData>(initialFormData);
   const [testingApi, setTestingApi] = React.useState(false);
   const [apiTestResult, setApiTestResult] = React.useState<'success' | 'error' | null>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [showToken, setShowToken] = React.useState(false);
+  const [nameError, setNameError] = React.useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<ReportTemplate | null>(null);
 
   const filteredTemplates = React.useMemo(() => {
     if (!searchQuery) return templates;
@@ -168,10 +119,30 @@ export default function ReportTemplatesPage() {
     );
   }, [templates, searchQuery]);
 
+  // 检查名称是否唯一
+  const validateName = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setNameError('请输入模板名称');
+      return false;
+    }
+    const exists = templates.some(
+      (t) => t.name.toLowerCase() === trimmed.toLowerCase() && t.id !== editingId
+    );
+    if (exists) {
+      setNameError('模板名称已存在');
+      return false;
+    }
+    setNameError(null);
+    return true;
+  };
+
   const handleAdd = () => {
     setEditingId(null);
     setFormData(initialFormData);
     setApiTestResult(null);
+    setShowToken(false);
+    setNameError(null);
     setIsModalOpen(true);
   };
 
@@ -179,89 +150,59 @@ export default function ReportTemplatesPage() {
     setEditingId(template.id);
     setFormData({
       name: template.name,
-      type: template.type,
       description: template.description,
-      status: template.status,
-      templateFile: null,
-      templateFileName: template.templateFile || '',
-      apiEndpoint: template.apiEndpoint || '',
+      apiEndpoint: template.apiEndpoint,
+      apiToken: template.apiToken || '',
     });
     setApiTestResult(null);
+    setShowToken(false);
+    setNameError(null);
     setIsModalOpen(true);
   };
 
-  const handleDuplicate = (template: ReportTemplate) => {
-    const newTemplate: ReportTemplate = {
-      ...template,
-      id: `TPL${String(templates.length + 1).padStart(3, '0')}`,
-      name: `${template.name} (副本)`,
-      version: 'v0.1',
-      status: 'draft',
-      createdAt: new Date().toISOString().slice(0, 10),
-      updatedAt: new Date().toISOString().slice(0, 10),
-    };
-    setTemplates((prev) => [newTemplate, ...prev]);
+  const handleDelete = (template: ReportTemplate) => {
+    setDeleteTarget(template);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('确定要删除此报告模板吗？')) {
-      setTemplates((prev) => prev.filter((t) => t.id !== id));
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      setTemplates((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+      setDeleteTarget(null);
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // 验证文件类型
-      if (!file.name.endsWith('.docx')) {
-        alert('请上传 .docx 格式的文件');
-        return;
-      }
-      setFormData((prev) => ({
-        ...prev,
-        templateFile: file,
-        templateFileName: file.name,
-      }));
-    }
-    // 重置 input
-    e.target.value = '';
-  };
-
-  const handleRemoveFile = () => {
-    setFormData((prev) => ({
-      ...prev,
-      templateFile: null,
-      templateFileName: '',
-    }));
+  const handleToggleStatus = (template: ReportTemplate) => {
+    const newStatus: TemplateStatus = template.status === 'active' ? 'archived' : 'active';
+    setTemplates((prev) =>
+      prev.map((t) =>
+        t.id === template.id
+          ? { ...t, status: newStatus, updatedAt: new Date().toISOString().slice(0, 10) }
+          : t
+      )
+    );
   };
 
   const handleTestApi = async () => {
     if (!formData.apiEndpoint) return;
-    
+
     setTestingApi(true);
     setApiTestResult(null);
-    
-    // 模拟 API 测试
+
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    // 简单验证 URL 格式
+
     try {
       new URL(formData.apiEndpoint);
       setApiTestResult(Math.random() > 0.2 ? 'success' : 'error');
     } catch {
       setApiTestResult('error');
     }
-    
+
     setTestingApi(false);
   };
 
   const handleSubmit = () => {
-    if (!formData.name) return;
-    // 新建时必须上传模板文件
-    if (!editingId && !formData.templateFile) {
-      alert('请上传报告模板文件');
-      return;
-    }
+    if (!validateName(formData.name)) return;
+    if (!formData.apiEndpoint) return;
 
     if (editingId) {
       setTemplates((prev) =>
@@ -269,12 +210,10 @@ export default function ReportTemplatesPage() {
           t.id === editingId
             ? {
                 ...t,
-                name: formData.name,
-                type: formData.type,
+                name: formData.name.trim(),
                 description: formData.description,
-                status: formData.status,
-                templateFile: formData.templateFileName || t.templateFile,
-                apiEndpoint: formData.apiEndpoint || t.apiEndpoint,
+                apiEndpoint: formData.apiEndpoint,
+                apiToken: formData.apiToken || undefined,
                 updatedAt: new Date().toISOString().slice(0, 10),
               }
             : t
@@ -283,13 +222,11 @@ export default function ReportTemplatesPage() {
     } else {
       const newTemplate: ReportTemplate = {
         id: `TPL${String(templates.length + 1).padStart(3, '0')}`,
-        name: formData.name,
-        type: formData.type,
+        name: formData.name.trim(),
         description: formData.description,
-        version: 'v0.1',
-        status: formData.status,
-        templateFile: formData.templateFileName,
         apiEndpoint: formData.apiEndpoint,
+        apiToken: formData.apiToken || undefined,
+        status: 'draft',
         createdBy: '当前用户',
         createdAt: new Date().toISOString().slice(0, 10),
         updatedAt: new Date().toISOString().slice(0, 10),
@@ -307,45 +244,28 @@ export default function ReportTemplatesPage() {
       accessor: (row) => (
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-fg-muted" />
-          <span className="font-medium text-fg-default">{row.name}</span>
+          <span className="font-medium font-mono text-fg-default">{row.name}</span>
         </div>
       ),
       width: 200,
     },
     {
-      id: 'type',
-      header: '类型',
-      accessor: (row) => {
-        const config = typeConfig[row.type];
-        return <Tag variant={config.variant}>{config.label}</Tag>;
-      },
-      width: 80,
-    },
-    {
-      id: 'version',
-      header: '版本',
-      accessor: 'version',
-      width: 70,
-    },
-    {
-      id: 'templateFile',
-      header: '模板文件',
+      id: 'description',
+      header: '描述',
       accessor: (row) => (
-        <span className="text-sm text-fg-muted font-mono">
-          {row.templateFile || '-'}
-        </span>
+        <span className="text-fg-muted text-sm">{row.description || '-'}</span>
       ),
-      width: 180,
+      width: 250,
     },
     {
       id: 'apiEndpoint',
       header: 'API 端点',
       accessor: (row) => (
-        <span className="text-sm text-fg-muted font-mono truncate block max-w-[200px]" title={row.apiEndpoint}>
-          {row.apiEndpoint || '-'}
+        <span className="text-sm text-fg-muted font-mono truncate block max-w-[250px]" title={row.apiEndpoint}>
+          {row.apiEndpoint}
         </span>
       ),
-      width: 200,
+      width: 260,
     },
     {
       id: 'status',
@@ -357,54 +277,48 @@ export default function ReportTemplatesPage() {
       width: 80,
     },
     {
+      id: 'updatedAt',
+      header: '更新时间',
+      accessor: 'updatedAt',
+      width: 100,
+    },
+    {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Button
-            variant="ghost"
-            size="small"
-            iconOnly
-            aria-label="预览"
-            onClick={() => console.log('Preview', row.id)}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
+            variant="secondary"
             size="small"
             iconOnly
             aria-label="编辑"
             onClick={() => handleEdit(row)}
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
+            leftIcon={<Pencil className="w-4 h-4" />}
+          />
           <Button
-            variant="ghost"
-            size="small"
-            iconOnly
-            aria-label="复制"
-            onClick={() => handleDuplicate(row)}
-          >
-            <Copy className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
+            variant="danger"
             size="small"
             iconOnly
             aria-label="删除"
-            onClick={() => handleDelete(row.id)}
+            onClick={() => handleDelete(row)}
             disabled={row.status === 'active'}
-          >
-            <Trash2 className="w-4 h-4 text-danger-fg" />
-          </Button>
+            leftIcon={<Trash2 className="w-4 h-4" />}
+          />
+          <Button
+            variant={row.status === 'active' ? 'secondary' : 'primary'}
+            size="small"
+            iconOnly
+            aria-label={row.status === 'active' ? '停用' : '启用'}
+            onClick={() => handleToggleStatus(row)}
+            leftIcon={row.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+          />
         </div>
       ),
-      width: 150,
+      width: 130,
     },
   ];
 
-  const isFormValid = formData.name && (editingId || formData.templateFile);
+  const isFormValid = formData.name.trim() && formData.apiEndpoint && !nameError;
 
   return (
     <PageContent>
@@ -437,23 +351,21 @@ export default function ReportTemplatesPage() {
         <ModalHeader>{editingId ? '编辑报告模板' : '新建报告模板'}</ModalHeader>
         <ModalBody>
           <div className="space-y-4">
-            <FormItem label="模板名称" required>
+            <FormItem
+              label="模板名称"
+              required
+              hint="唯一标识符，建议使用英文和连字符"
+              error={nameError || undefined}
+            >
               <Input
                 value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="输入模板名称"
-              />
-            </FormItem>
-
-            <FormItem label="模板类型" required>
-              <Select
-                value={formData.type}
-                onChange={(value) => {
-                  if (typeof value === 'string') {
-                    setFormData((prev) => ({ ...prev, type: value as TemplateType }));
-                  }
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, name: e.target.value }));
+                  if (nameError) validateName(e.target.value);
                 }}
-                options={typeOptions}
+                onBlur={() => validateName(formData.name)}
+                placeholder="如 wes-germline-report"
+                error={!!nameError}
               />
             </FormItem>
 
@@ -466,104 +378,72 @@ export default function ReportTemplatesPage() {
               />
             </FormItem>
 
-            {/* 模板文件上传 */}
-            <FormItem label="模板文件" required={!editingId} hint="上传 .docx 格式的报告模板文件">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".docx"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              {formData.templateFileName ? (
-                <div className="flex items-center gap-2 p-2 bg-canvas-subtle rounded-md border border-border-default">
-                  <FileText className="w-4 h-4 text-accent-fg" />
-                  <span className="flex-1 text-sm text-fg-default truncate">
-                    {formData.templateFileName}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleRemoveFile}
-                    className="p-1 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border-default rounded-md hover:border-accent-emphasis hover:bg-canvas-subtle transition-colors"
+            <FormItem label="API 端点" required hint="报告生成服务的 RESTful API 地址">
+              <div className="flex gap-2">
+                <Input
+                  value={formData.apiEndpoint}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, apiEndpoint: e.target.value }));
+                    setApiTestResult(null);
+                  }}
+                  placeholder="https://api.example.com/reports/generate"
+                  leftElement={<Link className="w-4 h-4" />}
+                  className="flex-1"
+                />
+                <Button
+                  variant="secondary"
+                  size="medium"
+                  onClick={handleTestApi}
+                  disabled={testingApi || !formData.apiEndpoint}
                 >
-                  <Upload className="w-5 h-5 text-fg-muted" />
-                  <span className="text-sm text-fg-muted">点击上传模板文件</span>
-                </button>
+                  {testingApi ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <TestTube2 className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              {apiTestResult && (
+                <div className={`flex items-center gap-1 text-sm mt-1 ${apiTestResult === 'success' ? 'text-success-fg' : 'text-danger-fg'}`}>
+                  {apiTestResult === 'success' ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>连接成功</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-4 h-4" />
+                      <span>连接失败</span>
+                    </>
+                  )}
+                </div>
               )}
             </FormItem>
 
-            {/* API 端点配置 */}
-            <FormItem label="报告生成 API" hint="配置生成报告的 RESTful API 端点">
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    value={formData.apiEndpoint}
-                    onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, apiEndpoint: e.target.value }));
-                      setApiTestResult(null);
-                    }}
-                    placeholder="https://api.example.com/reports/generate"
-                    leftElement={<Link className="w-4 h-4" />}
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="secondary"
-                    size="medium"
-                    onClick={handleTestApi}
-                    disabled={testingApi || !formData.apiEndpoint}
-                  >
-                    {testingApi ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <TestTube2 className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-                {apiTestResult && (
-                  <div className={`flex items-center gap-1 text-sm ${apiTestResult === 'success' ? 'text-success-fg' : 'text-danger-fg'}`}>
-                    {apiTestResult === 'success' ? (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        <span>API 连接成功</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-4 h-4" />
-                        <span>API 连接失败，请检查地址</span>
-                      </>
-                    )}
-                  </div>
-                )}
+            <FormItem label="API Token" hint="访问令牌，不加密传输时可留空">
+              <div className="relative">
+                <Input
+                  type={showToken ? 'text' : 'password'}
+                  value={formData.apiToken}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, apiToken: e.target.value }))}
+                  placeholder="可选，用于 API 认证"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowToken(!showToken)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg-default"
+                >
+                  {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </FormItem>
 
-            <FormItem label="状态">
-              <Select
-                value={formData.status}
-                onChange={(value) => {
-                  if (typeof value === 'string') {
-                    setFormData((prev) => ({ ...prev, status: value as TemplateStatus }));
-                  }
-                }}
-                options={statusOptions}
-              />
-            </FormItem>
-
             <div className="bg-canvas-subtle rounded-md p-3 text-xs text-fg-muted">
-              <p className="font-medium text-fg-default mb-1">提示</p>
+              <p className="font-medium text-fg-default mb-1">说明</p>
               <ul className="list-disc list-inside space-y-1">
-                <li>模板文件使用 .docx 格式，支持变量占位符</li>
-                <li>API 端点用于调用后端服务生成报告</li>
-                <li>启用前请确保模板文件和 API 配置正确</li>
+                <li>模板名称必须唯一，用于系统内部标识</li>
+                <li>API 端点需要实现报告生成接口规范</li>
+                <li>新建模板默认为草稿状态，测试通过后可启用</li>
               </ul>
             </div>
           </div>
@@ -574,6 +454,33 @@ export default function ReportTemplatesPage() {
           </Button>
           <Button variant="primary" onClick={handleSubmit} disabled={!isFormValid}>
             {editingId ? '保存' : '创建'}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* 删除确认弹窗 */}
+      <Modal open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)} size="small">
+        <ModalHeader>删除确认</ModalHeader>
+        <ModalBody>
+          <div className="flex flex-col items-center text-center py-4">
+            <div className="w-12 h-12 rounded-full bg-danger-subtle flex items-center justify-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-danger-fg" />
+            </div>
+            <p className="text-fg-default mb-2">确定要删除此报告模板吗？</p>
+            {deleteTarget && (
+              <p className="text-sm text-fg-muted font-mono bg-canvas-subtle px-2 py-1 rounded">
+                {deleteTarget.name}
+              </p>
+            )}
+            <p className="text-xs text-fg-muted mt-3">此操作不可撤销</p>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+            取消
+          </Button>
+          <Button variant="danger" onClick={confirmDelete}>
+            确认删除
           </Button>
         </ModalFooter>
       </Modal>
