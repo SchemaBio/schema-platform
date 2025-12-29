@@ -152,6 +152,12 @@ export function SNVIndelTab({
       sortable: true,
     },
     {
+      id: 'transcript',
+      header: '转录本',
+      accessor: 'transcript',
+      width: 130,
+    },
+    {
       id: 'hgvsc',
       header: 'cDNA变化',
       accessor: 'hgvsc',

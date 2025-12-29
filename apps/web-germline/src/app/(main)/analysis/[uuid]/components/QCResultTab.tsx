@@ -92,7 +92,7 @@ export function getMetricStatus(value: number, thresholds: QCMetricConfig['thres
 // 状态颜色映射
 const statusColors: Record<QCStatus, { bg: string; text: string; border: string }> = {
   success: { bg: 'bg-success-subtle', text: 'text-success-fg', border: 'border-success-emphasis' },
-  warning: { bg: 'bg-attention-subtle', text: 'text-attention-fg', border: 'border-attention-emphasis' },
+  warning: { bg: 'bg-warning-subtle', text: 'text-warning-fg', border: 'border-warning-emphasis' },
   danger: { bg: 'bg-danger-subtle', text: 'text-danger-fg', border: 'border-danger-emphasis' },
 };
 
@@ -157,7 +157,7 @@ export function QCResultTab({ taskId }: QCResultTabProps) {
           <span>达标</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-attention-emphasis" />
+          <div className="w-3 h-3 rounded bg-warning-emphasis" />
           <span>警告</span>
         </div>
         <div className="flex items-center gap-2">

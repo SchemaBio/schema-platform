@@ -240,6 +240,7 @@ const mockCNVExons: CNVExon[] = [
   {
     id: 'cnv-exon-001',
     gene: 'BRCA1',
+    transcript: 'NM_007294.4',
     exon: 'Exon 11-13',
     chromosome: 'chr17',
     startPosition: 43091434,
@@ -252,6 +253,7 @@ const mockCNVExons: CNVExon[] = [
   {
     id: 'cnv-exon-002',
     gene: 'EGFR',
+    transcript: 'NM_005228.5',
     exon: 'Exon 18-21',
     chromosome: 'chr7',
     startPosition: 55211070,
@@ -264,6 +266,7 @@ const mockCNVExons: CNVExon[] = [
   {
     id: 'cnv-exon-003',
     gene: 'DMD',
+    transcript: 'NM_004006.3',
     exon: 'Exon 45-50',
     chromosome: 'chrX',
     startPosition: 31792164,
@@ -276,6 +279,7 @@ const mockCNVExons: CNVExon[] = [
   {
     id: 'cnv-exon-004',
     gene: 'SMN1',
+    transcript: 'NM_000344.4',
     exon: 'Exon 7',
     chromosome: 'chr5',
     startPosition: 70924941,
@@ -292,6 +296,7 @@ const mockSTRs: STR[] = [
   {
     id: 'str-001',
     gene: 'FMR1',
+    transcript: 'NM_002024.6',
     locus: 'Xq27.3',
     repeatUnit: 'CGG',
     repeatCount: 35,
@@ -302,6 +307,7 @@ const mockSTRs: STR[] = [
   {
     id: 'str-002',
     gene: 'HTT',
+    transcript: 'NM_002111.8',
     locus: '4p16.3',
     repeatUnit: 'CAG',
     repeatCount: 42,
@@ -312,6 +318,7 @@ const mockSTRs: STR[] = [
   {
     id: 'str-003',
     gene: 'DMPK',
+    transcript: 'NM_001081563.2',
     locus: '19q13.32',
     repeatUnit: 'CTG',
     repeatCount: 65,
@@ -322,6 +329,7 @@ const mockSTRs: STR[] = [
   {
     id: 'str-004',
     gene: 'ATXN1',
+    transcript: 'NM_000332.4',
     locus: '6p22.3',
     repeatUnit: 'CAG',
     repeatCount: 28,

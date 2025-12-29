@@ -102,6 +102,7 @@ export interface CNVSegment {
 export interface CNVExon {
   id: string;
   gene: string;
+  transcript: string;            // 转录本
   exon: string;
   chromosome: string;
   startPosition: number;
@@ -118,6 +119,7 @@ export type STRStatus = 'Normal' | 'Premutation' | 'FullMutation';
 export interface STR {
   id: string;
   gene: string;
+  transcript: string;            // 转录本
   locus: string;                 // 位点名称
   repeatUnit: string;            // 重复单元
   repeatCount: number;           // 重复次数

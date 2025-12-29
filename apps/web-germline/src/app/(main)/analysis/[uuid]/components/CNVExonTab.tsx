@@ -90,6 +90,12 @@ export function CNVExonTab({
       sortable: true,
     },
     {
+      id: 'transcript',
+      header: '转录本',
+      accessor: 'transcript',
+      width: 130,
+    },
+    {
       id: 'exon',
       header: '外显子',
       accessor: 'exon',
