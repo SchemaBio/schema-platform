@@ -113,8 +113,8 @@ export function CNVDetailPanel({ variant, variantType, isOpen, onClose }: CNVDet
               </>
             )}
             <InfoItem label="染色体" value={variant.chromosome} />
-            <InfoItem label="起始位置" value={variant.startPosition.toLocaleString()} />
-            <InfoItem label="终止位置" value={variant.endPosition.toLocaleString()} />
+            <InfoItem label="起始位置" value={variant.startPosition} />
+            <InfoItem label="终止位置" value={variant.endPosition} />
             {!isExon && (
               <InfoItem label="长度" value={formatLength((variant as CNVSegment).length)} />
             )}

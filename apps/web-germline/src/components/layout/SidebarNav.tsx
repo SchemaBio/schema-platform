@@ -63,9 +63,10 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
       `}>
         {collapsed ? (
           <Tooltip content="展开侧边栏" placement="right" variant="nav">
-            <div 
+            <button 
               className="flex items-center min-w-0 cursor-pointer"
               onClick={() => onCollapsedChange(false)}
+              type="button"
             >
               <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 overflow-hidden">
                 <Image
@@ -76,7 +77,7 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
                   className="object-contain"
                 />
               </div>
-            </div>
+            </button>
           </Tooltip>
         ) : (
           <div className="flex items-center min-w-0">

@@ -114,10 +114,16 @@ export function AppShell({ children }: AppShellProps) {
   const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1279px)');
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-  // Auto-collapse sidebar on tablet
+  // Auto-collapse sidebar on tablet (only on initial detection)
+  const hasAutoCollapsed = React.useRef(false);
   React.useEffect(() => {
-    if (isTablet && !collapsed) {
+    if (isTablet && !collapsed && !hasAutoCollapsed.current) {
       setCollapsed(true);
+      hasAutoCollapsed.current = true;
+    }
+    // Reset when leaving tablet mode
+    if (!isTablet) {
+      hasAutoCollapsed.current = false;
     }
   }, [isTablet, collapsed, setCollapsed]);
 

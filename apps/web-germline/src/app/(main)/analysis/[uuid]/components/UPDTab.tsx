@@ -161,14 +161,14 @@ export function UPDTab({
     {
       id: 'startPosition',
       header: '起始位置',
-      accessor: (row) => row.startPosition.toLocaleString(),
+      accessor: (row) => row.startPosition,
       width: 120,
       sortable: true,
     },
     {
       id: 'endPosition',
       header: '终止位置',
-      accessor: (row) => row.endPosition.toLocaleString(),
+      accessor: (row) => row.endPosition,
       width: 120,
     },
     {

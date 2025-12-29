@@ -356,7 +356,7 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
                   onClick={() => onOpenIGV?.(variant.chromosome, variant.position)}
                   className="text-accent-fg hover:underline"
                 >
-                  {variant.chromosome}:{variant.position.toLocaleString()}
+                  {variant.chromosome}:{variant.position}
                 </button>
               }
             />

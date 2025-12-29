@@ -205,7 +205,7 @@ interface PositionLinkProps {
 }
 
 export function PositionLink({ chromosome, position, label, onClick }: PositionLinkProps) {
-  const displayLabel = label ?? `${chromosome}:${position.toLocaleString()}`;
+  const displayLabel = label ?? `${chromosome}:${position}`;
   
   return (
     <button
