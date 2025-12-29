@@ -1,0 +1,32 @@
+{
+  "name": "@schema/web-somatic",
+  "version": "0.1.0",
+  "private": true,
+  "description": "肿瘤泛癌专用基因组分析系统",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-popover": "^1.0.7",
+    "@schema/ui-kit": "workspace:*",
+    "igv": "^2.15.11",
+    "lucide-react": "^0.344.0",
+    "mammoth": "^1.8.0",
+    "next": "14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.0"
+  }
+}

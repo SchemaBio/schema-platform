@@ -1,0 +1,69 @@
+'use client';
+
+import * as React from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { TabType, TableFilterState } from '../types';
+import { DEFAULT_FILTER_STATE } from '../types';
+
+interface TabStates {
+  'snv-indel': TableFilterState;
+  'hotspot': TableFilterState;
+  'cnv-gene': TableFilterState;
+  'cnv-exon': TableFilterState;
+  'cnv-chrom': TableFilterState;
+  'fusion': TableFilterState;
+  'neoantigen': TableFilterState;
+}
+
+interface UseTabStateReturn {
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+  getFilterState: (tab: keyof TabStates) => TableFilterState;
+  setFilterState: (tab: keyof TabStates, state: TableFilterState) => void;
+}
+
+export function useTabState(uuid: string): UseTabStateReturn {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 从URL获取当前标签页
+  const activeTab = (searchParams.get('tab') as TabType) || 'sample-info';
+
+  // 各标签页的筛选状态（保存在内存中）
+  const [tabStates, setTabStates] = React.useState<TabStates>({
+    'snv-indel': { ...DEFAULT_FILTER_STATE },
+    'hotspot': { ...DEFAULT_FILTER_STATE },
+    'cnv-gene': { ...DEFAULT_FILTER_STATE },
+    'cnv-exon': { ...DEFAULT_FILTER_STATE },
+    'cnv-chrom': { ...DEFAULT_FILTER_STATE },
+    'fusion': { ...DEFAULT_FILTER_STATE },
+    'neoantigen': { ...DEFAULT_FILTER_STATE },
+  });
+
+  // 切换标签页
+  const setActiveTab = React.useCallback((tab: TabType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.push(`/analysis/${uuid}?${params.toString()}`);
+  }, [router, uuid, searchParams]);
+
+  // 获取指定标签页的筛选状态
+  const getFilterState = React.useCallback((tab: keyof TabStates): TableFilterState => {
+    return tabStates[tab];
+  }, [tabStates]);
+
+  // 设置指定标签页的筛选状态
+  const setFilterState = React.useCallback((tab: keyof TabStates, state: TableFilterState) => {
+    setTabStates(prev => ({
+      ...prev,
+      [tab]: state,
+    }));
+  }, []);
+
+  return {
+    activeTab,
+    setActiveTab,
+    getFilterState,
+    setFilterState,
+  };
+}
