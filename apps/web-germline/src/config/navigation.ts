@@ -81,8 +81,6 @@ export const sidebarNavConfig: SidebarNavConfig = {
   // 样本管理 - 实验员操作
   samples: [
     { label: '样本列表', href: '/samples', icon: List },
-    { label: '新建样本', href: '/samples/new', icon: Plus },
-    { label: '批量导入', href: '/samples/import', icon: Upload },
     { label: '家系管理', href: '/samples/pedigree', icon: GitBranch },
   ],
   // 实验中心 - 实验员操作
