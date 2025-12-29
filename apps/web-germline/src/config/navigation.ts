@@ -93,8 +93,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '流程列表', href: '/pipeline', icon: List },
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
     { label: '数据库管理', href: '/pipeline/database', icon: Server },
-    { label: '基线文件', href: '/pipeline/baseline', icon: TrendingUp },
-    { label: '流程配置', href: '/pipeline/config', icon: Settings },
+    { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
   ],
   // 分析中心 - 解读工程师操作
   analysis: [

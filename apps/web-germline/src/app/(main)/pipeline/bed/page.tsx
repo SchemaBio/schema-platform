@@ -84,14 +84,10 @@ export default function BedFilesPage() {
     {
       id: 'actions',
       header: '操作',
-      accessor: (row) => (
+      accessor: () => (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="small" iconOnly aria-label="下载">
-            <Download className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="small" iconOnly aria-label="删除">
-            <Trash2 className="w-4 h-4 text-danger-fg" />
-          </Button>
+          <Button variant="ghost" size="small" iconOnly aria-label="下载" leftIcon={<Download className="w-4 h-4" />} />
+          <Button variant="ghost" size="small" iconOnly aria-label="删除" leftIcon={<Trash2 className="w-4 h-4 text-danger-fg" />} />
         </div>
       ),
       width: 100,
