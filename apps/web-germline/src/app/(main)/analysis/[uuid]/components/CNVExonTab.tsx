@@ -8,6 +8,7 @@ import type { CNVExon, TableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getCNVExons, getGeneLists, type GeneListOption } from '../mock-data';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
+import { CNVDetailPanel } from './CNVDetailPanel';
 
 interface CNVExonTabProps {
   taskId: string;
@@ -26,8 +27,23 @@ export function CNVExonTab({
   const [geneLists, setGeneLists] = React.useState<GeneListOption[]>([]);
   const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
 
+  // 详情面板状态
+  const [selectedVariant, setSelectedVariant] = React.useState<CNVExon | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
+
+  // 点击行打开详情面板
+  const handleRowClick = React.useCallback((variant: CNVExon) => {
+    setSelectedVariant(variant);
+    setDetailPanelOpen(true);
+  }, []);
+
+  // 关闭详情面板
+  const handleCloseDetailPanel = React.useCallback(() => {
+    setDetailPanelOpen(false);
+  }, []);
 
   // 加载基因列表
   React.useEffect(() => {
@@ -289,6 +305,7 @@ export function CNVExonTab({
             sortColumn={filterState.sortColumn}
             sortDirection={filterState.sortDirection}
             onSortChange={handleSortChange}
+            onRowClick={handleRowClick}
           />
 
           {totalPages > 1 && (
@@ -320,6 +337,14 @@ export function CNVExonTab({
           暂无外显子CNV变异数据
         </div>
       )}
+
+      {/* CNV 详情面板 */}
+      <CNVDetailPanel
+        variant={selectedVariant}
+        variantType="exon"
+        isOpen={detailPanelOpen}
+        onClose={handleCloseDetailPanel}
+      />
     </div>
   );
 }

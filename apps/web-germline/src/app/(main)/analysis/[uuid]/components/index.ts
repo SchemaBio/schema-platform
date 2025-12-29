@@ -10,4 +10,6 @@ export { MTTab } from './MTTab';
 export { UPDTab } from './UPDTab';
 export { IGVViewer, PositionLink } from './IGVViewer';
 export { VariantDetailPanel } from './VariantDetailPanel';
+export { CNVDetailPanel } from './CNVDetailPanel';
+export { MTDetailPanel } from './MTDetailPanel';
 export { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';

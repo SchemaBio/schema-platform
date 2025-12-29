@@ -9,6 +9,7 @@ import { DEFAULT_FILTER_STATE } from '../types';
 import { getMitochondrialVariants } from '../mock-data';
 import { IGVViewer, PositionLink } from './IGVViewer';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
+import { MTDetailPanel } from './MTDetailPanel';
 
 interface MTTabProps {
   taskId: string;
@@ -42,8 +43,23 @@ export function MTTab({
     position: number;
   }>({ isOpen: false, chromosome: '', position: 0 });
 
+  // 详情面板状态
+  const [selectedVariant, setSelectedVariant] = React.useState<MitochondrialVariant | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
+
+  // 点击行打开详情面板
+  const handleRowClick = React.useCallback((variant: MitochondrialVariant) => {
+    setSelectedVariant(variant);
+    setDetailPanelOpen(true);
+  }, []);
+
+  // 关闭详情面板
+  const handleCloseDetailPanel = React.useCallback(() => {
+    setDetailPanelOpen(false);
+  }, []);
 
   // 打开 IGV 查看器
   const handleOpenIGV = React.useCallback((chromosome: string, position: number) => {
@@ -254,6 +270,7 @@ export function MTTab({
             sortColumn={filterState.sortColumn}
             sortDirection={filterState.sortDirection}
             onSortChange={handleSortChange}
+            onRowClick={handleRowClick}
           />
 
           {totalPages > 1 && (
@@ -292,6 +309,14 @@ export function MTTab({
         position={igvState.position}
         isOpen={igvState.isOpen}
         onClose={handleCloseIGV}
+      />
+
+      {/* 线粒体变异详情面板 */}
+      <MTDetailPanel
+        variant={selectedVariant}
+        isOpen={detailPanelOpen}
+        onClose={handleCloseDetailPanel}
+        onOpenIGV={handleOpenIGV}
       />
     </div>
   );
