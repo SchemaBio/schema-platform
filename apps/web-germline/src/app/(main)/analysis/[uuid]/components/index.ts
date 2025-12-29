@@ -9,3 +9,4 @@ export { STRTab } from './STRTab';
 export { MTTab } from './MTTab';
 export { UPDTab } from './UPDTab';
 export { IGVViewer, PositionLink } from './IGVViewer';
+export { VariantDetailPanel } from './VariantDetailPanel';

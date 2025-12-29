@@ -8,6 +8,7 @@ import type { SNVIndel, TableFilterState, PaginatedResult, ACMGClassification } 
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getSNVIndels, ACMG_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
 import { IGVViewer, PositionLink } from './IGVViewer';
+import { VariantDetailPanel } from './VariantDetailPanel';
 
 interface SNVIndelTabProps {
   taskId: string;
@@ -32,6 +33,10 @@ export function SNVIndelTab({
     position: number;
   }>({ isOpen: false, chromosome: '', position: 0 });
 
+  // 详情面板状态
+  const [selectedVariant, setSelectedVariant] = React.useState<SNVIndel | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
 
@@ -43,6 +48,17 @@ export function SNVIndelTab({
   // 关闭 IGV 查看器
   const handleCloseIGV = React.useCallback(() => {
     setIgvState(prev => ({ ...prev, isOpen: false }));
+  }, []);
+
+  // 点击行打开详情面板
+  const handleRowClick = React.useCallback((variant: SNVIndel) => {
+    setSelectedVariant(variant);
+    setDetailPanelOpen(true);
+  }, []);
+
+  // 关闭详情面板
+  const handleCloseDetailPanel = React.useCallback(() => {
+    setDetailPanelOpen(false);
   }, []);
 
   // 加载基因列表
@@ -270,6 +286,7 @@ export function SNVIndelTab({
             sortColumn={filterState.sortColumn}
             sortDirection={filterState.sortDirection}
             onSortChange={handleSortChange}
+            onRowClick={handleRowClick}
           />
 
           {/* 分页 */}
@@ -309,6 +326,14 @@ export function SNVIndelTab({
         position={igvState.position}
         isOpen={igvState.isOpen}
         onClose={handleCloseIGV}
+      />
+
+      {/* 变异详情面板 */}
+      <VariantDetailPanel
+        variant={selectedVariant}
+        isOpen={detailPanelOpen}
+        onClose={handleCloseDetailPanel}
+        onOpenIGV={handleOpenIGV}
       />
     </div>
   );
