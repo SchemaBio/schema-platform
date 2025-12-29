@@ -203,12 +203,12 @@ export interface TabConfig {
 export const TAB_CONFIGS: TabConfig[] = [
   { id: 'sample-info', label: '样本信息' },
   { id: 'qc', label: '质控结果' },
-  { id: 'snv-indel', label: 'SNV/Indel检出表' },
-  { id: 'cnv-segment', label: 'CNV检出表(片段)' },
-  { id: 'cnv-exon', label: 'CNV检出表(外显子)' },
-  { id: 'str', label: '动态突变检出表' },
-  { id: 'mt', label: '线粒体检出表' },
-  { id: 'upd', label: 'UPD检出表' },
+  { id: 'snv-indel', label: 'SNV/InDel' },
+  { id: 'cnv-segment', label: 'CNV(Region)' },
+  { id: 'cnv-exon', label: 'CNV(Exon)' },
+  { id: 'str', label: '动态突变' },
+  { id: 'mt', label: '线粒体' },
+  { id: 'upd', label: 'UPD' },
 ];
 
 // ============ 表格筛选状态 ============
