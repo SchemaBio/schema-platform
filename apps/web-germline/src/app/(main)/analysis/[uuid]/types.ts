@@ -188,6 +188,7 @@ export interface TableFilterState {
   sortDirection?: 'asc' | 'desc';
   page: number;
   pageSize: number;
+  geneListId?: string;  // 基因列表过滤
 }
 
 export const DEFAULT_FILTER_STATE: TableFilterState = {
@@ -195,6 +196,7 @@ export const DEFAULT_FILTER_STATE: TableFilterState = {
   filters: {},
   page: 1,
   pageSize: 20,
+  geneListId: undefined,
 };
 
 // ============ 分页结果 ============

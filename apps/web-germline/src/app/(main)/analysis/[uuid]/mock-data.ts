@@ -480,8 +480,19 @@ export async function getSNVIndels(
   filterState: TableFilterState
 ): Promise<PaginatedResult<SNVIndel>> {
   await new Promise(resolve => setTimeout(resolve, 150));
+  
+  let data = [...mockSNVIndels];
+  
+  // 基因列表过滤
+  if (filterState.geneListId) {
+    const geneList = getGeneListById(filterState.geneListId);
+    if (geneList) {
+      data = data.filter(item => geneList.genes.includes(item.gene));
+    }
+  }
+  
   return applyFilterAndPagination(
-    mockSNVIndels,
+    data,
     filterState,
     ['gene', 'chromosome', 'hgvsc', 'hgvsp'],
     ['gene', 'chromosome', 'position', 'alleleFrequency', 'depth', 'acmgClassification']
@@ -498,8 +509,21 @@ export async function getCNVSegments(
   filterState: TableFilterState
 ): Promise<PaginatedResult<CNVSegment>> {
   await new Promise(resolve => setTimeout(resolve, 150));
+  
+  let data = [...mockCNVSegments];
+  
+  // 基因列表过滤（涉及基因中任一匹配）
+  if (filterState.geneListId) {
+    const geneList = getGeneListById(filterState.geneListId);
+    if (geneList) {
+      data = data.filter(item => 
+        item.genes.some(gene => geneList.genes.includes(gene))
+      );
+    }
+  }
+  
   return applyFilterAndPagination(
-    mockCNVSegments,
+    data,
     filterState,
     ['chromosome'],
     ['chromosome', 'startPosition', 'length', 'type', 'copyNumber', 'confidence']
@@ -511,8 +535,19 @@ export async function getCNVExons(
   filterState: TableFilterState
 ): Promise<PaginatedResult<CNVExon>> {
   await new Promise(resolve => setTimeout(resolve, 150));
+  
+  let data = [...mockCNVExons];
+  
+  // 基因列表过滤（单基因匹配）
+  if (filterState.geneListId) {
+    const geneList = getGeneListById(filterState.geneListId);
+    if (geneList) {
+      data = data.filter(item => geneList.genes.includes(item.gene));
+    }
+  }
+  
   return applyFilterAndPagination(
-    mockCNVExons,
+    data,
     filterState,
     ['gene', 'exon', 'chromosome'],
     ['gene', 'chromosome', 'startPosition', 'type', 'copyNumber', 'ratio', 'confidence']
@@ -524,8 +559,19 @@ export async function getSTRs(
   filterState: TableFilterState
 ): Promise<PaginatedResult<STR>> {
   await new Promise(resolve => setTimeout(resolve, 150));
+  
+  let data = [...mockSTRs];
+  
+  // 基因列表过滤（单基因匹配）
+  if (filterState.geneListId) {
+    const geneList = getGeneListById(filterState.geneListId);
+    if (geneList) {
+      data = data.filter(item => geneList.genes.includes(item.gene));
+    }
+  }
+  
   return applyFilterAndPagination(
-    mockSTRs,
+    data,
     filterState,
     ['gene', 'locus'],
     ['gene', 'locus', 'repeatCount', 'status']
@@ -550,8 +596,21 @@ export async function getUPDRegions(
   filterState: TableFilterState
 ): Promise<PaginatedResult<UPDRegion>> {
   await new Promise(resolve => setTimeout(resolve, 150));
+  
+  let data = [...mockUPDRegions];
+  
+  // 基因列表过滤（涉及基因中任一匹配）
+  if (filterState.geneListId) {
+    const geneList = getGeneListById(filterState.geneListId);
+    if (geneList) {
+      data = data.filter(item => 
+        item.genes.some(gene => geneList.genes.includes(gene))
+      );
+    }
+  }
+  
   return applyFilterAndPagination(
-    mockUPDRegions,
+    data,
     filterState,
     ['chromosome'],
     ['chromosome', 'startPosition', 'length', 'type']
@@ -566,3 +625,53 @@ export const ACMG_CONFIG: Record<ACMGClassification, { label: string; variant: '
   Likely_Benign: { label: '可能良性', variant: 'info' },
   Benign: { label: '良性', variant: 'success' },
 };
+
+// ============ 基因列表数据 ============
+export interface GeneListOption {
+  id: string;
+  name: string;
+  geneCount: number;
+  genes: string[];
+}
+
+const mockGeneLists: GeneListOption[] = [
+  {
+    id: 'gl-001',
+    name: '心血管疾病基因Panel',
+    geneCount: 156,
+    genes: ['BRCA1', 'TP53', 'MLH1', 'LDLR', 'MYH7', 'MYBPC3', 'TNNT2', 'LMNA'],
+  },
+  {
+    id: 'gl-002',
+    name: '遗传性肿瘤基因Panel',
+    geneCount: 89,
+    genes: ['BRCA1', 'BRCA2', 'TP53', 'MLH1', 'MSH2', 'APC', 'PTEN'],
+  },
+  {
+    id: 'gl-003',
+    name: '肥厚型心肌病',
+    geneCount: 23,
+    genes: ['MYH7', 'MYBPC3', 'TNNT2', 'TNNI3', 'TPM1', 'MYL2', 'MYL3', 'ACTC1'],
+  },
+  {
+    id: 'gl-004',
+    name: '扩张型心肌病',
+    geneCount: 45,
+    genes: ['LMNA', 'TTN', 'MYH7', 'TNNT2', 'SCN5A', 'PLN', 'RBM20', 'BAG3'],
+  },
+  {
+    id: 'gl-005',
+    name: '囊性纤维化',
+    geneCount: 1,
+    genes: ['CFTR'],
+  },
+];
+
+export async function getGeneLists(): Promise<GeneListOption[]> {
+  await new Promise(resolve => setTimeout(resolve, 50));
+  return mockGeneLists;
+}
+
+export function getGeneListById(id: string): GeneListOption | undefined {
+  return mockGeneLists.find(list => list.id === id);
+}
