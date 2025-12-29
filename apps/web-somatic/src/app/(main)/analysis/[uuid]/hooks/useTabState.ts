@@ -8,6 +8,8 @@ import { DEFAULT_FILTER_STATE } from '../types';
 interface TabStates {
   'snv-indel': TableFilterState;
   'hotspot': TableFilterState;
+  'chemotherapy': TableFilterState;
+  'germline': TableFilterState;
   'cnv-gene': TableFilterState;
   'cnv-exon': TableFilterState;
   'cnv-chrom': TableFilterState;
@@ -33,6 +35,8 @@ export function useTabState(uuid: string): UseTabStateReturn {
   const [tabStates, setTabStates] = React.useState<TabStates>({
     'snv-indel': { ...DEFAULT_FILTER_STATE },
     'hotspot': { ...DEFAULT_FILTER_STATE },
+    'chemotherapy': { ...DEFAULT_FILTER_STATE },
+    'germline': { ...DEFAULT_FILTER_STATE },
     'cnv-gene': { ...DEFAULT_FILTER_STATE },
     'cnv-exon': { ...DEFAULT_FILTER_STATE },
     'cnv-chrom': { ...DEFAULT_FILTER_STATE },

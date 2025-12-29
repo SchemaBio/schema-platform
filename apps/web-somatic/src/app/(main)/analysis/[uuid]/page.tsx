@@ -13,6 +13,8 @@ import {
   QCResultTab,
   SNVIndelTab,
   HotspotTab,
+  ChemotherapyTab,
+  GermlineTab,
   CNVGeneTab,
   CNVExonTab,
   CNVChromTab,
@@ -108,6 +110,22 @@ export default function AnalysisDetailPage() {
             taskId={uuid}
             filterState={getFilterState('hotspot')}
             onFilterChange={(state) => setFilterState('hotspot', state)}
+          />
+        );
+      case 'chemotherapy':
+        return (
+          <ChemotherapyTab
+            taskId={uuid}
+            filterState={getFilterState('chemotherapy')}
+            onFilterChange={(state) => setFilterState('chemotherapy', state)}
+          />
+        );
+      case 'germline':
+        return (
+          <GermlineTab
+            taskId={uuid}
+            filterState={getFilterState('germline')}
+            onFilterChange={(state) => setFilterState('germline', state)}
           />
         );
       case 'cnv-gene':

@@ -4,6 +4,8 @@ export { QCResultTab } from './QCResultTab';
 export { SampleInfoTab } from './SampleInfoTab';
 export { SNVIndelTab } from './SNVIndelTab';
 export { HotspotTab } from './HotspotTab';
+export { ChemotherapyTab } from './ChemotherapyTab';
+export { GermlineTab } from './GermlineTab';
 export { CNVGeneTab } from './CNVGeneTab';
 export { CNVExonTab } from './CNVExonTab';
 export { CNVChromTab } from './CNVChromTab';

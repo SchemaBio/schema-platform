@@ -9,6 +9,8 @@ import {
   QCResultTab,
   SNVIndelTab,
   HotspotTab,
+  ChemotherapyTab,
+  GermlineTab,
   CNVGeneTab,
   CNVExonTab,
   CNVChromTab,
@@ -40,6 +42,8 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   const [tabStates, setTabStates] = React.useState({
     'snv-indel': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'hotspot': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
+    'chemotherapy': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
+    'germline': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'cnv-gene': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'cnv-exon': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'cnv-chrom': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
@@ -101,6 +105,22 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             taskId={taskId}
             filterState={getFilterState('hotspot')}
             onFilterChange={(state) => setFilterState('hotspot', state)}
+          />
+        );
+      case 'chemotherapy':
+        return (
+          <ChemotherapyTab
+            taskId={taskId}
+            filterState={getFilterState('chemotherapy')}
+            onFilterChange={(state) => setFilterState('chemotherapy', state)}
+          />
+        );
+      case 'germline':
+        return (
+          <GermlineTab
+            taskId={taskId}
+            filterState={getFilterState('germline')}
+            onFilterChange={(state) => setFilterState('germline', state)}
           />
         );
       case 'cnv-gene':

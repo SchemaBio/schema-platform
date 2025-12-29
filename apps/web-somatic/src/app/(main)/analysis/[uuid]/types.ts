@@ -196,7 +196,7 @@ export interface UPDRegion extends VariantReviewStatus {
 }
 
 // ============ 标签页类型 ============
-export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'hotspot' | 'cnv-gene' | 'cnv-exon' | 'cnv-chrom' | 'fusion' | 'neoantigen' | 'biomarkers' | 'report';
+export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'hotspot' | 'chemotherapy' | 'germline' | 'cnv-gene' | 'cnv-exon' | 'cnv-chrom' | 'fusion' | 'neoantigen' | 'biomarkers' | 'report';
 
 export interface TabConfig {
   id: TabType;
@@ -208,6 +208,8 @@ export const TAB_CONFIGS: TabConfig[] = [
   { id: 'qc', label: '质控结果' },
   { id: 'snv-indel', label: 'SNV/InDel' },
   { id: 'hotspot', label: 'Hotspot' },
+  { id: 'chemotherapy', label: '化疗位点' },
+  { id: 'germline', label: '胚系位点' },
   { id: 'cnv-gene', label: 'CNV(Gene)' },
   { id: 'cnv-exon', label: 'CNV(Exon)' },
   { id: 'cnv-chrom', label: 'CNV(Chrom)' },
