@@ -59,7 +59,7 @@ export interface SidebarNavConfig {
 
 /**
  * Main navigation items displayed in the sidebar.
- * 业务流程：概览 → 样本管理 → 实验中心 → 数据管理 → 流程中心 → 分析中心 → 报告中心 → 知识中心
+ * 业务流程：概览 → 样本管理 → 实验中心 → 数据管理 → 流程中心 → 分析中心 → 知识中心
  */
 export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
@@ -68,7 +68,7 @@ export const mainNavItems: NavItem[] = [
   { label: '数据管理', href: '/data', icon: HardDrive },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
   { label: '分析中心', href: '/analysis', icon: FlaskConical },
-  { label: '报告中心', href: '/reports', icon: FileText },
+  // { label: '报告中心', href: '/reports', icon: FileText }, // 暂时关闭
   { label: '知识中心', href: '/knowledge', icon: BookOpen },
 ];
 
@@ -99,6 +99,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
     { label: '数据库管理', href: '/pipeline/database', icon: Server },
     { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
+    { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
   // 分析中心 - 解读工程师操作
   analysis: [
