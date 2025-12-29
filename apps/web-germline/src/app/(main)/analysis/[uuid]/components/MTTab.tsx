@@ -8,6 +8,7 @@ import type { MitochondrialVariant, MitochondrialPathogenicity, TableFilterState
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getMitochondrialVariants } from '../mock-data';
 import { IGVViewer, PositionLink } from './IGVViewer';
+import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 
 interface MTTabProps {
   taskId: string;
@@ -32,6 +33,7 @@ export function MTTab({
   const [internalFilterState, setInternalFilterState] = React.useState<TableFilterState>(DEFAULT_FILTER_STATE);
   const [result, setResult] = React.useState<PaginatedResult<MitochondrialVariant> | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
 
   // IGV 查看器状态
   const [igvState, setIgvState] = React.useState<{
@@ -52,6 +54,27 @@ export function MTTab({
   const handleCloseIGV = React.useCallback(() => {
     setIgvState(prev => ({ ...prev, isOpen: false }));
   }, []);
+
+  // 处理审核状态变更
+  const handleReviewChange = React.useCallback((id: string, checked: boolean) => {
+    setReviewStatus(prev => ({
+      ...prev,
+      [id]: { ...prev[id], reviewed: checked, reported: prev[id]?.reported ?? false }
+    }));
+  }, []);
+
+  // 处理回报状态变更
+  const handleReportChange = React.useCallback((id: string, checked: boolean) => {
+    setReviewStatus(prev => ({
+      ...prev,
+      [id]: { reviewed: prev[id]?.reviewed ?? false, reported: checked }
+    }));
+  }, []);
+
+  // 获取变异的审核状态
+  const getReviewState = React.useCallback((variant: MitochondrialVariant) => {
+    return reviewStatus[variant.id] ?? { reviewed: variant.reviewed, reported: variant.reported };
+  }, [reviewStatus]);
 
   React.useEffect(() => {
     async function loadData() {
@@ -86,6 +109,34 @@ export function MTTab({
   }, [filterState, setFilterState]);
 
   const columns: Column<MitochondrialVariant>[] = [
+    {
+      id: 'reviewed',
+      header: <ReviewColumnHeader />,
+      accessor: (row) => {
+        const state = getReviewState(row);
+        return (
+          <ReviewCheckbox
+            checked={state.reviewed}
+            onChange={(checked) => handleReviewChange(row.id, checked)}
+          />
+        );
+      },
+      width: 50,
+    },
+    {
+      id: 'reported',
+      header: <ReportColumnHeader />,
+      accessor: (row) => {
+        const state = getReviewState(row);
+        return (
+          <ReportCheckbox
+            checked={state.reported}
+            onChange={(checked) => handleReportChange(row.id, checked)}
+          />
+        );
+      },
+      width: 50,
+    },
     {
       id: 'position',
       header: '位置',

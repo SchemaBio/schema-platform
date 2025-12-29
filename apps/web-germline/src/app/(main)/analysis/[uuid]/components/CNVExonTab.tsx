@@ -7,6 +7,7 @@ import { Search, ListFilter } from 'lucide-react';
 import type { CNVExon, TableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getCNVExons, getGeneLists, type GeneListOption } from '../mock-data';
+import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 
 interface CNVExonTabProps {
   taskId: string;
@@ -23,6 +24,7 @@ export function CNVExonTab({
   const [result, setResult] = React.useState<PaginatedResult<CNVExon> | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [geneLists, setGeneLists] = React.useState<GeneListOption[]>([]);
+  const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
 
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
@@ -76,12 +78,61 @@ export function CNVExonTab({
     });
   }, [filterState, setFilterState]);
 
+  // 处理审核状态变更
+  const handleReviewChange = React.useCallback((id: string, checked: boolean) => {
+    setReviewStatus(prev => ({
+      ...prev,
+      [id]: { ...prev[id], reviewed: checked, reported: prev[id]?.reported ?? false }
+    }));
+  }, []);
+
+  // 处理回报状态变更
+  const handleReportChange = React.useCallback((id: string, checked: boolean) => {
+    setReviewStatus(prev => ({
+      ...prev,
+      [id]: { reviewed: prev[id]?.reviewed ?? false, reported: checked }
+    }));
+  }, []);
+
+  // 获取变异的审核状态
+  const getReviewState = React.useCallback((variant: CNVExon) => {
+    return reviewStatus[variant.id] ?? { reviewed: variant.reviewed, reported: variant.reported };
+  }, [reviewStatus]);
+
   const selectedGeneList = React.useMemo(() => {
     if (!filterState.geneListId) return null;
     return geneLists.find(list => list.id === filterState.geneListId);
   }, [filterState.geneListId, geneLists]);
 
   const columns: Column<CNVExon>[] = [
+    {
+      id: 'reviewed',
+      header: <ReviewColumnHeader />,
+      accessor: (row) => {
+        const state = getReviewState(row);
+        return (
+          <ReviewCheckbox
+            checked={state.reviewed}
+            onChange={(checked) => handleReviewChange(row.id, checked)}
+          />
+        );
+      },
+      width: 50,
+    },
+    {
+      id: 'reported',
+      header: <ReportColumnHeader />,
+      accessor: (row) => {
+        const state = getReviewState(row);
+        return (
+          <ReportCheckbox
+            checked={state.reported}
+            onChange={(checked) => handleReportChange(row.id, checked)}
+          />
+        );
+      },
+      width: 50,
+    },
     {
       id: 'gene',
       header: '基因',

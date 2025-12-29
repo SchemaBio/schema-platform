@@ -114,6 +114,12 @@ const mockSNVIndels: SNVIndel[] = [
     omimId: '113705',
     diseaseAssociation: '遗传性乳腺癌-卵巢癌综合征',
     inheritanceMode: 'AD',
+    reviewed: true,
+    reported: true,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 10:30',
+    reportedBy: '李工',
+    reportedAt: '2024-12-25 14:00',
   },
   {
     id: 'snv-002',
@@ -147,6 +153,10 @@ const mockSNVIndels: SNVIndel[] = [
     omimId: '191170',
     diseaseAssociation: 'Li-Fraumeni综合征',
     inheritanceMode: 'AD',
+    reviewed: true,
+    reported: false,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 11:00',
   },
   {
     id: 'snv-003',
@@ -175,6 +185,8 @@ const mockSNVIndels: SNVIndel[] = [
     omimId: '602421',
     diseaseAssociation: '囊性纤维化',
     inheritanceMode: 'AR',
+    reviewed: false,
+    reported: false,
   },
   {
     id: 'snv-004',
@@ -204,6 +216,8 @@ const mockSNVIndels: SNVIndel[] = [
     omimId: '120436',
     diseaseAssociation: 'Lynch综合征',
     inheritanceMode: 'AD',
+    reviewed: false,
+    reported: false,
   },
   {
     id: 'snv-005',
@@ -228,6 +242,8 @@ const mockSNVIndels: SNVIndel[] = [
     omimId: '606945',
     diseaseAssociation: '家族性高胆固醇血症',
     inheritanceMode: 'AD',
+    reviewed: false,
+    reported: false,
   },
 ];
 
@@ -272,6 +288,10 @@ const mockCNVSegments: CNVSegment[] = [
     copyNumber: 1,
     genes: ['BRCA1'],
     confidence: 0.95,
+    reviewed: true,
+    reported: false,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 15:00',
   },
   {
     id: 'cnv-002',
@@ -283,6 +303,8 @@ const mockCNVSegments: CNVSegment[] = [
     copyNumber: 4,
     genes: ['EGFR'],
     confidence: 0.88,
+    reviewed: false,
+    reported: false,
   },
   {
     id: 'cnv-003',
@@ -294,6 +316,8 @@ const mockCNVSegments: CNVSegment[] = [
     copyNumber: 1,
     genes: ['TBX1', 'COMT', 'DGCR8'],
     confidence: 0.92,
+    reviewed: false,
+    reported: false,
   },
 ];
 
@@ -311,6 +335,12 @@ const mockCNVExons: CNVExon[] = [
     copyNumber: 1,
     ratio: 0.52,
     confidence: 0.94,
+    reviewed: true,
+    reported: true,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 10:30',
+    reportedBy: '李工',
+    reportedAt: '2024-12-25 14:00',
   },
   {
     id: 'cnv-exon-002',
@@ -324,6 +354,8 @@ const mockCNVExons: CNVExon[] = [
     copyNumber: 5,
     ratio: 2.45,
     confidence: 0.91,
+    reviewed: false,
+    reported: false,
   },
   {
     id: 'cnv-exon-003',
@@ -337,6 +369,10 @@ const mockCNVExons: CNVExon[] = [
     copyNumber: 0,
     ratio: 0.05,
     confidence: 0.98,
+    reviewed: true,
+    reported: false,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 11:00',
   },
   {
     id: 'cnv-exon-004',
@@ -350,6 +386,8 @@ const mockCNVExons: CNVExon[] = [
     copyNumber: 1,
     ratio: 0.48,
     confidence: 0.89,
+    reviewed: false,
+    reported: false,
   },
 ];
 
@@ -365,6 +403,8 @@ const mockSTRs: STR[] = [
     normalRangeMin: 5,
     normalRangeMax: 44,
     status: 'Normal',
+    reviewed: false,
+    reported: false,
   },
   {
     id: 'str-002',
@@ -376,6 +416,12 @@ const mockSTRs: STR[] = [
     normalRangeMin: 10,
     normalRangeMax: 35,
     status: 'FullMutation',
+    reviewed: true,
+    reported: true,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 10:30',
+    reportedBy: '李工',
+    reportedAt: '2024-12-25 14:00',
   },
   {
     id: 'str-003',
@@ -387,6 +433,10 @@ const mockSTRs: STR[] = [
     normalRangeMin: 5,
     normalRangeMax: 37,
     status: 'Premutation',
+    reviewed: true,
+    reported: false,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 11:00',
   },
   {
     id: 'str-004',
@@ -398,6 +448,8 @@ const mockSTRs: STR[] = [
     normalRangeMin: 6,
     normalRangeMax: 38,
     status: 'Normal',
+    reviewed: false,
+    reported: false,
   },
 ];
 
@@ -413,6 +465,12 @@ const mockMTVariants: MitochondrialVariant[] = [
     pathogenicity: 'Pathogenic',
     associatedDisease: 'MELAS综合征',
     haplogroup: 'H',
+    reviewed: true,
+    reported: true,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 10:30',
+    reportedBy: '李工',
+    reportedAt: '2024-12-25 14:00',
   },
   {
     id: 'mt-002',
@@ -424,6 +482,10 @@ const mockMTVariants: MitochondrialVariant[] = [
     pathogenicity: 'Pathogenic',
     associatedDisease: 'MERRF综合征',
     haplogroup: 'H',
+    reviewed: true,
+    reported: false,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 11:00',
   },
   {
     id: 'mt-003',
@@ -435,6 +497,8 @@ const mockMTVariants: MitochondrialVariant[] = [
     pathogenicity: 'Pathogenic',
     associatedDisease: 'Leber遗传性视神经病变',
     haplogroup: 'J',
+    reviewed: false,
+    reported: false,
   },
   {
     id: 'mt-004',
@@ -445,6 +509,8 @@ const mockMTVariants: MitochondrialVariant[] = [
     heteroplasmy: 0.15,
     pathogenicity: 'VUS',
     associatedDisease: '-',
+    reviewed: false,
+    reported: false,
   },
 ];
 
@@ -459,6 +525,12 @@ const mockUPDRegions: UPDRegion[] = [
     type: 'Isodisomy',
     genes: ['UBE3A', 'SNRPN', 'NDN'],
     parentOfOrigin: 'Maternal',
+    reviewed: true,
+    reported: true,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 10:30',
+    reportedBy: '李工',
+    reportedAt: '2024-12-25 14:00',
   },
   {
     id: 'upd-002',
@@ -469,6 +541,8 @@ const mockUPDRegions: UPDRegion[] = [
     type: 'Heterodisomy',
     genes: ['IGF2', 'H19'],
     parentOfOrigin: 'Paternal',
+    reviewed: false,
+    reported: false,
   },
 ];
 

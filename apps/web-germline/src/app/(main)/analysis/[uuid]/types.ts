@@ -52,7 +52,17 @@ export type ACMGClassification =
   | 'Benign';
 
 // ============ SNV/Indel变异 ============
-export interface SNVIndel {
+// ============ 变异审核状态 ============
+export interface VariantReviewStatus {
+  reviewed: boolean;             // 是否已审核
+  reported: boolean;             // 是否已回报
+  reviewedBy?: string;           // 审核人
+  reviewedAt?: string;           // 审核时间
+  reportedBy?: string;           // 回报人
+  reportedAt?: string;           // 回报时间
+}
+
+export interface SNVIndel extends VariantReviewStatus {
   id: string;
   gene: string;                  // 基因名
   chromosome: string;            // 染色体
@@ -105,7 +115,7 @@ export interface SampleInfo {
 }
 
 // ============ CNV变异(片段级别) ============
-export interface CNVSegment {
+export interface CNVSegment extends VariantReviewStatus {
   id: string;
   chromosome: string;
   startPosition: number;
@@ -118,7 +128,7 @@ export interface CNVSegment {
 }
 
 // ============ CNV变异(外显子级别) ============
-export interface CNVExon {
+export interface CNVExon extends VariantReviewStatus {
   id: string;
   gene: string;
   transcript: string;            // 转录本
@@ -135,7 +145,7 @@ export interface CNVExon {
 // ============ 动态突变（STR） ============
 export type STRStatus = 'Normal' | 'Premutation' | 'FullMutation';
 
-export interface STR {
+export interface STR extends VariantReviewStatus {
   id: string;
   gene: string;
   transcript: string;            // 转录本
@@ -155,7 +165,7 @@ export type MitochondrialPathogenicity =
   | 'Likely_Benign' 
   | 'Benign';
 
-export interface MitochondrialVariant {
+export interface MitochondrialVariant extends VariantReviewStatus {
   id: string;
   position: number;
   ref: string;
@@ -171,7 +181,7 @@ export interface MitochondrialVariant {
 export type UPDType = 'Isodisomy' | 'Heterodisomy';
 export type ParentOfOrigin = 'Maternal' | 'Paternal' | 'Unknown';
 
-export interface UPDRegion {
+export interface UPDRegion extends VariantReviewStatus {
   id: string;
   chromosome: string;
   startPosition: number;

@@ -9,6 +9,7 @@ import { DEFAULT_FILTER_STATE } from '../types';
 import { getSNVIndels, ACMG_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
 import { IGVViewer, PositionLink } from './IGVViewer';
 import { VariantDetailPanel } from './VariantDetailPanel';
+import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 
 interface SNVIndelTabProps {
   taskId: string;
@@ -25,6 +26,7 @@ export function SNVIndelTab({
   const [result, setResult] = React.useState<PaginatedResult<SNVIndel> | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [geneLists, setGeneLists] = React.useState<GeneListOption[]>([]);
+  const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
   
   // IGV 查看器状态
   const [igvState, setIgvState] = React.useState<{
@@ -60,6 +62,27 @@ export function SNVIndelTab({
   const handleCloseDetailPanel = React.useCallback(() => {
     setDetailPanelOpen(false);
   }, []);
+
+  // 处理审核状态变更
+  const handleReviewChange = React.useCallback((id: string, checked: boolean) => {
+    setReviewStatus(prev => ({
+      ...prev,
+      [id]: { ...prev[id], reviewed: checked, reported: prev[id]?.reported ?? false }
+    }));
+  }, []);
+
+  // 处理回报状态变更
+  const handleReportChange = React.useCallback((id: string, checked: boolean) => {
+    setReviewStatus(prev => ({
+      ...prev,
+      [id]: { reviewed: prev[id]?.reviewed ?? false, reported: checked }
+    }));
+  }, []);
+
+  // 获取变异的审核状态
+  const getReviewState = React.useCallback((variant: SNVIndel) => {
+    return reviewStatus[variant.id] ?? { reviewed: variant.reviewed, reported: variant.reported };
+  }, [reviewStatus]);
 
   // 加载基因列表
   React.useEffect(() => {
@@ -123,6 +146,34 @@ export function SNVIndelTab({
 
   // 列定义
   const columns: Column<SNVIndel>[] = [
+    {
+      id: 'reviewed',
+      header: <ReviewColumnHeader />,
+      accessor: (row) => {
+        const state = getReviewState(row);
+        return (
+          <ReviewCheckbox
+            checked={state.reviewed}
+            onChange={(checked) => handleReviewChange(row.id, checked)}
+          />
+        );
+      },
+      width: 50,
+    },
+    {
+      id: 'reported',
+      header: <ReportColumnHeader />,
+      accessor: (row) => {
+        const state = getReviewState(row);
+        return (
+          <ReportCheckbox
+            checked={state.reported}
+            onChange={(checked) => handleReportChange(row.id, checked)}
+          />
+        );
+      },
+      width: 50,
+    },
     {
       id: 'gene',
       header: '基因',
