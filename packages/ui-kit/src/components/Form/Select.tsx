@@ -286,8 +286,8 @@ export function Select<T extends string = string>({
         <SelectPrimitive.Content
           className={cn(
             'z-50',
-            'bg-canvas-default',
-            'border border-border-default',
+            'bg-canvas',
+            'border border-border',
             'rounded-medium shadow-medium',
             'max-h-60 overflow-auto',
             'animate-in fade-in-0 zoom-in-95'

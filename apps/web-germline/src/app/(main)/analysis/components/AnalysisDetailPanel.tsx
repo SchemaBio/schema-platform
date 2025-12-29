@@ -14,6 +14,7 @@ import {
   STRTab,
   MTTab,
   UPDTab,
+  ReportTab,
 } from '../[uuid]/components';
 import { Tag } from '@schema/ui-kit';
 
@@ -132,6 +133,8 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             onFilterChange={(state) => setFilterState('upd', state)}
           />
         );
+      case 'report':
+        return <ReportTab taskId={taskId} />;
       default:
         return null;
     }
