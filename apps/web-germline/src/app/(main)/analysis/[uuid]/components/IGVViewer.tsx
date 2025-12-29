@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { X, ExternalLink } from 'lucide-react';
+import { Tooltip } from '@schema/ui-kit';
 
 interface IGVViewerProps {
   chromosome: string;
@@ -208,12 +209,13 @@ export function PositionLink({ chromosome, position, label, onClick }: PositionL
   const displayLabel = label ?? `${chromosome}:${position}`;
   
   return (
-    <button
-      onClick={() => onClick(chromosome, position)}
-      className="text-accent-fg hover:underline cursor-pointer text-left"
-      title="点击在 IGV 中查看"
-    >
-      {displayLabel}
-    </button>
+    <Tooltip content="点击在 IGV 中查看" placement="top" variant="nav">
+      <button
+        onClick={() => onClick(chromosome, position)}
+        className="text-accent-fg hover:underline cursor-pointer text-left"
+      >
+        {displayLabel}
+      </button>
+    </Tooltip>
   );
 }
