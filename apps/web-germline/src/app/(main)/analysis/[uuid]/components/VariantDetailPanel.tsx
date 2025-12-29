@@ -1,16 +1,32 @@
 'use client';
 
 import * as React from 'react';
-import { X, ExternalLink, FileText, Database, Dna } from 'lucide-react';
+import { X, ExternalLink, FileText, Database, Dna, Edit2, Check, Plus, Trash2 } from 'lucide-react';
 import { Tag } from '@schema/ui-kit';
 import type { SNVIndel, ACMGClassification } from '../types';
 import { ACMG_CONFIG } from '../mock-data';
+
+// ACMG 证据项定义
+const ACMG_CRITERIA_OPTIONS = {
+  pathogenic: {
+    veryStrong: ['PVS1'],
+    strong: ['PS1', 'PS2', 'PS3', 'PS4'],
+    moderate: ['PM1', 'PM2', 'PM3', 'PM4', 'PM5', 'PM6'],
+    supporting: ['PP1', 'PP2', 'PP3', 'PP4', 'PP5'],
+  },
+  benign: {
+    standalone: ['BA1'],
+    strong: ['BS1', 'BS2', 'BS3', 'BS4'],
+    supporting: ['BP1', 'BP2', 'BP3', 'BP4', 'BP5', 'BP6', 'BP7'],
+  },
+};
 
 interface VariantDetailPanelProps {
   variant: SNVIndel | null;
   isOpen: boolean;
   onClose: () => void;
   onOpenIGV?: (chromosome: string, position: number) => void;
+  onUpdateClassification?: (variantId: string, classification: ACMGClassification, criteria: string[]) => void;
 }
 
 // 信息项组件
@@ -45,19 +61,240 @@ function InfoItem({ label, value, link }: { label: string; value?: React.ReactNo
 }
 
 // 分组标题组件
-function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+function SectionTitle({ icon: Icon, title, action }: { icon: React.ElementType; title: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
-      <Icon className="w-4 h-4 text-fg-muted" />
-      <h4 className="text-sm font-medium text-fg-default">{title}</h4>
+    <div className="flex items-center justify-between mb-3 mt-5 first:mt-0">
+      <div className="flex items-center gap-2">
+        <Icon className="w-4 h-4 text-fg-muted" />
+        <h4 className="text-sm font-medium text-fg-default">{title}</h4>
+      </div>
+      {action}
     </div>
   );
 }
 
-export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV }: VariantDetailPanelProps) {
+// ACMG 分类编辑器组件
+function ACMGClassificationEditor({
+  currentClassification,
+  currentCriteria,
+  onSave,
+  onCancel,
+}: {
+  currentClassification: ACMGClassification;
+  currentCriteria: string[];
+  onSave: (classification: ACMGClassification, criteria: string[]) => void;
+  onCancel: () => void;
+}) {
+  const [classification, setClassification] = React.useState<ACMGClassification>(currentClassification);
+  const [selectedCriteria, setSelectedCriteria] = React.useState<Set<string>>(new Set(currentCriteria));
+
+  const toggleCriteria = (criterion: string) => {
+    const newSet = new Set(selectedCriteria);
+    if (newSet.has(criterion)) {
+      newSet.delete(criterion);
+    } else {
+      newSet.add(criterion);
+    }
+    setSelectedCriteria(newSet);
+  };
+
+  const handleSave = () => {
+    onSave(classification, Array.from(selectedCriteria));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* 分类选择 */}
+      <div>
+        <label className="block text-sm text-fg-muted mb-2">ACMG 分类</label>
+        <select
+          value={classification}
+          onChange={(e) => setClassification(e.target.value as ACMGClassification)}
+          className="w-full px-3 py-2 text-sm border border-border rounded-md bg-canvas-default text-fg-default"
+        >
+          {Object.entries(ACMG_CONFIG).map(([key, config]) => (
+            <option key={key} value={key}>{config.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* 致病性证据 */}
+      <div>
+        <label className="block text-sm text-fg-muted mb-2">致病性证据</label>
+        <div className="space-y-2">
+          <div>
+            <span className="text-xs text-fg-subtle">非常强 (PVS)</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ACMG_CRITERIA_OPTIONS.pathogenic.veryStrong.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleCriteria(c)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    selectedCriteria.has(c)
+                      ? 'bg-danger-emphasis text-fg-on-emphasis'
+                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs text-fg-subtle">强 (PS)</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ACMG_CRITERIA_OPTIONS.pathogenic.strong.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleCriteria(c)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    selectedCriteria.has(c)
+                      ? 'bg-danger-subtle text-danger-fg'
+                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs text-fg-subtle">中等 (PM)</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ACMG_CRITERIA_OPTIONS.pathogenic.moderate.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleCriteria(c)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    selectedCriteria.has(c)
+                      ? 'bg-warning-subtle text-warning-fg'
+                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs text-fg-subtle">支持 (PP)</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ACMG_CRITERIA_OPTIONS.pathogenic.supporting.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleCriteria(c)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    selectedCriteria.has(c)
+                      ? 'bg-warning-subtle text-warning-fg'
+                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 良性证据 */}
+      <div>
+        <label className="block text-sm text-fg-muted mb-2">良性证据</label>
+        <div className="space-y-2">
+          <div>
+            <span className="text-xs text-fg-subtle">独立 (BA)</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ACMG_CRITERIA_OPTIONS.benign.standalone.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleCriteria(c)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    selectedCriteria.has(c)
+                      ? 'bg-success-emphasis text-fg-on-emphasis'
+                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs text-fg-subtle">强 (BS)</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ACMG_CRITERIA_OPTIONS.benign.strong.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleCriteria(c)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    selectedCriteria.has(c)
+                      ? 'bg-success-subtle text-success-fg'
+                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="text-xs text-fg-subtle">支持 (BP)</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {ACMG_CRITERIA_OPTIONS.benign.supporting.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => toggleCriteria(c)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    selectedCriteria.has(c)
+                      ? 'bg-success-subtle text-success-fg'
+                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 操作按钮 */}
+      <div className="flex gap-2 pt-2">
+        <button
+          onClick={handleSave}
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90 transition-colors"
+        >
+          <Check className="w-4 h-4" />
+          保存
+        </button>
+        <button
+          onClick={onCancel}
+          className="px-3 py-2 text-sm border border-border rounded-md hover:bg-canvas-inset transition-colors"
+        >
+          取消
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpdateClassification }: VariantDetailPanelProps) {
+  const [isEditingACMG, setIsEditingACMG] = React.useState(false);
+  const [localClassification, setLocalClassification] = React.useState<ACMGClassification | null>(null);
+  const [localCriteria, setLocalCriteria] = React.useState<string[] | null>(null);
+
+  // 当 variant 变化时重置编辑状态
+  React.useEffect(() => {
+    setIsEditingACMG(false);
+    setLocalClassification(null);
+    setLocalCriteria(null);
+  }, [variant?.id]);
+
   if (!isOpen || !variant) return null;
 
-  const acmgConfig = ACMG_CONFIG[variant.acmgClassification];
+  const currentClassification = localClassification ?? variant.acmgClassification;
+  const currentCriteria = localCriteria ?? variant.acmgCriteria ?? [];
+  const acmgConfig = ACMG_CONFIG[currentClassification];
   
   // 格式化频率显示
   const formatFrequency = (freq?: number) => {
@@ -71,6 +308,14 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV }: Vari
   const formatScore = (score?: number, precision = 2) => {
     if (score === undefined || score === null) return undefined;
     return score.toFixed(precision);
+  };
+
+  // 保存 ACMG 分类
+  const handleSaveACMG = (classification: ACMGClassification, criteria: string[]) => {
+    setLocalClassification(classification);
+    setLocalCriteria(criteria);
+    setIsEditingACMG(false);
+    onUpdateClassification?.(variant.id, classification, criteria);
   };
 
   return (
@@ -163,21 +408,46 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV }: Vari
           </div>
 
           {/* ACMG 分类 */}
-          <SectionTitle icon={FileText} title="ACMG 分类" />
+          <SectionTitle 
+            icon={FileText} 
+            title="ACMG 分类" 
+            action={
+              !isEditingACMG && (
+                <button
+                  onClick={() => setIsEditingACMG(true)}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-fg-muted hover:text-fg-default hover:bg-canvas-inset rounded transition-colors"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  编辑
+                </button>
+              )
+            }
+          />
           <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="分类" value={<Tag variant={acmgConfig.variant}>{acmgConfig.label}</Tag>} />
-            <InfoItem 
-              label="证据项" 
-              value={variant.acmgCriteria?.length ? (
-                <div className="flex flex-wrap gap-1">
-                  {variant.acmgCriteria.map((c) => (
-                    <span key={c} className="px-1.5 py-0.5 text-xs bg-canvas-inset rounded">
-                      {c}
-                    </span>
-                  ))}
-                </div>
-              ) : undefined}
-            />
+            {isEditingACMG ? (
+              <ACMGClassificationEditor
+                currentClassification={currentClassification}
+                currentCriteria={currentCriteria}
+                onSave={handleSaveACMG}
+                onCancel={() => setIsEditingACMG(false)}
+              />
+            ) : (
+              <>
+                <InfoItem label="分类" value={<Tag variant={acmgConfig.variant}>{acmgConfig.label}</Tag>} />
+                <InfoItem 
+                  label="证据项" 
+                  value={currentCriteria.length ? (
+                    <div className="flex flex-wrap gap-1">
+                      {currentCriteria.map((c) => (
+                        <span key={c} className="px-1.5 py-0.5 text-xs bg-canvas-inset rounded">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  ) : undefined}
+                />
+              </>
+            )}
           </div>
 
           {/* 临床意义 */}
