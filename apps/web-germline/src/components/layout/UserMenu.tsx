@@ -31,36 +31,36 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
   };
 
   const triggerButton = (
-    <button
-      className={`
-        flex items-center gap-2 rounded-md transition-all duration-fast
-        hover:bg-canvas-inset p-1.5
-        ${collapsed ? 'justify-center' : 'w-full'}
-      `}
-      aria-label="用户菜单"
-    >
-      <Avatar
-        src={user.avatar}
-        name={user.name}
-        size="small"
-      />
-      {!collapsed && (
-        <span className="text-sm text-fg-default truncate">{user.name}</span>
-      )}
-    </button>
+    <PopoverPrimitive.Trigger asChild>
+      <button
+        className={`
+          flex items-center gap-2 rounded-md transition-all duration-fast
+          hover:bg-canvas-inset p-1.5
+          ${collapsed ? 'justify-center' : 'w-full'}
+        `}
+        aria-label="用户菜单"
+      >
+        <Avatar
+          src={user.avatar}
+          name={user.name}
+          size="small"
+        />
+        {!collapsed && (
+          <span className="text-sm text-fg-default truncate">{user.name}</span>
+        )}
+      </button>
+    </PopoverPrimitive.Trigger>
   );
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-      <PopoverPrimitive.Trigger asChild>
-        {collapsed ? (
-          <Tooltip content={user.name} placement="right">
-            {triggerButton}
-          </Tooltip>
-        ) : (
-          triggerButton
-        )}
-      </PopoverPrimitive.Trigger>
+      {collapsed ? (
+        <Tooltip content={user.name} placement="right" variant="nav">
+          {triggerButton}
+        </Tooltip>
+      ) : (
+        triggerButton
+      )}
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
           side={collapsed ? 'right' : 'top'}

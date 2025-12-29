@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { PageContent } from '@/components/layout';
 
 export default function AboutPage() {
@@ -7,11 +8,17 @@ export default function AboutPage() {
     <PageContent>
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-accent-emphasis rounded-xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">🧬</span>
+          <div className="w-20 h-20 rounded-xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
+            <Image
+              src="/logo.png"
+              alt="Schema Germline"
+              width={80}
+              height={80}
+              className="object-contain"
+            />
           </div>
-          <h1 className="text-2xl font-semibold text-fg-default mb-2">绳墨生物</h1>
-          <p className="text-fg-muted">遗传病分析平台</p>
+          <h1 className="text-2xl font-semibold text-fg-default mb-2">Schema Germline</h1>
+          <p className="text-fg-muted">全外显子测序（WES）分析平台</p>
         </div>
 
         <div className="space-y-6">
@@ -34,9 +41,25 @@ export default function AboutPage() {
           <section className="p-4 bg-canvas-subtle rounded-lg border border-border">
             <h2 className="text-sm font-medium text-fg-default mb-3">产品介绍</h2>
             <p className="text-sm text-fg-muted leading-relaxed">
-              绳墨生物遗传病分析平台是一款专业的全外显子遗传病基因组分析系统，
-              提供样本管理、数据处理、变异分析、ACMG 分类、报告生成等一站式解决方案，
-              助力临床遗传病诊断和科研工作。
+              Schema Germline 是一款专为全外显子测序（Whole Exome Sequencing, WES）设计的遗传病分析平台。
+              系统覆盖从原始数据到临床报告的完整分析流程，包括：
+            </p>
+            <ul className="mt-3 text-sm text-fg-muted space-y-1.5 list-disc list-inside">
+              <li>SNV/InDel 变异检测与 ACMG/AMP 致病性分类</li>
+              <li>CNV 拷贝数变异分析与 ClinGen 评估</li>
+              <li>线粒体 DNA 变异检测与异质性分析</li>
+              <li>基因列表管理与变异知识库</li>
+              <li>IGV 基因组浏览器集成</li>
+              <li>标准化临床报告生成</li>
+            </ul>
+          </section>
+
+          {/* 适用场景 */}
+          <section className="p-4 bg-canvas-subtle rounded-lg border border-border">
+            <h2 className="text-sm font-medium text-fg-default mb-3">适用场景</h2>
+            <p className="text-sm text-fg-muted leading-relaxed">
+              本平台专注于胚系（Germline）变异分析，适用于单基因遗传病、罕见病的临床诊断与科研分析。
+              支持单样本、Trio 家系等多种分析模式。
             </p>
           </section>
 
