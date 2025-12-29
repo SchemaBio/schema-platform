@@ -129,7 +129,7 @@ export function CNVSegmentTab({
           />
         );
       },
-      width: 50,
+      width: 60,
     },
     {
       id: 'reported',
@@ -143,7 +143,7 @@ export function CNVSegmentTab({
           />
         );
       },
-      width: 50,
+      width: 60,
     },
     {
       id: 'chromosome',

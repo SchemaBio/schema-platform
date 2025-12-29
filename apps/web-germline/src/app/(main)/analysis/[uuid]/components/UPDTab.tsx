@@ -129,10 +129,12 @@ export function UPDTab({
       accessor: (row) => {
         const state = getReviewState(row);
         return (
-          <ReviewCheckbox
-            checked={state.reviewed}
-            onChange={(checked) => handleReviewChange(row.id, checked)}
-          />
+          <div className="flex justify-center">
+            <ReviewCheckbox
+              checked={state.reviewed}
+              onChange={(checked) => handleReviewChange(row.id, checked)}
+            />
+          </div>
         );
       },
       width: 50,
@@ -143,10 +145,12 @@ export function UPDTab({
       accessor: (row) => {
         const state = getReviewState(row);
         return (
-          <ReportCheckbox
-            checked={state.reported}
-            onChange={(checked) => handleReportChange(row.id, checked)}
-          />
+          <div className="flex justify-center">
+            <ReportCheckbox
+              checked={state.reported}
+              onChange={(checked) => handleReportChange(row.id, checked)}
+            />
+          </div>
         );
       },
       width: 50,

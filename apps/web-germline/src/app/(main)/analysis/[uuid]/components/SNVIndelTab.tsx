@@ -176,7 +176,7 @@ export function SNVIndelTab({
           />
         );
       },
-      width: 50,
+      width: 60,
     },
     {
       id: 'reported',
@@ -190,7 +190,7 @@ export function SNVIndelTab({
           />
         );
       },
-      width: 50,
+      width: 60,
     },
     {
       id: 'gene',

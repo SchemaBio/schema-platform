@@ -15,7 +15,7 @@ interface ReviewCheckboxProps {
  */
 export function ReviewCheckbox({ checked, onChange, disabled }: ReviewCheckboxProps) {
   return (
-    <Tooltip content={checked ? '已审核' : '点击标记为已审核'} placement="top">
+    <Tooltip content={checked ? '审核通过' : '点击标记为审核通过'} placement="top" variant="nav">
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -30,7 +30,7 @@ export function ReviewCheckbox({ checked, onChange, disabled }: ReviewCheckboxPr
           }
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
-        aria-label={checked ? '已审核' : '标记为已审核'}
+        aria-label={checked ? '审核通过' : '标记为审核通过'}
       >
         <CheckCircle2 className={`w-5 h-5 ${checked ? 'fill-success-subtle' : ''}`} />
       </button>
@@ -43,7 +43,7 @@ export function ReviewCheckbox({ checked, onChange, disabled }: ReviewCheckboxPr
  */
 export function ReportCheckbox({ checked, onChange, disabled }: ReviewCheckboxProps) {
   return (
-    <Tooltip content={checked ? '已回报' : '点击标记为已回报'} placement="top">
+    <Tooltip content={checked ? '回报' : '点击标记为回报'} placement="top" variant="nav">
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -58,7 +58,7 @@ export function ReportCheckbox({ checked, onChange, disabled }: ReviewCheckboxPr
           }
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
-        aria-label={checked ? '已回报' : '标记为已回报'}
+        aria-label={checked ? '回报' : '标记为回报'}
       >
         <FileCheck2 className={`w-5 h-5 ${checked ? 'fill-accent-subtle' : ''}`} />
       </button>
@@ -70,21 +70,9 @@ export function ReportCheckbox({ checked, onChange, disabled }: ReviewCheckboxPr
  * 审核和回报状态的列头
  */
 export function ReviewColumnHeader() {
-  return (
-    <Tooltip content="审核状态" placement="top">
-      <div className="flex justify-center">
-        <CheckCircle2 className="w-4 h-4 text-fg-muted" />
-      </div>
-    </Tooltip>
-  );
+  return '审核';
 }
 
 export function ReportColumnHeader() {
-  return (
-    <Tooltip content="回报状态" placement="top">
-      <div className="flex justify-center">
-        <FileCheck2 className="w-4 h-4 text-fg-muted" />
-      </div>
-    </Tooltip>
-  );
+  return '回报';
 }
