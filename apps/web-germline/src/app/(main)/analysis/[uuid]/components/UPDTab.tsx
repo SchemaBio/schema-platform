@@ -129,15 +129,13 @@ export function UPDTab({
       accessor: (row) => {
         const state = getReviewState(row);
         return (
-          <div className="flex justify-center">
-            <ReviewCheckbox
-              checked={state.reviewed}
-              onChange={(checked) => handleReviewChange(row.id, checked)}
-            />
-          </div>
+          <ReviewCheckbox
+            checked={state.reviewed}
+            onChange={(checked) => handleReviewChange(row.id, checked)}
+          />
         );
       },
-      width: 50,
+      width: 60,
     },
     {
       id: 'reported',
@@ -145,15 +143,13 @@ export function UPDTab({
       accessor: (row) => {
         const state = getReviewState(row);
         return (
-          <div className="flex justify-center">
-            <ReportCheckbox
-              checked={state.reported}
-              onChange={(checked) => handleReportChange(row.id, checked)}
-            />
-          </div>
+          <ReportCheckbox
+            checked={state.reported}
+            onChange={(checked) => handleReportChange(row.id, checked)}
+          />
         );
       },
-      width: 50,
+      width: 60,
     },
     {
       id: 'chromosome',
