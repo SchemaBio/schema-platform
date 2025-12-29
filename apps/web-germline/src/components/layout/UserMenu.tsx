@@ -44,6 +44,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
           src={user.avatar}
           name={user.name}
           size="small"
+          className="bg-accent-emphasis text-white ring-2 ring-accent-muted"
         />
         {!collapsed && (
           <span className="text-sm text-fg-default truncate">{user.name}</span>
