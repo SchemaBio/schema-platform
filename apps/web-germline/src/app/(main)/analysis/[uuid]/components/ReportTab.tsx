@@ -3,23 +3,23 @@
 import * as React from 'react';
 import { Button, Select, Tag, FormItem, Modal, ModalHeader, ModalBody, ModalFooter } from '@schema/ui-kit';
 import { 
-  FileText, Play, Clock, CheckCircle, XCircle, Loader2, Download, 
-  FileSpreadsheet, Database, FileCode, Upload 
+  FileText, Play, Clock, CheckCircle, Loader2, Download, 
+  FileSpreadsheet, Database, FileCode, Upload, FileArchive, Trash2, AlertCircle,
+  X, Eye, FileType
 } from 'lucide-react';
 
 // 统一的报告记录类型
 interface ReportRecord {
   id: string;
   name: string;
-  type: 'generated' | 'uploaded';  // 生成的 or 上传的
-  templateName?: string;           // 生成报告的模板名
-  fileName?: string;               // 上传报告的文件名
-  status: 'pending' | 'generating' | 'completed' | 'failed';
+  type: 'generated' | 'uploaded';
+  templateName?: string;
+  fileName?: string;
+  status: 'pending' | 'generating' | 'completed';
   createdAt: string;
   createdBy: string;
   completedAt?: string;
   downloadUrl?: string;
-  errorMessage?: string;
 }
 
 // 报告模板类型
@@ -58,16 +58,6 @@ async function getReportRecords(_taskId: string): Promise<ReportRecord[]> {
       downloadUrl: '/reports/RPT001.pdf',
     },
     {
-      id: 'RPT002',
-      name: 'cardio-panel-report',
-      type: 'generated',
-      templateName: 'cardio-panel-report',
-      status: 'failed',
-      createdAt: '2024-12-28 15:00',
-      createdBy: '李工',
-      errorMessage: 'API 连接超时',
-    },
-    {
       id: 'UPL001',
       name: '患者报告_手动上传.docx',
       type: 'uploaded',
@@ -80,6 +70,7 @@ async function getReportRecords(_taskId: string): Promise<ReportRecord[]> {
   ];
 }
 
+
 export function ReportTab({ taskId }: ReportTabProps) {
   const [templates, setTemplates] = React.useState<ReportTemplate[]>([]);
   const [records, setRecords] = React.useState<ReportRecord[]>([]);
@@ -88,9 +79,15 @@ export function ReportTab({ taskId }: ReportTabProps) {
   const [generating, setGenerating] = React.useState(false);
   const [uploadModalOpen, setUploadModalOpen] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
+  const [errorModalOpen, setErrorModalOpen] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
+  const [recordToDelete, setRecordToDelete] = React.useState<ReportRecord | null>(null);
+  const [previewRecord, setPreviewRecord] = React.useState<ReportRecord | null>(null);
+  const [previewHtml, setPreviewHtml] = React.useState<string>('');
+  const [previewLoading, setPreviewLoading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // 加载数据
   React.useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -115,60 +112,110 @@ export function ReportTab({ taskId }: ReportTabProps) {
     if (!template) return;
 
     setGenerating(true);
-
-    const newRecord: ReportRecord = {
-      id: `RPT${String(Date.now()).slice(-6)}`,
-      name: template.name,
-      type: 'generated',
-      templateName: template.name,
-      status: 'generating',
-      createdAt: new Date().toLocaleString('zh-CN'),
-      createdBy: '当前用户',
-    };
-
-    setRecords((prev) => [newRecord, ...prev]);
-
-    // 模拟生成
+    const newRecordId = `RPT${String(Date.now()).slice(-6)}`;
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     const success = Math.random() > 0.2;
-    setRecords((prev) =>
-      prev.map((r) =>
-        r.id === newRecord.id
-          ? {
-              ...r,
-              status: success ? 'completed' : 'failed',
-              completedAt: success ? new Date().toLocaleString('zh-CN') : undefined,
-              downloadUrl: success ? `/reports/${newRecord.id}.pdf` : undefined,
-              errorMessage: success ? undefined : '报告生成失败',
-            }
-          : r
-      )
-    );
+    
+    if (success) {
+      const newRecord: ReportRecord = {
+        id: newRecordId,
+        name: template.name,
+        type: 'generated',
+        templateName: template.name,
+        status: 'completed',
+        createdAt: new Date().toLocaleString('zh-CN'),
+        createdBy: '当前用户',
+        completedAt: new Date().toLocaleString('zh-CN'),
+        downloadUrl: `/reports/${newRecordId}.pdf`,
+      };
+      setRecords((prev) => [newRecord, ...prev]);
+    } else {
+      setErrorMessage(`报告 "${template.name}" 生成失败：API 连接超时，请稍后重试。`);
+      setErrorModalOpen(true);
+    }
 
     setGenerating(false);
     setSelectedTemplate('');
   };
 
-  const handleRetry = async (record: ReportRecord) => {
-    setRecords((prev) =>
-      prev.map((r) => (r.id === record.id ? { ...r, status: 'generating' as const, errorMessage: undefined } : r))
-    );
+  const handleDelete = (record: ReportRecord) => {
+    setRecordToDelete(record);
+    setDeleteModalOpen(true);
+  };
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+  const confirmDelete = async () => {
+    if (!recordToDelete) return;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id));
+    setDeleteModalOpen(false);
+    if (previewRecord?.id === recordToDelete.id) {
+      setPreviewRecord(null);
+      setPreviewHtml('');
+    }
+    setRecordToDelete(null);
+  };
 
-    setRecords((prev) =>
-      prev.map((r) =>
-        r.id === record.id
-          ? {
-              ...r,
-              status: 'completed' as const,
-              completedAt: new Date().toLocaleString('zh-CN'),
-              downloadUrl: `/reports/${record.id}.pdf`,
-            }
-          : r
-      )
-    );
+  const handlePreview = async (record: ReportRecord) => {
+    if (record.status !== 'completed' || !record.downloadUrl) return;
+    
+    setPreviewRecord(record);
+    setPreviewLoading(true);
+    setPreviewHtml('');
+
+    try {
+      const mammoth = await import('mammoth');
+      const response = await fetch(record.downloadUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      setPreviewHtml(result.value);
+    } catch {
+      // 显示模拟内容
+      setPreviewHtml(`
+        <div style="font-family: 'SimSun', serif; padding: 20px;">
+          <h1 style="text-align: center; font-size: 18px; margin-bottom: 20px;">基因检测报告</h1>
+          <p><strong>报告编号：</strong>${record.id}</p>
+          <p><strong>报告名称：</strong>${record.name}</p>
+          <p><strong>生成时间：</strong>${record.createdAt}</p>
+          <p><strong>创建者：</strong>${record.createdBy}</p>
+          <hr style="margin: 20px 0;" />
+          <h2 style="font-size: 16px;">一、样本信息</h2>
+          <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+            <tr><td style="border: 1px solid #ddd; padding: 8px;">样本类型</td><td style="border: 1px solid #ddd; padding: 8px;">外周血</td></tr>
+            <tr><td style="border: 1px solid #ddd; padding: 8px;">采样日期</td><td style="border: 1px solid #ddd; padding: 8px;">2024-12-25</td></tr>
+            <tr><td style="border: 1px solid #ddd; padding: 8px;">检测方法</td><td style="border: 1px solid #ddd; padding: 8px;">全外显子组测序 (WES)</td></tr>
+          </table>
+          <h2 style="font-size: 16px;">二、检测结果</h2>
+          <p>本次检测共发现 <strong>3</strong> 个可能致病性变异，详见下表：</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+            <tr style="background: #f5f5f5;">
+              <th style="border: 1px solid #ddd; padding: 8px;">基因</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">变异</th>
+              <th style="border: 1px solid #ddd; padding: 8px;">ACMG分类</th>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 8px;">BRCA1</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">c.5266dupC</td>
+              <td style="border: 1px solid #ddd; padding: 8px; color: red;">致病</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 8px;">TP53</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">c.743G>A</td>
+              <td style="border: 1px solid #ddd; padding: 8px; color: orange;">可能致病</td>
+            </tr>
+          </table>
+          <h2 style="font-size: 16px;">三、结论与建议</h2>
+          <p>根据检测结果，建议进行遗传咨询并定期随访。</p>
+        </div>
+      `);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closePreview = () => {
+    setPreviewRecord(null);
+    setPreviewHtml('');
   };
 
   const handleUploadClick = () => {
@@ -180,7 +227,6 @@ export function ReportTab({ taskId }: ReportTabProps) {
     if (!file) return;
 
     setUploading(true);
-    // 模拟上传
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const newRecord: ReportRecord = {
@@ -197,25 +243,13 @@ export function ReportTab({ taskId }: ReportTabProps) {
     setRecords((prev) => [newRecord, ...prev]);
     setUploading(false);
     setUploadModalOpen(false);
-    
-    // 清空 input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 下载处理函数
-  const handleDownloadExcel = () => {
-    window.open(`/api/analysis/${taskId}/export/excel`, '_blank');
-  };
-
-  const handleDownloadParquet = () => {
-    window.open(`/api/analysis/${taskId}/export/parquet`, '_blank');
-  };
-
-  const handleDownloadVCF = () => {
-    window.open(`/api/analysis/${taskId}/export/vcf`, '_blank');
-  };
+  const handleDownloadExcel = () => window.open(`/api/analysis/${taskId}/export/excel`, '_blank');
+  const handleDownloadParquet = () => window.open(`/api/analysis/${taskId}/export/parquet`, '_blank');
+  const handleDownloadVCF = () => window.open(`/api/analysis/${taskId}/export/vcf`, '_blank');
+  const handleDownloadBAM = () => window.open(`/api/analysis/${taskId}/export/bam`, '_blank');
 
   if (loading) {
     return (
@@ -225,212 +259,236 @@ export function ReportTab({ taskId }: ReportTabProps) {
     );
   }
 
+
   return (
-    <div className="space-y-6">
-      {/* 数据导出区域 */}
-      <div className="bg-canvas-subtle rounded-lg p-4">
-        <h4 className="text-sm font-medium text-fg-default mb-3 flex items-center gap-2">
-          <Download className="w-4 h-4" />
-          数据导出
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            size="small"
-            leftIcon={<FileSpreadsheet className="w-4 h-4" />}
-            onClick={handleDownloadExcel}
-          >
-            Excel 结果表
-          </Button>
-          <Button
-            variant="secondary"
-            size="small"
-            leftIcon={<Database className="w-4 h-4" />}
-            onClick={handleDownloadParquet}
-          >
-            Parquet 文件
-          </Button>
-          <Button
-            variant="secondary"
-            size="small"
-            leftIcon={<FileCode className="w-4 h-4" />}
-            onClick={handleDownloadVCF}
-          >
-            SNV/InDel VCF
-          </Button>
-        </div>
-      </div>
-
-      {/* 报告操作区域 */}
-      <div className="bg-canvas-subtle rounded-lg p-4">
-        <h4 className="text-sm font-medium text-fg-default mb-3 flex items-center gap-2">
-          <FileText className="w-4 h-4" />
-          报告管理
-        </h4>
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            <FormItem label="选择报告模板">
-              <Select
-                value={selectedTemplate}
-                onChange={(value) => {
-                  if (typeof value === 'string') setSelectedTemplate(value);
-                }}
-                options={templateOptions}
-                placeholder="请选择报告模板..."
-              />
-            </FormItem>
+    <div className="flex gap-4">
+      {/* 左侧主内容区 */}
+      <div className={`space-y-6 transition-all duration-300 ${previewRecord ? 'w-1/2' : 'w-full'}`}>
+        {/* 数据导出区域 */}
+        <div className="bg-canvas-subtle rounded-lg p-4">
+          <h4 className="text-sm font-medium text-fg-default mb-3 flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            数据导出
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" size="small" leftIcon={<FileSpreadsheet className="w-4 h-4" />} onClick={handleDownloadExcel}>
+              Excel 结果表
+            </Button>
+            <Button variant="secondary" size="small" leftIcon={<Database className="w-4 h-4" />} onClick={handleDownloadParquet}>
+              Parquet 文件
+            </Button>
+            <Button variant="secondary" size="small" leftIcon={<FileCode className="w-4 h-4" />} onClick={handleDownloadVCF}>
+              SNV/InDel VCF
+            </Button>
+            <Button variant="secondary" size="small" leftIcon={<FileArchive className="w-4 h-4" />} onClick={handleDownloadBAM}>
+              BAM 比对文件
+            </Button>
           </div>
-          <Button
-            variant="primary"
-            leftIcon={generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-            onClick={handleGenerate}
-            disabled={!selectedTemplate || generating}
-          >
-            {generating ? '生成中...' : '生成报告'}
-          </Button>
-          <Button
-            variant="secondary"
-            leftIcon={uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            onClick={() => setUploadModalOpen(true)}
-            disabled={uploading}
-          >
-            上传报告
-          </Button>
         </div>
-      </div>
 
-      {/* 报告列表 */}
-      <div>
-        <h4 className="text-sm font-medium text-fg-default mb-3">报告列表</h4>
-        {records.length === 0 ? (
-          <div className="text-center py-8 text-fg-muted border border-border rounded-lg">
-            暂无报告记录
+        {/* 报告操作区域 */}
+        <div className="bg-canvas-subtle rounded-lg p-4">
+          <h4 className="text-sm font-medium text-fg-default mb-3 flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            报告管理
+          </h4>
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <FormItem label="选择报告模板">
+                <Select
+                  value={selectedTemplate}
+                  onChange={(value) => { if (typeof value === 'string') setSelectedTemplate(value); }}
+                  options={templateOptions}
+                  placeholder="请选择报告模板..."
+                />
+              </FormItem>
+            </div>
+            <Button
+              variant="primary"
+              leftIcon={generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              onClick={handleGenerate}
+              disabled={!selectedTemplate || generating}
+            >
+              {generating ? '生成中...' : '生成报告'}
+            </Button>
+            <Button
+              variant="secondary"
+              leftIcon={uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              onClick={() => setUploadModalOpen(true)}
+              disabled={uploading}
+            >
+              上传报告
+            </Button>
           </div>
-        ) : (
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-canvas-subtle border-b border-border">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium text-fg-muted">报告名称</th>
-                  <th className="text-left px-4 py-2 font-medium text-fg-muted w-24">类型</th>
-                  <th className="text-left px-4 py-2 font-medium text-fg-muted w-24">状态</th>
-                  <th className="text-left px-4 py-2 font-medium text-fg-muted w-36">创建时间</th>
-                  <th className="text-left px-4 py-2 font-medium text-fg-muted w-20">创建者</th>
-                  <th className="text-right px-4 py-2 font-medium text-fg-muted w-28">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((record, index) => (
-                  <tr 
-                    key={record.id} 
-                    className={index !== records.length - 1 ? 'border-b border-border' : ''}
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {record.status === 'completed' && <CheckCircle className="w-4 h-4 text-success-fg flex-shrink-0" />}
-                        {record.status === 'failed' && <XCircle className="w-4 h-4 text-danger-fg flex-shrink-0" />}
-                        {record.status === 'generating' && <Loader2 className="w-4 h-4 text-accent-fg animate-spin flex-shrink-0" />}
-                        {record.status === 'pending' && <Clock className="w-4 h-4 text-warning-fg flex-shrink-0" />}
-                        <div>
-                          <div className="text-fg-default font-mono text-xs">{record.name}</div>
-                          {record.errorMessage && (
-                            <div className="text-xs text-danger-fg">{record.errorMessage}</div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Tag variant={record.type === 'generated' ? 'info' : 'neutral'}>
-                        {record.type === 'generated' ? '自动生成' : '手动上传'}
-                      </Tag>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Tag
-                        variant={
-                          record.status === 'completed'
-                            ? 'success'
-                            : record.status === 'failed'
-                            ? 'danger'
-                            : record.status === 'generating'
-                            ? 'info'
-                            : 'warning'
-                        }
-                      >
-                        {record.status === 'completed'
-                          ? '已完成'
-                          : record.status === 'failed'
-                          ? '失败'
-                          : record.status === 'generating'
-                          ? '生成中'
-                          : '等待中'}
-                      </Tag>
-                    </td>
-                    <td className="px-4 py-3 text-fg-muted text-xs">{record.createdAt}</td>
-                    <td className="px-4 py-3 text-fg-muted">{record.createdBy}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {record.status === 'completed' && record.downloadUrl && (
-                          <Button
-                            variant="ghost"
-                            size="small"
-                            leftIcon={<Download className="w-4 h-4" />}
-                            onClick={() => window.open(record.downloadUrl, '_blank')}
-                          >
-                            下载
-                          </Button>
-                        )}
-                        {record.status === 'failed' && record.type === 'generated' && (
-                          <Button
-                            variant="ghost"
-                            size="small"
-                            leftIcon={<Play className="w-4 h-4" />}
-                            onClick={() => handleRetry(record)}
-                          >
-                            重试
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+        </div>
+
+        {/* 报告列表 */}
+        <div>
+          <h4 className="text-sm font-medium text-fg-default mb-3">报告列表</h4>
+          {records.length === 0 ? (
+            <div className="text-center py-8 text-fg-muted border border-border rounded-lg">暂无报告记录</div>
+          ) : (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm table-fixed">
+                <thead className="bg-canvas-subtle border-b border-border">
+                  <tr>
+                    <th className="text-left px-4 py-2 font-medium text-fg-muted w-[30%]">报告名称</th>
+                    <th className="text-center px-4 py-2 font-medium text-fg-muted w-[12%]">类型</th>
+                    <th className="text-center px-4 py-2 font-medium text-fg-muted w-[12%]">状态</th>
+                    <th className="text-center px-4 py-2 font-medium text-fg-muted w-[18%]">创建时间</th>
+                    <th className="text-center px-4 py-2 font-medium text-fg-muted w-[10%]">创建者</th>
+                    <th className="text-center px-4 py-2 font-medium text-fg-muted w-[18%]">操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {records.map((record, index) => (
+                    <tr 
+                      key={record.id} 
+                      className={`${index !== records.length - 1 ? 'border-b border-border' : ''} ${record.status === 'completed' ? 'cursor-pointer hover:bg-canvas-subtle' : ''} ${previewRecord?.id === record.id ? 'bg-accent-subtle' : ''}`}
+                      onClick={() => record.status === 'completed' && handlePreview(record)}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {record.status === 'completed' && <CheckCircle className="w-4 h-4 text-success-fg flex-shrink-0" />}
+                          {record.status === 'generating' && <Loader2 className="w-4 h-4 text-accent-fg animate-spin flex-shrink-0" />}
+                          {record.status === 'pending' && <Clock className="w-4 h-4 text-warning-fg flex-shrink-0" />}
+                          <span className="text-fg-default font-mono text-xs truncate">{record.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Tag variant={record.type === 'generated' ? 'info' : 'neutral'}>
+                          {record.type === 'generated' ? '自动生成' : '手动上传'}
+                        </Tag>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Tag variant={record.status === 'completed' ? 'success' : record.status === 'generating' ? 'info' : 'warning'}>
+                          {record.status === 'completed' ? '已完成' : record.status === 'generating' ? '生成中' : '等待中'}
+                        </Tag>
+                      </td>
+                      <td className="px-4 py-3 text-center text-fg-muted text-xs">{record.createdAt}</td>
+                      <td className="px-4 py-3 text-center text-fg-muted">{record.createdBy}</td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1">
+                          {record.status === 'completed' && (
+                            <Button variant="ghost" size="small" onClick={() => handlePreview(record)} title="预览">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {record.status === 'completed' && record.downloadUrl && (
+                            <Button variant="ghost" size="small" onClick={() => window.open(record.downloadUrl, '_blank')} title="下载">
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {record.status === 'completed' && (
+                            <Button variant="ghost" size="small" onClick={() => window.open(`/api/reports/${record.id}/pdf`, '_blank')} title="导出PDF">
+                              <FileType className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="small" onClick={() => handleDelete(record)} disabled={record.status === 'generating'} title="删除">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
+
+
+      {/* 右侧预览面板 */}
+      {previewRecord && (
+        <>
+          {/* 点击空白处关闭预览的遮罩 */}
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={closePreview}
+          />
+          <div 
+            className="w-1/2 border border-border rounded-lg bg-canvas-default flex flex-col h-[calc(100vh-200px)] sticky top-4 z-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-canvas-subtle rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-fg-muted" />
+                <span className="text-sm font-medium text-fg-default truncate max-w-[200px]">{previewRecord.name}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {previewRecord.downloadUrl && (
+                  <Button variant="ghost" size="small" leftIcon={<Download className="w-4 h-4" />} onClick={() => window.open(previewRecord.downloadUrl, '_blank')}>
+                    下载
+                  </Button>
+                )}
+                <Button variant="ghost" size="small" leftIcon={<X className="w-4 h-4" />} onClick={closePreview}>
+                  关闭
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              {previewLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-accent-fg mx-auto mb-2" />
+                    <p className="text-sm text-fg-muted">正在加载预览...</p>
+                  </div>
+                </div>
+              ) : previewHtml ? (
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+              ) : (
+                <div className="flex items-center justify-center h-full text-fg-muted">无法加载预览内容</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* 上传弹窗 */}
-      <Modal
-        open={uploadModalOpen}
-        onOpenChange={setUploadModalOpen}
-      >
+      <Modal open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
         <ModalHeader>上传报告文件</ModalHeader>
         <ModalBody>
           <div className="space-y-4">
-            <p className="text-sm text-fg-muted">
-              请选择要上传的 DOCX 报告文件。上传后可在报告列表中查看和下载。
-            </p>
-            <div 
-              className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-accent-emphasis hover:bg-canvas-subtle transition-colors"
-              onClick={handleUploadClick}
-            >
+            <p className="text-sm text-fg-muted">请选择要上传的 DOCX 报告文件。上传后可在报告列表中查看和下载。</p>
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-accent-emphasis hover:bg-canvas-subtle transition-colors" onClick={handleUploadClick}>
               <Upload className="w-8 h-8 mx-auto mb-2 text-fg-muted" />
               <p className="text-sm text-fg-default">点击选择文件</p>
               <p className="text-xs text-fg-muted mt-1">支持 .docx 格式</p>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".docx"
-              className="hidden"
-              onChange={handleFileChange}
-            />
+            <input ref={fileInputRef} type="file" accept=".docx" className="hidden" onChange={handleFileChange} />
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button variant="secondary" onClick={() => setUploadModalOpen(false)}>
-            取消
-          </Button>
+          <Button variant="secondary" onClick={() => setUploadModalOpen(false)}>取消</Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* 生成失败提示弹窗 */}
+      <Modal open={errorModalOpen} onOpenChange={setErrorModalOpen}>
+        <ModalHeader>
+          <div className="flex items-center gap-2 text-danger-fg">
+            <AlertCircle className="w-5 h-5" />
+            报告生成失败
+          </div>
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-fg-muted">{errorMessage}</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="primary" onClick={() => setErrorModalOpen(false)}>确定</Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* 删除确认弹窗 */}
+      <Modal open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <ModalHeader>确认删除</ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-fg-muted">确定要删除报告 &quot;{recordToDelete?.name}&quot; 吗？此操作不可撤销。</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setDeleteModalOpen(false)}>取消</Button>
+          <Button variant="danger" onClick={confirmDelete}>删除</Button>
         </ModalFooter>
       </Modal>
     </div>
