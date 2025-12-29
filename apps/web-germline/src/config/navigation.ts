@@ -127,6 +127,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '个人设置', href: '/settings', icon: User },
     { label: 'AI 设置', href: '/settings/ai', icon: Bot },
     { label: '权限管理', href: '/settings/permissions', icon: Shield },
+    { label: '存储管理', href: '/settings/storage', icon: HardDrive },
   ],
 };
 
