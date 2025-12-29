@@ -23,6 +23,7 @@ const pathLabelMap: Record<string, string> = {
   // 主模块
   dashboard: '概览',
   samples: '样本管理',
+  lab: '实验中心',
   data: '数据管理',
   pipeline: '流程中心',
   analysis: '分析中心',
@@ -34,6 +35,8 @@ const pathLabelMap: Record<string, string> = {
   new: '新建',
   import: '批量导入',
   pedigree: '家系管理',
+  // 实验中心子页面
+  sequencers: '测序仪',
   // 数据管理子页面
   samplesheet: '上机表',
   matching: '数据匹配',
@@ -62,6 +65,7 @@ const pathLabelMap: Record<string, string> = {
  */
 const defaultSubPageMap: Record<string, string> = {
   '/samples': '样本列表',
+  '/lab': '上机表',
   '/data': '数据列表',
   '/pipeline': '流程列表',
   '/analysis': '任务列表',

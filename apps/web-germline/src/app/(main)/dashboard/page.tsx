@@ -151,11 +151,44 @@ export default function DashboardPage() {
   return (
     <PageContent>
       {/* 欢迎信息 */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-fg-default">欢迎回来，张医生</h2>
-        <p className="text-sm text-fg-muted mt-1">
-          今天是 2024年12月28日，以下是系统概览
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-fg-default">欢迎回来，张医生</h2>
+          <p className="text-sm text-fg-muted mt-1">
+            今天是 2024年12月28日，以下是系统概览
+          </p>
+        </div>
+        {/* 快捷操作 */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/samples/new"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <Users className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">新建样本</span>
+          </Link>
+          <Link
+            href="/analysis/new"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <FlaskConical className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">新建任务</span>
+          </Link>
+          <Link
+            href="/reports/new"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">生成报告</span>
+          </Link>
+          <Link
+            href="/lab"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">导入数据</span>
+          </Link>
+        </div>
       </div>
 
       {/* 统计卡片 */}
@@ -321,38 +354,6 @@ export default function DashboardPage() {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* 快捷操作 */}
-      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link
-          href="/samples/new"
-          className="p-4 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all text-center"
-        >
-          <Users className="w-6 h-6 mx-auto text-fg-muted mb-2" />
-          <span className="text-sm text-fg-default">新建样本</span>
-        </Link>
-        <Link
-          href="/analysis/new"
-          className="p-4 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all text-center"
-        >
-          <FlaskConical className="w-6 h-6 mx-auto text-fg-muted mb-2" />
-          <span className="text-sm text-fg-default">新建任务</span>
-        </Link>
-        <Link
-          href="/reports/new"
-          className="p-4 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all text-center"
-        >
-          <FileText className="w-6 h-6 mx-auto text-fg-muted mb-2" />
-          <span className="text-sm text-fg-default">生成报告</span>
-        </Link>
-        <Link
-          href="/data/samplesheet"
-          className="p-4 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all text-center"
-        >
-          <Calendar className="w-6 h-6 mx-auto text-fg-muted mb-2" />
-          <span className="text-sm text-fg-default">导入数据</span>
-        </Link>
       </div>
     </PageContent>
   );
