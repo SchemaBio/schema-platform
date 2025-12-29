@@ -4,11 +4,14 @@ import * as React from 'react';
 import { DataTable, Tag, Input } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, ListFilter } from 'lucide-react';
-import type { CNVExon, TableFilterState, PaginatedResult } from '../types';
+import type { CNVExon, TableFilterState, PaginatedResult, CNVAssessment, LossAssessmentCriteria, GainAssessmentCriteria } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getCNVExons, getGeneLists, type GeneListOption } from '../mock-data';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 import { CNVDetailPanel } from './CNVDetailPanel';
+import { CNVPathogenicityTag } from './CNVPathogenicityTag';
+import { CNVAssessmentPanel } from './CNVAssessmentPanel';
+import { useCNVAssessment } from '../hooks/useCNVAssessment';
 
 interface CNVExonTabProps {
   taskId: string;
@@ -31,6 +34,22 @@ export function CNVExonTab({
   const [selectedVariant, setSelectedVariant] = React.useState<CNVExon | null>(null);
   const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
 
+  // 评估面板状态
+  const [assessmentVariant, setAssessmentVariant] = React.useState<CNVExon | null>(null);
+  const [assessmentPanelOpen, setAssessmentPanelOpen] = React.useState(false);
+  
+  // 评估状态管理
+  const { 
+    assessment, 
+    updateCriteria, 
+    resetAssessment, 
+    saveAssessment,
+    initializeAssessment,
+  } = useCNVAssessment(assessmentVariant);
+
+  // 存储每个CNV的评估结果
+  const [assessmentCache, setAssessmentCache] = React.useState<Record<string, CNVAssessment>>({});
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
 
@@ -44,6 +63,33 @@ export function CNVExonTab({
   const handleCloseDetailPanel = React.useCallback(() => {
     setDetailPanelOpen(false);
   }, []);
+
+  // 打开评估面板
+  const handleOpenAssessmentPanel = React.useCallback((variant: CNVExon) => {
+    setAssessmentVariant(variant);
+    initializeAssessment(variant);
+    setAssessmentPanelOpen(true);
+  }, [initializeAssessment]);
+
+  // 关闭评估面板
+  const handleCloseAssessmentPanel = React.useCallback(() => {
+    setAssessmentPanelOpen(false);
+  }, []);
+
+  // 保存评估
+  const handleSaveAssessment = React.useCallback((savedAssessment: CNVAssessment) => {
+    setAssessmentCache(prev => ({
+      ...prev,
+      [savedAssessment.cnvId]: savedAssessment,
+    }));
+    saveAssessment();
+    setAssessmentPanelOpen(false);
+  }, [saveAssessment]);
+
+  // 获取CNV的评估结果
+  const getAssessmentForCNV = React.useCallback((cnvId: string): CNVAssessment | null => {
+    return assessmentCache[cnvId] ?? null;
+  }, [assessmentCache]);
 
   // 加载基因列表
   React.useEffect(() => {
@@ -215,6 +261,27 @@ export function CNVExonTab({
       sortable: true,
     },
     {
+      id: 'pathogenicity',
+      header: '致病性',
+      accessor: (row) => {
+        const cachedAssessment = getAssessmentForCNV(row.id);
+        const classification = cachedAssessment?.classification ?? 'VUS';
+        const score = cachedAssessment?.totalScore ?? 0;
+        const isUserModified = cachedAssessment?.isUserModified ?? false;
+        
+        return (
+          <CNVPathogenicityTag
+            cnvType={row.type}
+            classification={classification}
+            score={score}
+            isUserModified={isUserModified}
+            onClick={() => handleOpenAssessmentPanel(row)}
+          />
+        );
+      },
+      width: 100,
+    },
+    {
       id: 'copyNumber',
       header: '拷贝数',
       accessor: (row) => row.copyNumber,
@@ -344,6 +411,17 @@ export function CNVExonTab({
         variantType="exon"
         isOpen={detailPanelOpen}
         onClose={handleCloseDetailPanel}
+      />
+
+      {/* CNV 评估面板 */}
+      <CNVAssessmentPanel
+        cnv={assessmentVariant}
+        assessment={assessment}
+        isOpen={assessmentPanelOpen}
+        onClose={handleCloseAssessmentPanel}
+        onSave={handleSaveAssessment}
+        onReset={resetAssessment}
+        onCriteriaChange={updateCriteria}
       />
     </div>
   );
