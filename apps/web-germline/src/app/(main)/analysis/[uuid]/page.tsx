@@ -17,6 +17,7 @@ import {
   STRTab,
   MTTab,
   UPDTab,
+  ReportTab,
 } from './components';
 
 export default function AnalysisDetailPage() {
@@ -139,6 +140,8 @@ export default function AnalysisDetailPage() {
             onFilterChange={(state) => setFilterState('upd', state)}
           />
         );
+      case 'report':
+        return <ReportTab taskId={uuid} />;
       default:
         return null;
     }

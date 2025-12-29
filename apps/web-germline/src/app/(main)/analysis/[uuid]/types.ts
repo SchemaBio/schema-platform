@@ -193,7 +193,7 @@ export interface UPDRegion extends VariantReviewStatus {
 }
 
 // ============ 标签页类型 ============
-export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd';
+export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'report';
 
 export interface TabConfig {
   id: TabType;
@@ -209,6 +209,7 @@ export const TAB_CONFIGS: TabConfig[] = [
   { id: 'str', label: '动态突变' },
   { id: 'mt', label: '线粒体' },
   { id: 'upd', label: 'UPD' },
+  { id: 'report', label: '报告生成' },
 ];
 
 // ============ 表格筛选状态 ============

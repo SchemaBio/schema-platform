@@ -8,6 +8,7 @@ export { CNVExonTab } from './CNVExonTab';
 export { STRTab } from './STRTab';
 export { MTTab } from './MTTab';
 export { UPDTab } from './UPDTab';
+export { ReportTab } from './ReportTab';
 export { IGVViewer, PositionLink } from './IGVViewer';
 export { VariantDetailPanel } from './VariantDetailPanel';
 export { CNVDetailPanel } from './CNVDetailPanel';
