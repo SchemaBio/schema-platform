@@ -64,20 +64,23 @@ export interface VariantReviewStatus {
 
 export interface SNVIndel extends VariantReviewStatus {
   id: string;
-  gene: string;                  // 基因名
-  chromosome: string;            // 染色体
-  position: number;              // 位置
-  ref: string;                   // 参考碱基
-  alt: string;                   // 变异碱基
-  variantType: 'SNV' | 'Insertion' | 'Deletion';
+  gene: string;                  // 基因名 (HGNC)
+  chromosome: string;            // 染色体 (不带chr前缀)
+  position: number;              // 位置 (兼容旧字段)
+  start: number;                 // 起始位置 (NCCL)
+  end: number;                   // 终止位置 (NCCL: SNV时与start相同，Insertion时为-1表示"-")
+  ref: string;                   // 参考碱基 (Insertion时为"-")
+  alt: string;                   // 变异碱基 (Deletion时为"-")
+  variantType: 'SNV' | 'Insertion' | 'Deletion' | 'Complex';
   zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
-  alleleFrequency: number;       // 等位基因频率
+  alleleFrequency: number;       // 等位基因频率 (VAF)
   depth: number;                 // 覆盖深度
   acmgClassification: ACMGClassification;
-  transcript: string;            // 转录本
-  hgvsc: string;                 // cDNA变化
-  hgvsp: string;                 // 蛋白质变化
-  consequence: string;           // 变异后果
+  transcript: string;            // 转录本 (含版本号，如 NM_005228.5)
+  hgvsc: string;                 // cDNA变化 (cHGVS)
+  hgvsp: string;                 // 蛋白质变化 (pHGVS)
+  consequence: string;           // 变异后果 (Consequence)
+  affectedExon?: string;         // 受影响外显子 (如 "19/27")
   // 扩展注释信息
   rsId?: string;                 // dbSNP ID
   clinvarId?: string;            // ClinVar ID

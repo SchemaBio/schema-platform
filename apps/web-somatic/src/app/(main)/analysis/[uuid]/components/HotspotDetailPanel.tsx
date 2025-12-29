@@ -4,20 +4,39 @@ import * as React from 'react';
 import { X, ExternalLink, FileText, Database, Dna, Pill, Activity } from 'lucide-react';
 import { Tag } from '@schema/ui-kit';
 
-// 热点突变类型
+// 突变类型 (NCCL规范)
+type VariantType = 'SNV' | 'Insertion' | 'Deletion' | 'Complex';
+
+// 突变后果 (NCCL规范)
+type Consequence = 
+  | 'Synonymous_substitution'
+  | 'Missense_substitution'
+  | 'Nonsense_substitution'
+  | 'Inframe_insertion'
+  | 'Frameshift_insertion'
+  | 'Inframe_deletion'
+  | 'Frameshift_deletion'
+  | 'Complex_mutation'
+  | 'Splice_Site_mutation'
+  | 'Other';
+
+// 热点突变类型 (NCCL规范)
 interface Hotspot {
   id: string;
-  gene: string;
-  mutation: string;
-  chromosome: string;
-  position: number;
+  chr: string;
+  start: number;
+  end: number;
   ref: string;
   alt: string;
+  gene: string;
+  type: VariantType;
   transcript: string;
-  hgvsc: string;
-  hgvsp: string;
+  cHGVS: string;
+  pHGVS: string;
   vaf: number;
   depth: number;
+  consequence: Consequence;
+  affectedExon: string;
   hotspotType: 'Oncogenic' | 'Resistance' | 'Sensitizing';
   clinicalSignificance: 'Tier I' | 'Tier II' | 'Tier III' | 'Unknown';
   drugAssociation: string[];
@@ -107,6 +126,32 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
     }
   };
 
+  const getTypeVariant = (type: VariantType): 'info' | 'warning' | 'danger' | 'success' => {
+    switch (type) {
+      case 'SNV': return 'info';
+      case 'Insertion': return 'success';
+      case 'Deletion': return 'danger';
+      case 'Complex': return 'warning';
+      default: return 'info';
+    }
+  };
+
+  const getConsequenceLabel = (consequence: Consequence): string => {
+    const labels: Record<Consequence, string> = {
+      'Synonymous_substitution': '同义突变',
+      'Missense_substitution': '错义突变',
+      'Nonsense_substitution': '无义突变',
+      'Inframe_insertion': '框内插入',
+      'Frameshift_insertion': '移码插入',
+      'Inframe_deletion': '框内删除',
+      'Frameshift_deletion': '移码删除',
+      'Complex_mutation': '复杂突变',
+      'Splice_Site_mutation': '剪接突变',
+      'Other': '其他',
+    };
+    return labels[consequence] || consequence;
+  };
+
   return (
     <>
       {/* 背景遮罩 */}
@@ -116,7 +161,7 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
       />
       
       {/* 侧边面板 */}
-      <div className="fixed right-0 top-0 h-full w-[480px] bg-white dark:bg-[#0d1117] border-l border-border shadow-xl z-50 flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-[520px] bg-white dark:bg-[#0d1117] border-l border-border shadow-xl z-50 flex flex-col">
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-canvas-subtle">
           <div className="flex items-center gap-3">
@@ -136,33 +181,46 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
 
         {/* 内容区域 */}
         <div className="flex-1 overflow-y-auto p-4">
-          {/* 基本信息 */}
-          <SectionTitle icon={Dna} title="基本信息" />
+          {/* 基因组位置信息 (NCCL规范) */}
+          <SectionTitle icon={Dna} title="基因组位置" />
           <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="基因" value={hotspot.gene} />
-            <InfoItem label="突变" value={<span className="font-medium">{hotspot.mutation}</span>} />
+            <InfoItem label="Chr" value={hotspot.chr} />
             <InfoItem 
-              label="位置" 
+              label="Start" 
               value={
                 <button
-                  onClick={() => onOpenIGV?.(hotspot.chromosome, hotspot.position)}
-                  className="text-accent-fg hover:underline"
+                  onClick={() => onOpenIGV?.(`chr${hotspot.chr}`, hotspot.start)}
+                  className="text-accent-fg hover:underline font-mono"
                 >
-                  {hotspot.chromosome}:{hotspot.position.toLocaleString()}
+                  {hotspot.start}
                 </button>
               }
             />
-            <InfoItem label="碱基变化" value={`${hotspot.ref} > ${hotspot.alt}`} />
-            <InfoItem label="转录本" value={hotspot.transcript} />
-            <InfoItem label="cDNA变化" value={hotspot.hgvsc} />
-            <InfoItem label="蛋白质变化" value={hotspot.hgvsp} />
+            <InfoItem label="End" value={hotspot.type === 'Insertion' || hotspot.end < 0 ? '-' : String(hotspot.end)} />
+            <InfoItem label="Ref" value={<span className="font-mono">{hotspot.ref}</span>} />
+            <InfoItem label="Alt" value={<span className="font-mono">{hotspot.alt}</span>} />
+          </div>
+
+          {/* 基因与转录本信息 */}
+          <SectionTitle icon={Dna} title="基因与转录本" />
+          <div className="bg-canvas-subtle rounded-lg p-3">
+            <InfoItem label="Gene" value={hotspot.gene} />
+            <InfoItem 
+              label="Type" 
+              value={<Tag variant={getTypeVariant(hotspot.type)}>{hotspot.type}</Tag>}
+            />
+            <InfoItem label="Transcript" value={hotspot.transcript} />
+            <InfoItem label="cHGVS" value={<span className="font-mono text-sm">{hotspot.cHGVS}</span>} />
+            <InfoItem label="pHGVS" value={<span className="font-mono text-sm">{hotspot.pHGVS}</span>} />
+            <InfoItem label="Consequence" value={getConsequenceLabel(hotspot.consequence)} />
+            <InfoItem label="Affected_Exon" value={hotspot.affectedExon} />
           </div>
 
           {/* 测序质量 */}
           <SectionTitle icon={Activity} title="测序质量" />
           <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="VAF" value={`${(hotspot.vaf * 100).toFixed(1)}%`} />
-            <InfoItem label="覆盖深度" value={`${hotspot.depth}X`} />
+            <InfoItem label="VAF%" value={`${(hotspot.vaf * 100).toFixed(2)}`} />
+            <InfoItem label="Depth" value={`${hotspot.depth}X`} />
           </div>
 
           {/* 临床意义 */}
@@ -187,7 +245,7 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
             <InfoItem 
               label="OncoKB Level" 
               value={hotspot.oncokbLevel}
-              link={hotspot.oncokbLevel ? `https://www.oncokb.org/gene/${hotspot.gene}/${hotspot.mutation}` : undefined}
+              link={hotspot.oncokbLevel ? `https://www.oncokb.org/gene/${hotspot.gene}/${hotspot.pHGVS.replace('p.', '')}` : undefined}
             />
             <InfoItem 
               label="COSMIC ID" 
@@ -294,7 +352,7 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
         <div className="border-t border-border p-4 bg-canvas-subtle">
           <div className="flex gap-2">
             <button
-              onClick={() => onOpenIGV?.(hotspot.chromosome, hotspot.position)}
+              onClick={() => onOpenIGV?.(`chr${hotspot.chr}`, hotspot.start)}
               className="flex-1 px-4 py-2 text-sm bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90 transition-colors"
             >
               在 IGV 中查看

@@ -345,38 +345,51 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
 
         {/* 内容区域 */}
         <div className="flex-1 overflow-y-auto p-4">
-          {/* 基本信息 */}
-          <SectionTitle icon={Dna} title="基本信息" />
+          {/* 基本信息 (NCCL规范) */}
+          <SectionTitle icon={Dna} title="基因组位置" />
           <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="基因" value={variant.gene} />
+            <InfoItem label="Chr" value={variant.chromosome.replace('chr', '')} />
             <InfoItem 
-              label="位置" 
+              label="Start" 
               value={
                 <button
-                  onClick={() => onOpenIGV?.(variant.chromosome, variant.position)}
-                  className="text-accent-fg hover:underline"
+                  onClick={() => onOpenIGV?.(variant.chromosome.startsWith('chr') ? variant.chromosome : `chr${variant.chromosome}`, variant.start ?? variant.position)}
+                  className="text-accent-fg hover:underline font-mono"
                 >
-                  {variant.chromosome}:{variant.position}
+                  {variant.start ?? variant.position}
                 </button>
               }
             />
-            <InfoItem label="参考/变异" value={`${variant.ref} > ${variant.alt}`} />
-            <InfoItem label="变异类型" value={variant.variantType} />
-            <InfoItem label="杂合性" value={
+            <InfoItem label="End" value={
+              variant.variantType === 'Insertion' || (variant.end !== undefined && variant.end < 0) 
+                ? '-' 
+                : String(variant.end ?? variant.position)
+            } />
+            <InfoItem label="Ref" value={<span className="font-mono">{variant.ref}</span>} />
+            <InfoItem label="Alt" value={<span className="font-mono">{variant.alt}</span>} />
+          </div>
+
+          {/* 基因与转录本信息 */}
+          <SectionTitle icon={Dna} title="基因与转录本" />
+          <div className="bg-canvas-subtle rounded-lg p-3">
+            <InfoItem label="Gene" value={variant.gene} />
+            <InfoItem label="Type" value={variant.variantType} />
+            <InfoItem label="Transcript" value={variant.transcript} />
+            <InfoItem label="cHGVS" value={<span className="font-mono text-sm">{variant.hgvsc}</span>} />
+            <InfoItem label="pHGVS" value={<span className="font-mono text-sm">{variant.hgvsp}</span>} />
+            <InfoItem label="Consequence" value={variant.consequence} />
+            <InfoItem label="Affected_Exon" value={variant.affectedExon} />
+            <InfoItem label="Zygosity" value={
               variant.zygosity === 'Heterozygous' ? '杂合' :
               variant.zygosity === 'Homozygous' ? '纯合' : '半合'
             } />
-            <InfoItem label="转录本" value={variant.transcript} />
-            <InfoItem label="cDNA变化" value={variant.hgvsc} />
-            <InfoItem label="蛋白质变化" value={variant.hgvsp} />
-            <InfoItem label="变异后果" value={variant.consequence} />
           </div>
 
           {/* 测序质量 */}
           <SectionTitle icon={FileText} title="测序质量" />
           <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="等位基因频率" value={`${(variant.alleleFrequency * 100).toFixed(1)}%`} />
-            <InfoItem label="覆盖深度" value={`${variant.depth}X`} />
+            <InfoItem label="VAF%" value={`${(variant.alleleFrequency * 100).toFixed(2)}`} />
+            <InfoItem label="Depth" value={`${variant.depth}X`} />
           </div>
 
           {/* 人群频率 */}
@@ -508,7 +521,7 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
         <div className="border-t border-border p-4 bg-canvas-subtle">
           <div className="flex gap-2">
             <button
-              onClick={() => onOpenIGV?.(variant.chromosome, variant.position)}
+              onClick={() => onOpenIGV?.(variant.chromosome.startsWith('chr') ? variant.chromosome : `chr${variant.chromosome}`, variant.start ?? variant.position)}
               className="flex-1 px-4 py-2 text-sm bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90 transition-colors"
             >
               在 IGV 中查看

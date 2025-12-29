@@ -162,7 +162,18 @@ export function SNVIndelTab({
     return geneLists.find(list => list.id === filterState.geneListId);
   }, [filterState.geneListId, geneLists]);
 
-  // 列定义
+  // 获取突变类型标签
+  const getTypeVariant = (type: string): 'info' | 'warning' | 'danger' | 'success' => {
+    switch (type) {
+      case 'SNV': return 'info';
+      case 'Insertion': return 'success';
+      case 'Deletion': return 'danger';
+      case 'Complex': return 'warning';
+      default: return 'info';
+    }
+  };
+
+  // 列定义 (NCCL规范)
   const columns: Column<SNVIndel>[] = [
     {
       id: 'reviewed',
@@ -193,90 +204,118 @@ export function SNVIndelTab({
       width: 60,
     },
     {
-      id: 'gene',
-      header: '基因',
-      accessor: 'gene',
-      width: 100,
-      sortable: true,
+      id: 'chr',
+      header: 'Chr',
+      accessor: (row) => row.chromosome.replace('chr', ''),
+      width: 50,
     },
     {
-      id: 'position',
-      header: '变异位置',
+      id: 'start',
+      header: 'Start',
       accessor: (row) => (
         <PositionLink
-          chromosome={row.chromosome}
-          position={row.position}
+          chromosome={row.chromosome.startsWith('chr') ? row.chromosome : `chr${row.chromosome}`}
+          position={row.start ?? row.position}
+          label={String(row.start ?? row.position)}
           onClick={handleOpenIGV}
         />
       ),
-      width: 150,
+      width: 100,
       sortable: true,
     },
     {
-      id: 'change',
-      header: '参考/变异',
-      accessor: (row) => `${row.ref}>${row.alt}`,
+      id: 'end',
+      header: 'End',
+      accessor: (row) => {
+        if (row.variantType === 'Insertion') return '-';
+        const endPos = row.end ?? row.position;
+        return endPos < 0 ? '-' : String(endPos);
+      },
       width: 100,
     },
     {
-      id: 'variantType',
-      header: '变异类型',
-      accessor: (row) => {
-        const typeLabels = { SNV: 'SNV', Insertion: '插入', Deletion: '缺失' };
-        return typeLabels[row.variantType];
-      },
+      id: 'ref',
+      header: 'Ref',
+      accessor: (row) => (
+        <span className="font-mono text-xs" title={row.ref}>
+          {row.ref.length > 8 ? `${row.ref.substring(0, 8)}...` : row.ref}
+        </span>
+      ),
       width: 80,
     },
     {
-      id: 'zygosity',
-      header: '杂合性',
-      accessor: (row) => {
-        const labels = { Heterozygous: '杂合', Homozygous: '纯合', Hemizygous: '半合' };
-        return labels[row.zygosity];
-      },
+      id: 'alt',
+      header: 'Alt',
+      accessor: (row) => (
+        <span className="font-mono text-xs" title={row.alt}>
+          {row.alt.length > 8 ? `${row.alt.substring(0, 8)}...` : row.alt}
+        </span>
+      ),
       width: 80,
     },
     {
-      id: 'alleleFrequency',
-      header: '频率',
-      accessor: (row) => `${(row.alleleFrequency * 100).toFixed(1)}%`,
-      width: 80,
-      sortable: true,
-    },
-    {
-      id: 'depth',
-      header: '深度',
-      accessor: (row) => `${row.depth}X`,
+      id: 'gene',
+      header: 'Gene',
+      accessor: 'gene',
       width: 70,
       sortable: true,
     },
     {
+      id: 'type',
+      header: 'Type',
+      accessor: (row) => (
+        <Tag variant={getTypeVariant(row.variantType)}>
+          {row.variantType}
+        </Tag>
+      ),
+      width: 90,
+    },
+    {
+      id: 'transcript',
+      header: 'Transcript',
+      accessor: 'transcript',
+      width: 120,
+    },
+    {
+      id: 'cHGVS',
+      header: 'cHGVS',
+      accessor: 'hgvsc',
+      width: 140,
+    },
+    {
+      id: 'pHGVS',
+      header: 'pHGVS',
+      accessor: 'hgvsp',
+      width: 120,
+    },
+    {
+      id: 'vaf',
+      header: 'VAF%',
+      accessor: (row) => `${(row.alleleFrequency * 100).toFixed(2)}`,
+      width: 70,
+      sortable: true,
+    },
+    {
+      id: 'consequence',
+      header: 'Consequence',
+      accessor: 'consequence',
+      width: 100,
+    },
+    {
+      id: 'affectedExon',
+      header: 'Affected_Exon',
+      accessor: (row) => row.affectedExon ?? '-',
+      width: 100,
+    },
+    {
       id: 'acmgClassification',
-      header: 'ACMG分类',
+      header: '临床意义',
       accessor: (row) => {
         const config = ACMG_CONFIG[row.acmgClassification];
         return <Tag variant={config.variant}>{config.label}</Tag>;
       },
-      width: 100,
+      width: 90,
       sortable: true,
-    },
-    {
-      id: 'transcript',
-      header: '转录本',
-      accessor: 'transcript',
-      width: 130,
-    },
-    {
-      id: 'hgvsc',
-      header: 'cDNA变化',
-      accessor: 'hgvsc',
-      width: 150,
-    },
-    {
-      id: 'hgvsp',
-      header: '蛋白质变化',
-      accessor: 'hgvsp',
-      width: 150,
     },
   ];
 

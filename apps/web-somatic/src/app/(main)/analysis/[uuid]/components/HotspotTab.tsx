@@ -11,20 +11,43 @@ import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader 
 import { HotspotDetailPanel } from './HotspotDetailPanel';
 import { IGVViewer, PositionLink } from './IGVViewer';
 
-// 热点突变类型
+// 突变类型 (NCCL规范)
+type VariantType = 'SNV' | 'Insertion' | 'Deletion' | 'Complex';
+
+// 突变后果 (NCCL规范)
+type Consequence = 
+  | 'Synonymous_substitution'    // 同义突变
+  | 'Missense_substitution'      // 错义突变
+  | 'Nonsense_substitution'      // 无义突变
+  | 'Inframe_insertion'          // 框内插入
+  | 'Frameshift_insertion'       // 移码插入
+  | 'Inframe_deletion'           // 框内删除
+  | 'Frameshift_deletion'        // 移码删除
+  | 'Complex_mutation'           // 复杂突变
+  | 'Splice_Site_mutation'       // 剪接点改变
+  | 'Other';                     // 其他
+
+// 热点突变类型 (NCCL规范)
 interface Hotspot {
   id: string;
-  gene: string;
-  mutation: string;
-  chromosome: string;
-  position: number;
-  ref: string;
-  alt: string;
-  transcript: string;
-  hgvsc: string;
-  hgvsp: string;
-  vaf: number;
-  depth: number;
+  // 基因组位置信息
+  chr: string;                   // 染色体 (不带chr前缀)
+  start: number;                 // 起始位置
+  end: number;                   // 终止位置 (SNV时与start相同，Insertion时为"-")
+  ref: string;                   // 参考碱基 (Insertion时为"-")
+  alt: string;                   // 变异碱基 (Deletion时为"-")
+  // 基因与转录本信息
+  gene: string;                  // HGNC基因名
+  type: VariantType;             // 突变类型
+  transcript: string;            // ClinVar参考转录本 (含版本号)
+  cHGVS: string;                 // cDNA变化 (HGVS规则)
+  pHGVS: string;                 // 蛋白质变化 (HGVS规则，可缩写)
+  // 检测信息
+  vaf: number;                   // VAF (0-1)
+  depth: number;                 // 覆盖深度
+  consequence: Consequence;      // 突变后果
+  affectedExon: string;          // 受影响外显子 (如 "19/27")
+  // 临床意义
   hotspotType: 'Oncogenic' | 'Resistance' | 'Sensitizing';
   clinicalSignificance: 'Tier I' | 'Tier II' | 'Tier III' | 'Unknown';
   drugAssociation: string[];
@@ -33,6 +56,7 @@ interface Hotspot {
   oncokbLevel?: string;
   pubmedIds?: string[];
   clinicalTrials?: string[];
+  // 状态
   reviewed: boolean;
   reported: boolean;
 }
@@ -43,64 +67,96 @@ interface HotspotTabProps {
   onFilterChange?: (state: TableFilterState) => void;
 }
 
-// Mock数据 - 常见肿瘤热点突变
+// Mock数据 - 常见肿瘤热点突变 (NCCL规范)
 const mockHotspots: Hotspot[] = [
   { 
-    id: '1', gene: 'EGFR', mutation: 'L858R', chromosome: 'chr7', position: 55259515, ref: 'T', alt: 'G', 
-    transcript: 'NM_005228.5', hgvsc: 'c.2573T>G', hgvsp: 'p.Leu858Arg',
-    vaf: 0.35, depth: 1250, hotspotType: 'Sensitizing', clinicalSignificance: 'Tier I', 
+    id: '1', 
+    chr: '7', start: 55259515, end: 55259515, ref: 'T', alt: 'G',
+    gene: 'EGFR', type: 'SNV', transcript: 'NM_005228.5', 
+    cHGVS: 'c.2573T>G', pHGVS: 'p.L858R',
+    vaf: 0.35, depth: 1250, consequence: 'Missense_substitution', affectedExon: '21/28',
+    hotspotType: 'Sensitizing', clinicalSignificance: 'Tier I', 
     drugAssociation: ['Gefitinib', 'Erlotinib', 'Osimertinib'], cancerType: ['NSCLC'],
     cosmicId: 'COSM6224', oncokbLevel: 'Level 1', pubmedIds: ['15118073', '15329413'],
     clinicalTrials: ['NCT02296125', 'NCT03778229'],
     reviewed: true, reported: true 
   },
   { 
-    id: '2', gene: 'EGFR', mutation: 'T790M', chromosome: 'chr7', position: 55249071, ref: 'C', alt: 'T', 
-    transcript: 'NM_005228.5', hgvsc: 'c.2369C>T', hgvsp: 'p.Thr790Met',
-    vaf: 0.12, depth: 980, hotspotType: 'Resistance', clinicalSignificance: 'Tier I', 
+    id: '2', 
+    chr: '7', start: 55249071, end: 55249071, ref: 'C', alt: 'T',
+    gene: 'EGFR', type: 'SNV', transcript: 'NM_005228.5', 
+    cHGVS: 'c.2369C>T', pHGVS: 'p.T790M',
+    vaf: 0.2312, depth: 980, consequence: 'Missense_substitution', affectedExon: '19/28',
+    hotspotType: 'Resistance', clinicalSignificance: 'Tier I', 
     drugAssociation: ['Osimertinib'], cancerType: ['NSCLC'],
     cosmicId: 'COSM6240', oncokbLevel: 'Level 1', pubmedIds: ['15737014', '25923549'],
     reviewed: true, reported: false 
   },
   { 
-    id: '3', gene: 'KRAS', mutation: 'G12D', chromosome: 'chr12', position: 25398284, ref: 'G', alt: 'A', 
-    transcript: 'NM_004985.5', hgvsc: 'c.35G>A', hgvsp: 'p.Gly12Asp',
-    vaf: 0.28, depth: 1560, hotspotType: 'Oncogenic', clinicalSignificance: 'Tier I', 
+    id: '3', 
+    chr: '7', start: 55242467, end: 55242484, ref: 'AATTAAGAGAAGCAACAT', alt: '-',
+    gene: 'EGFR', type: 'Deletion', transcript: 'NM_005228.5', 
+    cHGVS: 'c.2237_2254del18', pHGVS: 'p.E746_S752delinsA',
+    vaf: 0.2312, depth: 1100, consequence: 'Inframe_deletion', affectedExon: '19/28',
+    hotspotType: 'Sensitizing', clinicalSignificance: 'Tier I', 
+    drugAssociation: ['Gefitinib', 'Erlotinib', 'Osimertinib', 'Afatinib'], cancerType: ['NSCLC'],
+    cosmicId: 'COSM6223', oncokbLevel: 'Level 1', pubmedIds: ['15118073'],
+    reviewed: false, reported: false 
+  },
+  { 
+    id: '4', 
+    chr: '7', start: 55249010, end: -1, ref: '-', alt: 'GTT',  // NCCL: Insertion的end为"-"，用-1表示
+    gene: 'EGFR', type: 'Insertion', transcript: 'NM_005228.5', 
+    cHGVS: 'c.2308_2309insGTT', pHGVS: 'p.D770delinsGY',
+    vaf: 0.18, depth: 920, consequence: 'Inframe_insertion', affectedExon: '20/28',
+    hotspotType: 'Resistance', clinicalSignificance: 'Tier I', 
+    drugAssociation: ['Poziotinib', 'Mobocertinib'], cancerType: ['NSCLC'],
+    cosmicId: 'COSM12376', oncokbLevel: 'Level 2', pubmedIds: ['23371856'],
+    reviewed: false, reported: false 
+  },
+  { 
+    id: '5', 
+    chr: '12', start: 25398284, end: 25398284, ref: 'G', alt: 'A',
+    gene: 'KRAS', type: 'SNV', transcript: 'NM_004985.5', 
+    cHGVS: 'c.35G>A', pHGVS: 'p.G12D',
+    vaf: 0.28, depth: 1560, consequence: 'Missense_substitution', affectedExon: '2/6',
+    hotspotType: 'Oncogenic', clinicalSignificance: 'Tier I', 
     drugAssociation: ['Sotorasib (G12C only)'], cancerType: ['PDAC', 'CRC', 'NSCLC'],
     cosmicId: 'COSM521', oncokbLevel: 'Level 3A', pubmedIds: ['23288408'],
     reviewed: false, reported: false 
   },
   { 
-    id: '4', gene: 'BRAF', mutation: 'V600E', chromosome: 'chr7', position: 140453136, ref: 'A', alt: 'T', 
-    transcript: 'NM_004333.6', hgvsc: 'c.1799T>A', hgvsp: 'p.Val600Glu',
-    vaf: 0.42, depth: 890, hotspotType: 'Oncogenic', clinicalSignificance: 'Tier I', 
+    id: '6', 
+    chr: '7', start: 140453136, end: 140453136, ref: 'A', alt: 'T',
+    gene: 'BRAF', type: 'SNV', transcript: 'NM_004333.6', 
+    cHGVS: 'c.1799T>A', pHGVS: 'p.V600E',
+    vaf: 0.42, depth: 890, consequence: 'Missense_substitution', affectedExon: '15/18',
+    hotspotType: 'Oncogenic', clinicalSignificance: 'Tier I', 
     drugAssociation: ['Vemurafenib', 'Dabrafenib', 'Encorafenib'], cancerType: ['Melanoma', 'CRC', 'NSCLC'],
     cosmicId: 'COSM476', oncokbLevel: 'Level 1', pubmedIds: ['12068308', '20818844'],
     clinicalTrials: ['NCT01909453'],
     reviewed: false, reported: false 
   },
   { 
-    id: '5', gene: 'PIK3CA', mutation: 'H1047R', chromosome: 'chr3', position: 178952085, ref: 'A', alt: 'G', 
-    transcript: 'NM_006218.4', hgvsc: 'c.3140A>G', hgvsp: 'p.His1047Arg',
-    vaf: 0.18, depth: 1120, hotspotType: 'Oncogenic', clinicalSignificance: 'Tier I', 
+    id: '7', 
+    chr: '3', start: 178952085, end: 178952085, ref: 'A', alt: 'G',
+    gene: 'PIK3CA', type: 'SNV', transcript: 'NM_006218.4', 
+    cHGVS: 'c.3140A>G', pHGVS: 'p.H1047R',
+    vaf: 0.18, depth: 1120, consequence: 'Missense_substitution', affectedExon: '21/21',
+    hotspotType: 'Oncogenic', clinicalSignificance: 'Tier I', 
     drugAssociation: ['Alpelisib'], cancerType: ['Breast'],
     cosmicId: 'COSM775', oncokbLevel: 'Level 1', pubmedIds: ['15016963', '31091374'],
     reviewed: false, reported: false 
   },
   { 
-    id: '6', gene: 'NRAS', mutation: 'Q61K', chromosome: 'chr1', position: 115256529, ref: 'C', alt: 'A', 
-    transcript: 'NM_002524.5', hgvsc: 'c.181C>A', hgvsp: 'p.Gln61Lys',
-    vaf: 0.22, depth: 750, hotspotType: 'Oncogenic', clinicalSignificance: 'Tier II', 
-    drugAssociation: [], cancerType: ['Melanoma', 'AML'],
-    cosmicId: 'COSM580', oncokbLevel: 'Level 3B',
-    reviewed: false, reported: false 
-  },
-  { 
-    id: '7', gene: 'ALK', mutation: 'F1174L', chromosome: 'chr2', position: 29443695, ref: 'G', alt: 'T', 
-    transcript: 'NM_004304.5', hgvsc: 'c.3522G>T', hgvsp: 'p.Phe1174Leu',
-    vaf: 0.31, depth: 680, hotspotType: 'Resistance', clinicalSignificance: 'Tier I', 
-    drugAssociation: ['Lorlatinib'], cancerType: ['Neuroblastoma', 'NSCLC'],
-    cosmicId: 'COSM28055', oncokbLevel: 'Level R2', pubmedIds: ['21030459'],
+    id: '8', 
+    chr: '9', start: 36923458, end: 36923459, ref: 'GG', alt: 'AT',
+    gene: 'PAX5', type: 'Complex', transcript: 'NM_016734.3', 
+    cHGVS: 'c.803_804delinsTA', pHGVS: 'p.A268D',
+    vaf: 0.2312, depth: 850, consequence: 'Missense_substitution', affectedExon: '7/10',
+    hotspotType: 'Oncogenic', clinicalSignificance: 'Tier II', 
+    drugAssociation: [], cancerType: ['B-ALL'],
+    cosmicId: 'COSM1234567',
     reviewed: false, reported: false 
   },
 ];
@@ -113,7 +169,8 @@ async function getHotspots(_taskId: string, filterState: TableFilterState): Prom
     const query = filterState.searchQuery.toLowerCase();
     data = data.filter(item => 
       item.gene.toLowerCase().includes(query) || 
-      item.mutation.toLowerCase().includes(query) ||
+      item.pHGVS.toLowerCase().includes(query) ||
+      item.cHGVS.toLowerCase().includes(query) ||
       item.drugAssociation.some(d => d.toLowerCase().includes(query))
     );
   }
@@ -264,7 +321,35 @@ export function HotspotTab({
     return geneLists.find(list => list.id === filterState.geneListId);
   }, [filterState.geneListId, geneLists]);
 
-  // 列定义
+  // 获取突变类型标签
+  const getTypeVariant = (type: VariantType): 'info' | 'warning' | 'danger' | 'success' => {
+    switch (type) {
+      case 'SNV': return 'info';
+      case 'Insertion': return 'success';
+      case 'Deletion': return 'danger';
+      case 'Complex': return 'warning';
+      default: return 'info';
+    }
+  };
+
+  // 获取突变后果显示文本
+  const getConsequenceLabel = (consequence: Consequence): string => {
+    const labels: Record<Consequence, string> = {
+      'Synonymous_substitution': '同义突变',
+      'Missense_substitution': '错义突变',
+      'Nonsense_substitution': '无义突变',
+      'Inframe_insertion': '框内插入',
+      'Frameshift_insertion': '移码插入',
+      'Inframe_deletion': '框内删除',
+      'Frameshift_deletion': '移码删除',
+      'Complex_mutation': '复杂突变',
+      'Splice_Site_mutation': '剪接突变',
+      'Other': '其他',
+    };
+    return labels[consequence] || consequence;
+  };
+
+  // 列定义 (NCCL规范)
   const columns: Column<Hotspot>[] = [
     {
       id: 'reviewed',
@@ -295,71 +380,107 @@ export function HotspotTab({
       width: 60,
     },
     {
-      id: 'gene',
-      header: '基因',
-      accessor: 'gene',
-      width: 80,
-      sortable: true,
+      id: 'chr',
+      header: 'Chr',
+      accessor: 'chr',
+      width: 50,
     },
     {
-      id: 'mutation',
-      header: '突变',
-      accessor: (row) => <span className="font-medium">{row.mutation}</span>,
-      width: 80,
-    },
-    {
-      id: 'position',
-      header: '位置',
+      id: 'start',
+      header: 'Start',
       accessor: (row) => (
         <PositionLink
-          chromosome={row.chromosome}
-          position={row.position}
+          chromosome={`chr${row.chr}`}
+          position={row.start}
+          label={String(row.start)}
           onClick={handleOpenIGV}
         />
       ),
-      width: 140,
+      width: 100,
     },
     {
-      id: 'change',
-      header: '碱基变化',
-      accessor: (row) => `${row.ref}>${row.alt}`,
+      id: 'end',
+      header: 'End',
+      accessor: (row) => row.type === 'Insertion' ? '-' : String(row.end),
+      width: 100,
+    },
+    {
+      id: 'ref',
+      header: 'Ref',
+      accessor: (row) => (
+        <span className="font-mono text-xs" title={row.ref}>
+          {row.ref.length > 8 ? `${row.ref.substring(0, 8)}...` : row.ref}
+        </span>
+      ),
       width: 80,
     },
     {
+      id: 'alt',
+      header: 'Alt',
+      accessor: (row) => (
+        <span className="font-mono text-xs" title={row.alt}>
+          {row.alt.length > 8 ? `${row.alt.substring(0, 8)}...` : row.alt}
+        </span>
+      ),
+      width: 80,
+    },
+    {
+      id: 'gene',
+      header: 'Gene',
+      accessor: 'gene',
+      width: 70,
+      sortable: true,
+    },
+    {
+      id: 'type',
+      header: 'Type',
+      accessor: (row) => (
+        <Tag variant={getTypeVariant(row.type)}>
+          {row.type}
+        </Tag>
+      ),
+      width: 90,
+    },
+    {
       id: 'transcript',
-      header: '转录本',
+      header: 'Transcript',
       accessor: 'transcript',
       width: 120,
     },
     {
-      id: 'hgvsp',
-      header: '蛋白质变化',
-      accessor: 'hgvsp',
+      id: 'cHGVS',
+      header: 'cHGVS',
+      accessor: 'cHGVS',
+      width: 140,
+    },
+    {
+      id: 'pHGVS',
+      header: 'pHGVS',
+      accessor: 'pHGVS',
       width: 120,
     },
     {
       id: 'vaf',
-      header: 'VAF',
-      accessor: (row) => `${(row.vaf * 100).toFixed(1)}%`,
+      header: 'VAF%',
+      accessor: (row) => `${(row.vaf * 100).toFixed(2)}`,
       width: 70,
       sortable: true,
     },
     {
-      id: 'depth',
-      header: '深度',
-      accessor: (row) => `${row.depth}X`,
-      width: 70,
-      sortable: true,
-    },
-    {
-      id: 'hotspotType',
-      header: '热点类型',
+      id: 'consequence',
+      header: 'Consequence',
       accessor: (row) => (
-        <Tag variant={getHotspotTypeVariant(row.hotspotType)}>
-          {row.hotspotType === 'Oncogenic' ? '致癌' : row.hotspotType === 'Resistance' ? '耐药' : '敏感'}
-        </Tag>
+        <span title={row.consequence}>
+          {getConsequenceLabel(row.consequence)}
+        </span>
       ),
-      width: 90,
+      width: 100,
+    },
+    {
+      id: 'affectedExon',
+      header: 'Affected_Exon',
+      accessor: 'affectedExon',
+      width: 100,
     },
     {
       id: 'clinicalSignificance',
