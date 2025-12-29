@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 import type { MitochondrialVariant, MitochondrialPathogenicity, TableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getMitochondrialVariants } from '../mock-data';
+import { IGVViewer, PositionLink } from './IGVViewer';
 
 interface MTTabProps {
   taskId: string;
@@ -32,8 +33,25 @@ export function MTTab({
   const [result, setResult] = React.useState<PaginatedResult<MitochondrialVariant> | null>(null);
   const [loading, setLoading] = React.useState(true);
 
+  // IGV 查看器状态
+  const [igvState, setIgvState] = React.useState<{
+    isOpen: boolean;
+    chromosome: string;
+    position: number;
+  }>({ isOpen: false, chromosome: '', position: 0 });
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
+
+  // 打开 IGV 查看器
+  const handleOpenIGV = React.useCallback((chromosome: string, position: number) => {
+    setIgvState({ isOpen: true, chromosome, position });
+  }, []);
+
+  // 关闭 IGV 查看器
+  const handleCloseIGV = React.useCallback(() => {
+    setIgvState(prev => ({ ...prev, isOpen: false }));
+  }, []);
 
   React.useEffect(() => {
     async function loadData() {
@@ -71,7 +89,14 @@ export function MTTab({
     {
       id: 'position',
       header: '位置',
-      accessor: (row) => `m.${row.position}`,
+      accessor: (row) => (
+        <PositionLink
+          chromosome="chrM"
+          position={row.position}
+          label={`m.${row.position}`}
+          onClick={handleOpenIGV}
+        />
+      ),
       width: 80,
       sortable: true,
     },
@@ -197,6 +222,14 @@ export function MTTab({
           暂无线粒体变异数据
         </div>
       )}
+
+      {/* IGV 查看器 */}
+      <IGVViewer
+        chromosome={igvState.chromosome}
+        position={igvState.position}
+        isOpen={igvState.isOpen}
+        onClose={handleCloseIGV}
+      />
     </div>
   );
 }

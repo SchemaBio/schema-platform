@@ -7,6 +7,7 @@ import { Search, ListFilter } from 'lucide-react';
 import type { SNVIndel, TableFilterState, PaginatedResult, ACMGClassification } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getSNVIndels, ACMG_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
+import { IGVViewer, PositionLink } from './IGVViewer';
 
 interface SNVIndelTabProps {
   taskId: string;
@@ -23,9 +24,26 @@ export function SNVIndelTab({
   const [result, setResult] = React.useState<PaginatedResult<SNVIndel> | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [geneLists, setGeneLists] = React.useState<GeneListOption[]>([]);
+  
+  // IGV 查看器状态
+  const [igvState, setIgvState] = React.useState<{
+    isOpen: boolean;
+    chromosome: string;
+    position: number;
+  }>({ isOpen: false, chromosome: '', position: 0 });
 
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
+
+  // 打开 IGV 查看器
+  const handleOpenIGV = React.useCallback((chromosome: string, position: number) => {
+    setIgvState({ isOpen: true, chromosome, position });
+  }, []);
+
+  // 关闭 IGV 查看器
+  const handleCloseIGV = React.useCallback(() => {
+    setIgvState(prev => ({ ...prev, isOpen: false }));
+  }, []);
 
   // 加载基因列表
   React.useEffect(() => {
@@ -99,7 +117,13 @@ export function SNVIndelTab({
     {
       id: 'position',
       header: '变异位置',
-      accessor: (row) => `${row.chromosome}:${row.position.toLocaleString()}`,
+      accessor: (row) => (
+        <PositionLink
+          chromosome={row.chromosome}
+          position={row.position}
+          onClick={handleOpenIGV}
+        />
+      ),
       width: 150,
       sortable: true,
     },
@@ -278,6 +302,14 @@ export function SNVIndelTab({
           暂无SNV/Indel变异数据
         </div>
       )}
+
+      {/* IGV 查看器 */}
+      <IGVViewer
+        chromosome={igvState.chromosome}
+        position={igvState.position}
+        isOpen={igvState.isOpen}
+        onClose={handleCloseIGV}
+      />
     </div>
   );
 }
