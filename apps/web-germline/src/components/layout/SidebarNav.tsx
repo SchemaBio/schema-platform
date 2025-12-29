@@ -2,9 +2,10 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Tooltip } from '@schema/ui-kit';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { UserMenu } from './UserMenu';
 import { mainNavItems, sidebarNavConfig, isNavItemActive, type SidebarNavItem, type NavItem } from '@/config/navigation';
 
@@ -60,16 +61,39 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
         flex items-center h-12 border-b border-border px-3
         ${collapsed ? 'justify-center' : 'justify-between'}
       `}>
-        <div className="flex items-center min-w-0">
-          <div className="w-8 h-8 bg-accent-emphasis rounded-md flex items-center justify-center shrink-0">
-            <span className="text-fg-on-emphasis font-bold text-sm">🧬</span>
-          </div>
-          {!collapsed && (
+        {collapsed ? (
+          <Tooltip content="展开侧边栏" placement="right" variant="nav">
+            <div 
+              className="flex items-center min-w-0 cursor-pointer"
+              onClick={() => onCollapsedChange(false)}
+            >
+              <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 overflow-hidden">
+                <Image
+                  src="/logo.png"
+                  alt="Schema Germline"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </Tooltip>
+        ) : (
+          <div className="flex items-center min-w-0">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="Schema Germline"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+            </div>
             <span className="ml-2 font-semibold text-fg-default truncate">
-              绳墨生物
+              Schema Germline
             </span>
-          )}
-        </div>
+          </div>
+        )}
         {!collapsed && (
           <button
             onClick={() => onCollapsedChange(true)}
@@ -78,17 +102,6 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-        )}
-        {collapsed && (
-          <Tooltip content="展开侧边栏" placement="right">
-            <button
-              onClick={() => onCollapsedChange(false)}
-              className="p-1.5 rounded-md text-fg-muted hover:text-fg-default hover:bg-canvas-inset transition-colors duration-fast"
-              aria-label="展开侧边栏"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </Tooltip>
         )}
       </div>
 
@@ -169,7 +182,7 @@ function MainNavItemComponent({ item, collapsed, currentPath }: MainNavItemCompo
   if (collapsed) {
     return (
       <li>
-        <Tooltip content={item.label} placement="right">
+        <Tooltip content={item.label} placement="right" variant="nav">
           {content}
         </Tooltip>
       </li>
@@ -221,7 +234,7 @@ function SubNavItemComponent({ item, collapsed, currentPath }: SubNavItemCompone
   if (collapsed) {
     return (
       <li>
-        <Tooltip content={item.label} placement="right">
+        <Tooltip content={item.label} placement="right" variant="nav">
           {content}
         </Tooltip>
       </li>

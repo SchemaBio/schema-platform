@@ -3,6 +3,7 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../../utils/cn';
 
 export type Placement = 'top' | 'right' | 'bottom' | 'left';
+export type TooltipVariant = 'default' | 'nav';
 
 export interface TooltipProps {
   /** Content to display in the tooltip */
@@ -15,6 +16,8 @@ export interface TooltipProps {
   children: React.ReactElement;
   /** Additional class name for the tooltip content */
   className?: string;
+  /** Visual variant of the tooltip */
+  variant?: TooltipVariant;
 }
 
 /**
@@ -32,7 +35,18 @@ export function Tooltip({
   delay = 200,
   children,
   className,
+  variant = 'default',
 }: TooltipProps): JSX.Element {
+  const variantStyles = {
+    default: 'bg-fg-default text-canvas-default',
+    nav: 'bg-white dark:bg-[#161b22] text-fg-default border border-border shadow-lg',
+  };
+
+  const arrowStyles = {
+    default: 'fill-fg-default',
+    nav: 'fill-white dark:fill-[#161b22]',
+  };
+
   return (
     <TooltipPrimitive.Provider delayDuration={delay}>
       <TooltipPrimitive.Root>
@@ -40,12 +54,14 @@ export function Tooltip({
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
             side={placement}
-            sideOffset={4}
+            sideOffset={8}
             collisionPadding={8}
             className={cn(
               // Base styles
-              'z-50 overflow-hidden rounded-md px-3 py-1.5',
-              'bg-fg-default text-canvas-default text-sm',
+              'z-50 overflow-hidden rounded-lg px-3 py-2',
+              'text-sm font-medium',
+              // Variant styles
+              variantStyles[variant],
               // Animation
               'animate-in fade-in-0 zoom-in-95',
               'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
@@ -58,7 +74,7 @@ export function Tooltip({
             )}
           >
             {content}
-            <TooltipPrimitive.Arrow className="fill-fg-default" />
+            <TooltipPrimitive.Arrow className={arrowStyles[variant]} />
           </TooltipPrimitive.Content>
         </TooltipPrimitive.Portal>
       </TooltipPrimitive.Root>
