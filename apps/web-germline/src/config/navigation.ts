@@ -27,6 +27,7 @@ import {
   History,
   Library,
   LayoutDashboard,
+  TestTube,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -47,6 +48,7 @@ export interface SidebarNavItem {
 export interface SidebarNavConfig {
   dashboard: SidebarNavItem[];
   samples: SidebarNavItem[];
+  lab: SidebarNavItem[];
   data: SidebarNavItem[];
   pipeline: SidebarNavItem[];
   analysis: SidebarNavItem[];
@@ -57,11 +59,12 @@ export interface SidebarNavConfig {
 
 /**
  * Main navigation items displayed in the sidebar.
- * 业务流程：概览 → 样本管理 → 数据管理 → 流程中心 → 分析中心 → 报告中心 → 知识中心
+ * 业务流程：概览 → 样本管理 → 实验中心 → 数据管理 → 流程中心 → 分析中心 → 报告中心 → 知识中心
  */
 export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   { label: '样本管理', href: '/samples', icon: Users },
+  { label: '实验中心', href: '/lab', icon: TestTube },
   { label: '数据管理', href: '/data', icon: HardDrive },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
   { label: '分析中心', href: '/analysis', icon: FlaskConical },
@@ -82,10 +85,13 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '批量导入', href: '/samples/import', icon: Upload },
     { label: '家系管理', href: '/samples/pedigree', icon: GitBranch },
   ],
-  // 数据管理 - 实验员操作
+  // 实验中心 - 实验员操作
+  lab: [
+    { label: '上机表', href: '/lab', icon: FileSpreadsheet },
+  ],
+  // 数据管理 - 生信工程师操作
   data: [
     { label: '数据列表', href: '/data', icon: List },
-    { label: '上机表', href: '/data/samplesheet', icon: FileSpreadsheet },
     { label: '数据匹配', href: '/data/matching', icon: Database },
   ],
   // 流程中心 - 生信工程师操作

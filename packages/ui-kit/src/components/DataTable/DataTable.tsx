@@ -464,7 +464,8 @@ export function DataTable<T>({
             'transition-colors duration-fast',
             striped && index % 2 === 1 && 'bg-canvas-subtle',
             'hover:bg-canvas-inset',
-            isSelected && 'bg-accent-subtle hover:bg-accent-muted'
+            isSelected && 'bg-accent-subtle hover:bg-accent-muted',
+            onRowClick && 'cursor-pointer'
           )}
           style={{ height: rowHeight }}
           onClick={() => onRowClick?.(row)}
@@ -558,7 +559,8 @@ export function DataTable<T>({
           'transition-colors duration-fast absolute w-full',
           striped && virtualRow.index % 2 === 1 && 'bg-canvas-subtle',
           'hover:bg-canvas-inset',
-          isSelected && 'bg-accent-subtle hover:bg-accent-muted'
+          isSelected && 'bg-accent-subtle hover:bg-accent-muted',
+          onRowClick && 'cursor-pointer'
         )}
         style={{
           height: rowHeight,
