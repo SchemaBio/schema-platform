@@ -95,6 +95,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
   pipeline: [
     { label: '流程列表', href: '/pipeline', icon: List },
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
+    { label: '基因列表', href: '/pipeline/gene-list', icon: Library },
     { label: '数据库管理', href: '/pipeline/database', icon: Server },
     { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
     { label: 'MSI 基线', href: '/pipeline/msi-baseline', icon: Activity },
