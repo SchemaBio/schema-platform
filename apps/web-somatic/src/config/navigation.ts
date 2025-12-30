@@ -104,7 +104,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
   // 分析中心 - 解读工程师操作
   analysis: [
     { label: '任务列表', href: '/analysis', icon: List },
-    { label: '新建任务', href: '/analysis/new', icon: Play },
+    // { label: '新建任务', href: '/analysis/new', icon: Play },
     { label: '进行中', href: '/analysis/running', icon: Clock },
     { label: '待解读', href: '/analysis/pending', icon: FlaskConical },
     { label: '已完成', href: '/analysis/completed', icon: CheckCircle },

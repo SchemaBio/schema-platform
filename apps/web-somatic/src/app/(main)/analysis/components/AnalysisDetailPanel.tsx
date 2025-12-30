@@ -1,11 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { getTaskDetail } from '../[uuid]/mock-data';
-import type { AnalysisTaskDetail, TabType, AnalysisStatus } from '../[uuid]/types';
+import { getTaskDetail, getSampleInfo } from '../[uuid]/mock-data';
+import type { AnalysisTaskDetail, TabType, AnalysisStatus, SampleInfo } from '../[uuid]/types';
 import { TAB_CONFIGS } from '../[uuid]/types';
 import {
-  SampleInfoTab,
   QCResultTab,
   SNVIndelTab,
   HotspotTab,
@@ -33,10 +32,14 @@ const statusConfig: Record<AnalysisStatus, { label: string; variant: 'neutral' |
   pending_interpretation: { label: '待解读', variant: 'warning' },
 };
 
+// 过滤掉样本信息标签页
+const FILTERED_TAB_CONFIGS = TAB_CONFIGS.filter(tab => tab.id !== 'sample-info');
+
 export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   const [task, setTask] = React.useState<AnalysisTaskDetail | null>(null);
+  const [sampleInfo, setSampleInfo] = React.useState<SampleInfo | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState<TabType>('sample-info');
+  const [activeTab, setActiveTab] = React.useState<TabType>('qc');
 
   // 各标签页的筛选状态
   const [tabStates, setTabStates] = React.useState({
@@ -59,8 +62,12 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   React.useEffect(() => {
     async function loadTask() {
       setLoading(true);
-      const taskData = await getTaskDetail(taskId);
+      const [taskData, sampleData] = await Promise.all([
+        getTaskDetail(taskId),
+        getSampleInfo(taskId),
+      ]);
       setTask(taskData);
+      setSampleInfo(sampleData);
       setLoading(false);
     }
     loadTask();
@@ -87,8 +94,6 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   // 渲染当前标签页内容
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'sample-info':
-        return <SampleInfoTab taskId={taskId} />;
       case 'qc':
         return <QCResultTab taskId={taskId} />;
       case 'snv-indel':
@@ -177,11 +182,16 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
       {/* 任务信息头部 - 紧凑版 */}
       <div className="mb-4 pb-3 border-b border-border-default">
         <div className="flex items-center gap-3 mb-1">
-          <h3 className="text-base font-medium text-fg-default">{task.name}</h3>
+          <h3 className="text-base font-medium text-fg-default">{task.sampleId}</h3>
           <Tag variant={statusInfo.variant} className="text-xs">{statusInfo.label}</Tag>
         </div>
-        <div className="flex items-center gap-4 text-xs text-fg-muted">
-          <span>样本: {task.sampleId}</span>
+        <div className="flex items-center gap-4 text-xs text-fg-muted flex-wrap">
+          <span>{sampleInfo?.sampleName || '-'}</span>
+          <span>{sampleInfo?.gender === 'Male' ? '男' : sampleInfo?.gender === 'Female' ? '女' : '未知'}{sampleInfo?.age ? ` / ${sampleInfo.age}岁` : ''}</span>
+          <span>{sampleInfo?.cancerType || '-'}</span>
+          <span>{sampleInfo?.project || '-'}</span>
+          <span>{sampleInfo?.institution || '-'}</span>
+          <span className="text-fg-subtle">|</span>
           <span>流程: {task.pipeline} {task.pipelineVersion}</span>
           <span>创建: {task.createdAt}</span>
         </div>
@@ -190,7 +200,7 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
       {/* 标签页导航 */}
       <div className="border-b border-border-default mb-4">
         <nav className="flex gap-1" role="tablist">
-          {TAB_CONFIGS.map((tab) => {
+          {FILTERED_TAB_CONFIGS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button

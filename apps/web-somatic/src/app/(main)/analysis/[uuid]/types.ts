@@ -29,6 +29,12 @@ export interface QCResult {
   duplicateRate: number;         // 重复率 (0-1)
   q30Rate: number;               // Q30比例 (0-1)
   insertSize: number;            // 插入片段大小
+  gcRatio: number;               // GC比例 (0-1)
+  uniformity: number;            // 均一性 (0-1)
+  dedupDepth: number;            // 去重深度
+  captureEfficiency: number;     // 捕获效率 (0-1)
+  predictedGender: 'Male' | 'Female' | 'Unknown';  // 性别预测
+  contaminationRate: number;     // 污染比例 (0-1)
 }
 
 export type QCMetricKey = keyof QCResult;
@@ -119,6 +125,9 @@ export interface SampleInfo {
   collectionDate: string;
   receivedDate: string;
   reportDate?: string;
+  project?: string;              // 项目名称
+  institution?: string;          // 送检单位
+  cancerType?: string;           // 癌种
 }
 
 // ============ CNV变异(片段级别) ============

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, Plus, Eye, RotateCcw, X, ChevronRight, ChevronLeft, List } from 'lucide-react';
@@ -338,9 +339,11 @@ export default function AnalysisPage() {
                   leftElement={<Search className="w-4 h-4" />}
                 />
               </div>
-              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
-                新建任务
-              </Button>
+              <Link href="/analysis/new">
+                <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
+                  新建任务
+                </Button>
+              </Link>
             </div>
 
             <DataTable
@@ -358,30 +361,39 @@ export default function AnalysisPage() {
       {hasOpenTabs && (
         <div className="flex-1 flex flex-col min-w-0">
           {/* 标签栏 */}
-          <div className="flex items-center border-b border-border-default bg-canvas-subtle overflow-x-auto flex-shrink-0">
-            {openTabs.map((tab) => (
-              <div
-                key={tab.id}
-                onClick={() => setActiveTabId(tab.id)}
-                className={`
-                  flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-border-muted
-                  text-sm whitespace-nowrap transition-colors
-                  ${activeTabId === tab.id 
-                    ? 'bg-canvas-default text-fg-default border-b-2 border-b-accent-emphasis -mb-px' 
-                    : 'text-fg-muted hover:bg-canvas-inset hover:text-fg-default'
-                  }
-                `}
-              >
-                <span>{tab.name}</span>
-                <button
-                  onClick={(e) => handleCloseTab(tab.id, e)}
-                  className="p-0.5 rounded hover:bg-canvas-inset"
-                  aria-label="关闭标签"
+          <div className="flex items-center border-b border-border-default bg-canvas-subtle flex-shrink-0">
+            <div className="flex-1 flex items-center overflow-x-auto">
+              {openTabs.map((tab) => (
+                <div
+                  key={tab.id}
+                  onClick={() => setActiveTabId(tab.id)}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-border-muted
+                    text-sm whitespace-nowrap transition-colors
+                    ${activeTabId === tab.id 
+                      ? 'bg-canvas-default text-fg-default border-b-2 border-b-accent-emphasis -mb-px' 
+                      : 'text-fg-muted hover:bg-canvas-inset hover:text-fg-default'
+                    }
+                  `}
                 >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+                  <span>{tab.name}</span>
+                  <button
+                    onClick={(e) => handleCloseTab(tab.id, e)}
+                    className="p-0.5 rounded hover:bg-canvas-inset"
+                    aria-label="关闭标签"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="px-3 py-1.5 flex-shrink-0">
+              <Link href="/analysis/new">
+                <Button variant="primary" size="small" leftIcon={<Plus className="w-4 h-4" />}>
+                  新建任务
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* 详情内容 */}
