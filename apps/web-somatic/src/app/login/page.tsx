@@ -49,78 +49,25 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* 左侧 - 品牌展示区 */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 bg-gradient-to-br from-accent-emphasis via-accent-fg to-accent-emphasis relative overflow-hidden">
-        {/* 背景装饰 */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-white rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white rounded-full blur-3xl opacity-5" />
-        </div>
-        
-        {/* DNA 螺旋装饰线条 */}
-        <div className="absolute inset-0 opacity-20">
-          <svg className="w-full h-full" viewBox="0 0 800 800" fill="none">
-            <path d="M200 0 Q400 200 200 400 Q0 600 200 800" stroke="white" strokeWidth="2" fill="none" />
-            <path d="M600 0 Q400 200 600 400 Q800 600 600 800" stroke="white" strokeWidth="2" fill="none" />
-            <path d="M200 100 L600 100" stroke="white" strokeWidth="1" opacity="0.5" />
-            <path d="M250 200 L550 200" stroke="white" strokeWidth="1" opacity="0.5" />
-            <path d="M200 300 L600 300" stroke="white" strokeWidth="1" opacity="0.5" />
-            <path d="M250 400 L550 400" stroke="white" strokeWidth="1" opacity="0.5" />
-            <path d="M200 500 L600 500" stroke="white" strokeWidth="1" opacity="0.5" />
-            <path d="M250 600 L550 600" stroke="white" strokeWidth="1" opacity="0.5" />
-            <path d="M200 700 L600 700" stroke="white" strokeWidth="1" opacity="0.5" />
-          </svg>
-        </div>
+      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative overflow-hidden items-center justify-center">
+        {/* 背景图片 */}
+        <Image
+          src="/login-bg.png"
+          alt="Background"
+          fill
+          className="object-cover"
+          priority
+        />
 
         {/* 内容 */}
-        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
-          {/* Logo */}
-          <div className="mb-8">
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
-              <Image
-                src="/logo.png"
-                alt="Schema"
-                width={56}
-                height={56}
-                className="object-contain"
-              />
-            </div>
-            <h1 className="text-4xl xl:text-5xl font-bold text-white mb-4">
-              绳墨生物
+        <div className="relative z-10 flex items-center justify-center">
+          <div className="text-left">
+            <h1 className="text-2xl xl:text-3xl font-bold text-black tracking-wide leading-tight">
+              Open Source<br />Genetic Exploration
             </h1>
-            <p className="text-xl xl:text-2xl text-white/80 font-light">
-              Schema Somatic
+            <p className="text-2xl xl:text-3xl font-bold text-black tracking-wide mt-2">
+              Somatic
             </p>
-          </div>
-
-          {/* 描述 */}
-          <div className="space-y-4 text-white/70">
-            <p className="text-lg">
-              专业的肿瘤基因组分析平台
-            </p>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-white/60 rounded-full" />
-                体细胞突变检测与注释
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-white/60 rounded-full" />
-                靶向药物匹配与用药指导
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-white/60 rounded-full" />
-                TMB/MSI/HRD 生物标志物分析
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-white/60 rounded-full" />
-                专业报告生成与审核流程
-              </li>
-            </ul>
-          </div>
-
-          {/* 底部版权 */}
-          <div className="absolute bottom-8 left-12 xl:left-20 text-white/40 text-sm">
-            © 2024 绳墨生物科技
           </div>
         </div>
       </div>
@@ -145,7 +92,7 @@ export default function LoginPage() {
 
           {/* 登录标题 */}
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-fg-default">欢迎回来</h2>
+            <h2 className="text-2xl font-semibold text-fg-default">开放分析平台</h2>
             <p className="text-fg-muted mt-1">请登录您的账号</p>
           </div>
 
@@ -160,33 +107,29 @@ export default function LoginPage() {
 
             {/* 用户名 */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-fg-default mb-1.5">
-                用户名
-              </label>
               <Input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="请输入用户名"
+                placeholder="用户名"
                 autoComplete="username"
                 autoFocus
+                className="h-12 text-base"
               />
             </div>
 
             {/* 密码 */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-fg-default mb-1.5">
-                密码
-              </label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="请输入密码"
+                  placeholder="密码"
                   autoComplete="current-password"
+                  className="h-12 text-base"
                 />
                 <button
                   type="button"
@@ -194,7 +137,7 @@ export default function LoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted hover:text-fg-default transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
