@@ -42,6 +42,10 @@ export interface Sample {
   status: SampleStatus;
   createdAt: string;
   updatedAt: string;
+  // 送检单位
+  hospital: string;
+  // 送检项目
+  testItems: string;
 }
 
 export interface SampleDetail extends Sample {

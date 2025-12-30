@@ -14,6 +14,8 @@ export const mockSamples: Sample[] = [
     status: 'completed',
     createdAt: '2024-12-20',
     updatedAt: '2024-12-25',
+    hospital: '北京协和医院',
+    testItems: '肺癌168基因Panel',
   },
   {
     id: 'S2024120002',
@@ -28,6 +30,8 @@ export const mockSamples: Sample[] = [
     status: 'analyzing',
     createdAt: '2024-12-21',
     updatedAt: '2024-12-21',
+    hospital: '上海肿瘤医院',
+    testItems: '乳腺癌56基因Panel',
   },
   {
     id: 'S2024120003',
@@ -41,6 +45,8 @@ export const mockSamples: Sample[] = [
     status: 'pending',
     createdAt: '2024-12-22',
     updatedAt: '2024-12-22',
+    hospital: '广州中山医院',
+    testItems: '结直肠癌Panel',
   },
   {
     id: 'S2024120004',
@@ -54,6 +60,8 @@ export const mockSamples: Sample[] = [
     status: 'matched',
     createdAt: '2024-12-23',
     updatedAt: '2024-12-24',
+    hospital: '浙江省肿瘤医院',
+    testItems: '妇科肿瘤Panel',
   },
   {
     id: 'S2024120005',
@@ -68,6 +76,8 @@ export const mockSamples: Sample[] = [
     status: 'completed',
     createdAt: '2024-12-24',
     updatedAt: '2024-12-28',
+    hospital: '四川华西医院',
+    testItems: '消化道肿瘤Panel',
   },
 ];
 

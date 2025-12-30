@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Input, DataTable, Tag, Avatar } from '@schema/ui-kit';
+import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, Download, Upload, Eye, ChevronRight, ChevronLeft, List, X } from 'lucide-react';
+import { Search, Plus, Download, Upload, ChevronRight, ChevronLeft, List, X, Trash2 } from 'lucide-react';
 import { SampleDetailPanel, NewSampleModal } from './components';
 import { mockSamples } from './mock-data';
 import type { Sample, OpenTab } from './types';
@@ -91,18 +91,27 @@ S001,张三,男,58,FFPE,肺癌,III,穿刺活检,北京协和医院,肿瘤内科,
       id: 'name',
       header: '姓名',
       accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <Avatar name={row.name} size="small" />
-          <div>
-            <span className="text-fg-default">{row.name}</span>
-            <div className="text-xs text-fg-muted">
-              <span className={GENDER_CONFIG[row.gender].color}>{GENDER_CONFIG[row.gender].label}</span>
-              <span className="ml-1">{row.age}岁</span>
-            </div>
+        <div>
+          <span className="text-fg-default">{row.name}</span>
+          <div className="text-xs text-fg-muted">
+            <span className={GENDER_CONFIG[row.gender].color}>{GENDER_CONFIG[row.gender].label}</span>
+            <span className="ml-1">{row.age}岁</span>
           </div>
         </div>
       ),
+      width: 100,
+    },
+    {
+      id: 'hospital',
+      header: '送检单位',
+      accessor: 'hospital',
       width: 130,
+    },
+    {
+      id: 'testItems',
+      header: '送检项目',
+      accessor: 'testItems',
+      width: 140,
     },
     {
       id: 'tumorType',
@@ -113,7 +122,6 @@ S001,张三,男,58,FFPE,肺癌,III,穿刺活检,北京协和医院,肿瘤内科,
       width: 100,
     },
     { id: 'sampleType', header: '样本类型', accessor: 'sampleType', width: 100 },
-    { id: 'dataCount', header: '关联数据', accessor: (row) => `${row.dataCount} 个`, width: 80 },
     {
       id: 'status',
       header: '状态',
@@ -128,10 +136,14 @@ S001,张三,男,58,FFPE,肺癌,III,穿刺活检,北京协和医院,肿瘤内科,
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="small" iconOnly aria-label="查看" onClick={() => handleOpenTab(row)}>
-            <Eye className="w-4 h-4" />
-          </Button>
+        <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
+            onClick={() => console.log('删除样本:', row.id)}
+            title="删除"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
       width: 60,

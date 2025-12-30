@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { PageContent } from '@/components/layout';
 import { Tag } from '@schema/ui-kit';
 import {
@@ -147,7 +148,35 @@ const weeklyStats = {
   avgTurnaroundDays: 3.2,
 };
 
+// 格式化时间
+function formatDateTime(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+}
+
+// 实时时间 Hook
+function useCurrentTime() {
+  const [time, setTime] = React.useState<string>('');
+
+  React.useEffect(() => {
+    setTime(formatDateTime(new Date()));
+    const timer = setInterval(() => {
+      setTime(formatDateTime(new Date()));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return time;
+}
+
 export default function DashboardPage() {
+  const currentTime = useCurrentTime();
+
   return (
     <PageContent>
       {/* 欢迎信息 */}
@@ -155,7 +184,7 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-xl font-semibold text-fg-default">欢迎回来，张医生</h2>
           <p className="text-sm text-fg-muted mt-1">
-            今天是 2024年12月28日，以下是系统概览
+            现在是 {currentTime}
           </p>
         </div>
         {/* 快捷操作 */}
@@ -320,7 +349,6 @@ export default function DashboardPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-canvas-subtle text-left text-sm text-fg-muted">
-                <th className="px-4 py-3 font-medium">任务ID</th>
                 <th className="px-4 py-3 font-medium">样本编号</th>
                 <th className="px-4 py-3 font-medium">患者</th>
                 <th className="px-4 py-3 font-medium">完成时间</th>
@@ -331,9 +359,6 @@ export default function DashboardPage() {
             <tbody className="divide-y divide-border">
               {recentCompletedTasks.map((task) => (
                 <tr key={task.id} className="hover:bg-canvas-subtle transition-colors">
-                  <td className="px-4 py-3 font-mono text-sm text-fg-default">
-                    {task.taskId.slice(0, 12)}...
-                  </td>
                   <td className="px-4 py-3 text-sm text-fg-default">{task.sampleId}</td>
                   <td className="px-4 py-3 text-sm text-fg-default">{task.patientName}</td>
                   <td className="px-4 py-3 text-sm text-fg-muted">{task.completedAt}</td>
