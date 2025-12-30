@@ -3,6 +3,7 @@
 import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Avatar, Tooltip } from '@schema/ui-kit';
 import { LogOut, Settings, User } from 'lucide-react';
 
@@ -10,24 +11,47 @@ interface UserMenuProps {
   collapsed?: boolean;
 }
 
+interface UserData {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+  avatar: string | null;
+}
+
 /**
  * UserMenu displays user avatar and dropdown menu with account options.
  */
 export function UserMenu({ collapsed = false }: UserMenuProps) {
   const [open, setOpen] = React.useState(false);
+  const [user, setUser] = React.useState<UserData | null>(null);
+  const router = useRouter();
 
-  // Mock user data - to be replaced with actual auth
-  const user = {
-    name: '张医生',
-    email: 'zhang@example.com',
-    avatar: undefined as string | undefined,
-    role: 'admin' as const,
-  };
+  // 从 localStorage 获取用户信息
+  React.useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
 
   const handleLogout = () => {
-    // TODO: Implement logout
-    console.log('Logout');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('user');
     setOpen(false);
+    router.push('/login');
+  };
+
+  // 如果没有用户信息，显示默认头像
+  const displayUser = user || {
+    name: '未登录',
+    username: '',
+    role: 'guest',
+    avatar: null,
   };
 
   const triggerButton = (
@@ -41,13 +65,13 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
         aria-label="用户菜单"
       >
         <Avatar
-          src={user.avatar}
-          name={user.name}
+          src={displayUser.avatar || undefined}
+          name={displayUser.name}
           size="small"
           className="bg-accent-emphasis text-white ring-2 ring-accent-muted"
         />
         {!collapsed && (
-          <span className="text-sm text-fg-default truncate">{user.name}</span>
+          <span className="text-sm text-fg-default truncate">{displayUser.name}</span>
         )}
       </button>
     </PopoverPrimitive.Trigger>
@@ -56,7 +80,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       {collapsed ? (
-        <Tooltip content={user.name} placement="right" variant="nav">
+        <Tooltip content={displayUser.name} placement="right" variant="nav">
           {triggerButton}
         </Tooltip>
       ) : (
@@ -71,8 +95,8 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
         >
           {/* User info */}
           <div className="px-3 py-2 border-b border-border">
-            <p className="text-sm font-medium text-fg-default">{user.name}</p>
-            <p className="text-xs text-fg-muted">{user.email}</p>
+            <p className="text-sm font-medium text-fg-default">{displayUser.name}</p>
+            <p className="text-xs text-fg-muted">@{displayUser.username || 'guest'}</p>
           </div>
 
           {/* Menu items */}
@@ -89,7 +113,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
               <User className="w-4 h-4" />
               个人设置
             </Link>
-            {user.role === 'admin' && (
+            {displayUser.role === 'admin' && (
               <Link
                 href="/settings"
                 onClick={() => setOpen(false)}
