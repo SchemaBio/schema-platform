@@ -27,6 +27,7 @@ import {
   Library,
   LayoutDashboard,
   TestTube,
+  Activity,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -96,6 +97,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
     { label: '数据库管理', href: '/pipeline/database', icon: Server },
     { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
+    { label: 'MSI 基线', href: '/pipeline/msi-baseline', icon: Activity },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
   // 分析中心 - 解读工程师操作

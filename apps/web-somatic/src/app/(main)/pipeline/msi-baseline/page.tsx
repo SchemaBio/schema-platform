@@ -6,42 +6,46 @@ import type { Column } from '@schema/ui-kit';
 import { Plus, Search, Download, Trash2, X, Upload, FileText } from 'lucide-react';
 import * as React from 'react';
 
-interface BaselineFile {
+interface MSIBaselineFile {
   id: string;
   name: string;
   sampleCount: number;
+  markerCount: number;
   bedFile: string;
   description: string;
   createdAt: string;
   createdBy: string;
 }
 
-const initialBaselines: BaselineFile[] = [
+const initialBaselines: MSIBaselineFile[] = [
   {
     id: '1',
-    name: 'WES_V7_CNV_Baseline_100',
-    sampleCount: 100,
+    name: 'MSI_Baseline_V1',
+    sampleCount: 50,
+    markerCount: 5,
     bedFile: 'Agilent_SureSelect_V7.bed',
-    description: 'WES V7 CNV检测基线（100样本）',
-    createdAt: '2024-10-15',
+    description: 'MSI 检测基线 V1（5个经典位点）',
+    createdAt: '2024-08-15',
     createdBy: '王工',
   },
   {
     id: '2',
-    name: 'WES_V7_CNV_Baseline_200',
-    sampleCount: 200,
+    name: 'MSI_Baseline_V2',
+    sampleCount: 100,
+    markerCount: 7,
     bedFile: 'Agilent_SureSelect_V7.bed',
-    description: 'WES V7 CNV检测基线（200样本）',
-    createdAt: '2024-11-01',
+    description: 'MSI 检测基线 V2（7个位点，含 MONO-27）',
+    createdAt: '2024-10-20',
     createdBy: '李工',
   },
   {
     id: '3',
-    name: 'IDT_xGen_CNV_Baseline',
+    name: 'ctDNA_MSI_Baseline',
     sampleCount: 80,
-    bedFile: 'IDT_xGen_Exome_v2.bed',
-    description: 'IDT xGen Exome CNV检测基线',
-    createdAt: '2024-09-20',
+    markerCount: 5,
+    bedFile: 'ctDNA_Panel_168.bed',
+    description: 'ctDNA 样本 MSI 检测基线',
+    createdAt: '2024-11-10',
     createdBy: '王工',
   },
 ];
@@ -66,7 +70,7 @@ function DeleteConfirmModal({ isOpen, baselineName, onClose, onConfirm }: Delete
             <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
           </div>
           <h3 className="text-lg font-medium text-center text-gray-900 dark:text-gray-100 mb-2">
-            删除 CNV 基线
+            删除 MSI 基线
           </h3>
           <p className="text-sm text-center text-gray-500 dark:text-gray-400">
             确定要删除基线 "<span className="font-medium text-gray-700 dark:text-gray-300">{baselineName}</span>" 吗？此操作无法撤销。
@@ -153,7 +157,7 @@ function CreateBaselineModal({ isOpen, onClose, onSubmit }: CreateBaselineModalP
       
       <div className="relative z-10 bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">创建 CNV 基线</h2>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">创建 MSI 基线</h2>
           <button
             onClick={handleClose}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
@@ -169,7 +173,7 @@ function CreateBaselineModal({ isOpen, onClose, onSubmit }: CreateBaselineModalP
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="如：WES_V7_CNV_Baseline_150"
+              placeholder="如：MSI_Baseline_V3"
             />
           </div>
 
@@ -242,13 +246,13 @@ function CreateBaselineModal({ isOpen, onClose, onSubmit }: CreateBaselineModalP
               ) : (
                 <>
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">点击或拖拽上传 CNV 基线文件</p>
+                  <p className="text-sm text-gray-500">点击或拖拽上传 MSI 基线文件</p>
                   <p className="text-xs text-gray-400 mt-1">支持 .txt、.tsv 格式</p>
                 </>
               )}
             </div>
             <p className="text-xs text-fg-muted mt-1">
-              基线文件应包含正常样本的覆盖度信息，用于 CNV 检测
+              基线文件应包含正常样本的 MSI 位点信息，用于计算 MSI 状态
             </p>
           </div>
         </div>
@@ -271,26 +275,27 @@ function CreateBaselineModal({ isOpen, onClose, onSubmit }: CreateBaselineModalP
 }
 
 
-export default function CNVBaselinePage() {
+export default function MSIBaselinePage() {
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [baselines, setBaselines] = React.useState<BaselineFile[]>(initialBaselines);
+  const [baselines, setBaselines] = React.useState<MSIBaselineFile[]>(initialBaselines);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState<BaselineFile | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<MSIBaselineFile | null>(null);
 
   const handleCreate = (data: { name: string; bedFile: string; description: string; file: File }) => {
-    const newBaseline: BaselineFile = {
+    const newBaseline: MSIBaselineFile = {
       id: String(Date.now()),
       name: data.name,
-      sampleCount: Math.floor(Math.random() * 150) + 50, // 模拟样本数
+      sampleCount: Math.floor(Math.random() * 100) + 30, // 模拟样本数
+      markerCount: Math.floor(Math.random() * 3) + 5, // 模拟位点数 5-7
       bedFile: data.bedFile,
-      description: data.description || `${data.name} CNV 检测基线`,
+      description: data.description || `${data.name} MSI 检测基线`,
       createdAt: new Date().toISOString().split('T')[0],
       createdBy: '当前用户',
     };
     setBaselines(prev => [...prev, newBaseline]);
   };
 
-  const handleDelete = (baseline: BaselineFile) => {
+  const handleDelete = (baseline: MSIBaselineFile) => {
     setDeleteTarget(baseline);
   };
 
@@ -311,17 +316,25 @@ export default function CNVBaselinePage() {
     );
   }, [searchQuery, baselines]);
 
-  const columns: Column<BaselineFile>[] = [
-    { id: 'name', header: '基线名称', accessor: 'name', width: 250 },
+  const columns: Column<MSIBaselineFile>[] = [
+    { id: 'name', header: '基线名称', accessor: 'name', width: 220 },
     {
       id: 'sampleCount',
       header: '样本数',
       accessor: (row) => `${row.sampleCount} 个`,
+      width: 90,
+    },
+    {
+      id: 'markerCount',
+      header: 'MSI 位点数',
+      accessor: (row) => (
+        <Tag variant="info">{row.markerCount} 个</Tag>
+      ),
       width: 100,
     },
     { id: 'bedFile', header: '关联 BED', accessor: 'bedFile', width: 200 },
     { id: 'description', header: '描述', accessor: 'description', width: 220 },
-    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 120 },
+    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 110 },
     { id: 'createdBy', header: '创建者', accessor: 'createdBy', width: 80 },
     {
       id: 'actions',
@@ -349,12 +362,12 @@ export default function CNVBaselinePage() {
 
   return (
     <PageContent>
-      <h2 className="text-lg font-medium text-fg-default mb-4">CNV 基线管理</h2>
+      <h2 className="text-lg font-medium text-fg-default mb-4">MSI 基线管理</h2>
 
       <div className="p-4 bg-canvas-subtle rounded-lg border border-border mb-4">
         <p className="text-sm text-fg-muted">
-          CNV 基线用于拷贝数变异检测，通过对比样本与基线的覆盖度差异识别 CNV。
-          建议使用相同捕获试剂盒、相同测序平台的样本构建基线，样本数量越多检测越准确（推荐 ≥50 个样本）。
+          MSI（微卫星不稳定性）基线用于判断样本的 MSI 状态。通过对比样本与正常基线的微卫星位点长度分布，
+          识别 MSI-H（高度不稳定）或 MSS（稳定）状态。建议使用 ≥30 个正常样本构建基线。
         </p>
       </div>
 
