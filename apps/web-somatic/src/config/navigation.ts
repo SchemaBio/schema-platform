@@ -116,10 +116,9 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '待审核', href: '/reports/review', icon: FileCheck },
     { label: '已发放', href: '/reports/released', icon: Send },
   ],
-  // 知识中心 - 位点知识库
+  // 知识中心 - 靶向药物知识库
   knowledge: [
     { label: '知识库概览', href: '/knowledge', icon: List },
-    // { label: '历史检出位点', href: '/knowledge/history', icon: History }, // 肿瘤样本检出位点较多，暂时关闭
     { label: '位点收录库', href: '/knowledge/variants', icon: Library },
     { label: '新增位点', href: '/knowledge/new', icon: Plus },
   ],
