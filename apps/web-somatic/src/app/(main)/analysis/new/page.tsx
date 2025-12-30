@@ -32,15 +32,15 @@ const mockSamples: SampleOption[] = [
 ];
 
 const mockPipelines = [
-  { value: 'wes-germline-v1', label: 'WES-Germline-v1 (全外显子遗传病)', version: 'v1.2.0' },
-  { value: 'panel-cardio', label: 'Panel-Cardio (心血管疾病)', version: 'v2.0.1' },
-  { value: 'panel-neuro', label: 'Panel-Neuro (神经系统疾病)', version: 'v1.0.0' },
+  { value: 'single-sample', label: '单样本分析', version: 'v1.2.0' },
+  { value: 'rna-fusion', label: 'RNA融合分析', version: 'v2.0.1' },
+  { value: 'paired-sample', label: '配对样本分析', version: 'v1.0.0' },
 ];
 
 export default function NewAnalysisPage() {
   const [taskId] = React.useState(() => generateUUID());
   const [selectedSample, setSelectedSample] = React.useState('');
-  const [selectedPipeline, setSelectedPipeline] = React.useState('wes-germline-v1');
+  const [selectedPipeline, setSelectedPipeline] = React.useState('single-sample');
   const [taskName, setTaskName] = React.useState('');
   const [enableCNV, setEnableCNV] = React.useState(true);
   const [enableSV, setEnableSV] = React.useState(false);
@@ -48,14 +48,12 @@ export default function NewAnalysisPage() {
 
   const selectedSampleInfo = mockSamples.find((s) => s.id === selectedSample);
 
-  // 自动生成任务名称
+  // 自动生成任务名称（只使用样本编号）
   React.useEffect(() => {
-    if (selectedSample && selectedPipeline) {
-      const pipeline = mockPipelines.find((p) => p.value === selectedPipeline);
-      const pipelineName = pipeline?.label.split(' ')[0] || '';
-      setTaskName(`${selectedSample} ${pipelineName}分析`);
+    if (selectedSample) {
+      setTaskName(selectedSample);
     }
-  }, [selectedSample, selectedPipeline]);
+  }, [selectedSample]);
 
   const handleSubmit = async () => {
     if (!selectedSample || !selectedPipeline) {

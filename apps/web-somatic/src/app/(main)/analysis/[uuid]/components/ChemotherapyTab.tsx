@@ -12,6 +12,9 @@ import { IGVViewer, PositionLink } from './IGVViewer';
 // 化疗药物代谢相关基因型
 type GenotypeResult = 'Normal' | 'Intermediate' | 'Poor' | 'Rapid' | 'Unknown';
 
+// 基因型分类（纯合、杂合、野生）
+type ZygosityType = 'Homozygous' | 'Heterozygous' | 'Wild';
+
 // 化疗位点检测结果
 interface ChemotherapySite {
   id: string;
@@ -29,6 +32,7 @@ interface ChemotherapySite {
   // 基因型
   rsId: string;
   genotype: string;              // 如 "CC", "CT", "TT"
+  zygosity: ZygosityType;        // 纯合、杂合、野生
   genotypeResult: GenotypeResult;
   // 药物相关
   drug: string;                  // 相关药物
@@ -56,7 +60,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '10', start: 96541616, end: 96541616, ref: 'A', alt: 'G',
     gene: 'CYP2C19', transcript: 'NM_000769.4',
     cHGVS: 'c.681G>A', pHGVS: 'p.P227P',
-    rsId: 'rs4244285', genotype: 'GA', genotypeResult: 'Intermediate',
+    rsId: 'rs4244285', genotype: 'GA', zygosity: 'Heterozygous', genotypeResult: 'Intermediate',
     drug: '氯吡格雷', drugCategory: '抗血小板药物',
     recommendation: '中间代谢型，建议考虑替代药物或增加剂量',
     evidenceLevel: 'Level 1A',
@@ -68,7 +72,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '10', start: 96522463, end: 96522463, ref: 'G', alt: 'A',
     gene: 'CYP2C19', transcript: 'NM_000769.4',
     cHGVS: 'c.636G>A', pHGVS: 'p.W212*',
-    rsId: 'rs4986893', genotype: 'GG', genotypeResult: 'Normal',
+    rsId: 'rs4986893', genotype: 'GG', zygosity: 'Wild', genotypeResult: 'Normal',
     drug: '奥美拉唑', drugCategory: '质子泵抑制剂',
     recommendation: '正常代谢型，标准剂量',
     evidenceLevel: 'Level 1A',
@@ -80,7 +84,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '19', start: 15990431, end: 15990431, ref: 'C', alt: 'T',
     gene: 'CYP2B6', transcript: 'NM_000767.5',
     cHGVS: 'c.516G>T', pHGVS: 'p.Q172H',
-    rsId: 'rs3745274', genotype: 'CT', genotypeResult: 'Intermediate',
+    rsId: 'rs3745274', genotype: 'CT', zygosity: 'Heterozygous', genotypeResult: 'Intermediate',
     drug: '环磷酰胺', drugCategory: '烷化剂',
     recommendation: '中间代谢型，监测药物浓度',
     evidenceLevel: 'Level 2A',
@@ -92,7 +96,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '1', start: 97915614, end: 97915614, ref: 'C', alt: 'T',
     gene: 'DPYD', transcript: 'NM_000110.4',
     cHGVS: 'c.1905+1G>A', pHGVS: '-',
-    rsId: 'rs3918290', genotype: 'CC', genotypeResult: 'Normal',
+    rsId: 'rs3918290', genotype: 'CC', zygosity: 'Wild', genotypeResult: 'Normal',
     drug: '5-氟尿嘧啶', drugCategory: '抗代谢药',
     recommendation: '正常代谢型，标准剂量',
     evidenceLevel: 'Level 1A',
@@ -104,7 +108,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '1', start: 97981343, end: 97981343, ref: 'T', alt: 'C',
     gene: 'DPYD', transcript: 'NM_000110.4',
     cHGVS: 'c.2846A>T', pHGVS: 'p.D949V',
-    rsId: 'rs67376798', genotype: 'TT', genotypeResult: 'Normal',
+    rsId: 'rs67376798', genotype: 'TT', zygosity: 'Wild', genotypeResult: 'Normal',
     drug: '卡培他滨', drugCategory: '抗代谢药',
     recommendation: '正常代谢型，标准剂量',
     evidenceLevel: 'Level 1A',
@@ -116,7 +120,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '6', start: 18130918, end: 18130918, ref: 'T', alt: 'C',
     gene: 'TPMT', transcript: 'NM_000367.5',
     cHGVS: 'c.460G>A', pHGVS: 'p.A154T',
-    rsId: 'rs1800460', genotype: 'TC', genotypeResult: 'Intermediate',
+    rsId: 'rs1800460', genotype: 'TC', zygosity: 'Heterozygous', genotypeResult: 'Intermediate',
     drug: '6-巯基嘌呤', drugCategory: '抗代谢药',
     recommendation: '中间代谢型，建议减量50%',
     evidenceLevel: 'Level 1A',
@@ -128,7 +132,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '7', start: 99361466, end: 99361466, ref: 'G', alt: 'A',
     gene: 'CYP3A5', transcript: 'NM_000777.5',
     cHGVS: 'c.6986A>G', pHGVS: '-',
-    rsId: 'rs776746', genotype: 'AA', genotypeResult: 'Poor',
+    rsId: 'rs776746', genotype: 'AA', zygosity: 'Homozygous', genotypeResult: 'Poor',
     drug: '他克莫司', drugCategory: '免疫抑制剂',
     recommendation: '慢代谢型，建议减量',
     evidenceLevel: 'Level 1A',
@@ -140,7 +144,7 @@ const mockChemotherapySites: ChemotherapySite[] = [
     chr: '12', start: 21178615, end: 21178615, ref: 'T', alt: 'C',
     gene: 'SLCO1B1', transcript: 'NM_006446.5',
     cHGVS: 'c.521T>C', pHGVS: 'p.V174A',
-    rsId: 'rs4149056', genotype: 'TC', genotypeResult: 'Intermediate',
+    rsId: 'rs4149056', genotype: 'TC', zygosity: 'Heterozygous', genotypeResult: 'Intermediate',
     drug: '辛伐他汀', drugCategory: '他汀类',
     recommendation: '中间风险，建议使用低剂量或替代药物',
     evidenceLevel: 'Level 1A',
@@ -259,6 +263,24 @@ export function ChemotherapyTab({
     }
   };
 
+  const getZygosityVariant = (zygosity: ZygosityType): 'success' | 'warning' | 'danger' | 'info' => {
+    switch (zygosity) {
+      case 'Wild': return 'success';
+      case 'Heterozygous': return 'warning';
+      case 'Homozygous': return 'danger';
+      default: return 'info';
+    }
+  };
+
+  const getZygosityLabel = (zygosity: ZygosityType): string => {
+    switch (zygosity) {
+      case 'Wild': return '野生';
+      case 'Heterozygous': return '杂合';
+      case 'Homozygous': return '纯合';
+      default: return '未知';
+    }
+  };
+
   const columns: Column<ChemotherapySite>[] = [
     {
       id: 'reviewed',
@@ -303,7 +325,19 @@ export function ChemotherapyTab({
       ),
       width: 120,
     },
+    { id: 'ref', header: 'Ref', accessor: 'ref', width: 60 },
+    { id: 'alt', header: 'Alt', accessor: 'alt', width: 60 },
     { id: 'genotype', header: 'Genotype', accessor: 'genotype', width: 80 },
+    {
+      id: 'zygosity',
+      header: '基因型',
+      accessor: (row) => (
+        <Tag variant={getZygosityVariant(row.zygosity)}>
+          {getZygosityLabel(row.zygosity)}
+        </Tag>
+      ),
+      width: 80,
+    },
     {
       id: 'genotypeResult',
       header: '代谢类型',

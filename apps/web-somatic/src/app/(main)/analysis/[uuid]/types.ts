@@ -51,6 +51,9 @@ export type ACMGClassification =
   | 'Likely_Benign' 
   | 'Benign';
 
+// ============ Tier临床意义分类 ============
+export type TierClassification = 'Tier I' | 'Tier II' | 'Tier III' | 'Tier IV' | 'Unknown';
+
 // ============ SNV/Indel变异 ============
 // ============ 变异审核状态 ============
 export interface VariantReviewStatus {
@@ -76,6 +79,7 @@ export interface SNVIndel extends VariantReviewStatus {
   alleleFrequency: number;       // 等位基因频率 (VAF)
   depth: number;                 // 覆盖深度
   acmgClassification: ACMGClassification;
+  clinicalSignificance: TierClassification;  // 临床意义 (Tier分类)
   transcript: string;            // 转录本 (含版本号，如 NM_005228.5)
   hgvsc: string;                 // cDNA变化 (cHGVS)
   hgvsp: string;                 // 蛋白质变化 (pHGVS)
@@ -208,8 +212,8 @@ export const TAB_CONFIGS: TabConfig[] = [
   { id: 'qc', label: '质控结果' },
   { id: 'snv-indel', label: 'SNV/InDel' },
   { id: 'hotspot', label: 'Hotspot' },
-  { id: 'chemotherapy', label: '化疗位点' },
   { id: 'germline', label: '胚系位点' },
+  { id: 'chemotherapy', label: '化疗位点' },
   { id: 'cnv-gene', label: 'CNV(Gene)' },
   { id: 'cnv-exon', label: 'CNV(Exon)' },
   { id: 'cnv-chrom', label: 'CNV(Chrom)' },

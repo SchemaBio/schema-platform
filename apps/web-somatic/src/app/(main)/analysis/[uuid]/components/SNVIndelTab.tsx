@@ -4,9 +4,9 @@ import * as React from 'react';
 import { DataTable, Tag, Input } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, ListFilter } from 'lucide-react';
-import type { SNVIndel, TableFilterState, PaginatedResult, ACMGClassification } from '../types';
+import type { SNVIndel, TableFilterState, PaginatedResult, TierClassification } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
-import { getSNVIndels, ACMG_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
+import { getSNVIndels, TIER_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
 import { IGVViewer, PositionLink } from './IGVViewer';
 import { VariantDetailPanel } from './VariantDetailPanel';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
@@ -136,13 +136,13 @@ export function SNVIndelTab({
     });
   }, [filterState, setFilterState]);
 
-  // 处理ACMG筛选
-  const handleACMGFilter = React.useCallback((classification: ACMGClassification | '') => {
+  // 处理Tier筛选
+  const handleTierFilter = React.useCallback((tier: TierClassification | '') => {
     const newFilters = { ...filterState.filters };
-    if (classification) {
-      newFilters.acmgClassification = classification;
+    if (tier) {
+      newFilters.clinicalSignificance = tier;
     } else {
-      delete newFilters.acmgClassification;
+      delete newFilters.clinicalSignificance;
     }
     setFilterState({ ...filterState, filters: newFilters, page: 1 });
   }, [filterState, setFilterState]);
@@ -308,10 +308,10 @@ export function SNVIndelTab({
       width: 100,
     },
     {
-      id: 'acmgClassification',
+      id: 'clinicalSignificance',
       header: '临床意义',
       accessor: (row) => {
-        const config = ACMG_CONFIG[row.acmgClassification];
+        const config = TIER_CONFIG[row.clinicalSignificance];
         return <Tag variant={config.variant}>{config.label}</Tag>;
       },
       width: 90,
@@ -354,14 +354,14 @@ export function SNVIndelTab({
             </select>
           </div>
 
-          {/* ACMG筛选 */}
+          {/* Tier筛选 */}
           <select
-            value={(filterState.filters.acmgClassification as string) || ''}
-            onChange={(e) => handleACMGFilter(e.target.value as ACMGClassification | '')}
+            value={(filterState.filters.clinicalSignificance as string) || ''}
+            onChange={(e) => handleTierFilter(e.target.value as TierClassification | '')}
             className="px-3 py-1.5 text-sm border border-border-default rounded-md bg-canvas-default text-fg-default"
           >
-            <option value="">全部ACMG分类</option>
-            {Object.entries(ACMG_CONFIG).map(([key, config]) => (
+            <option value="">全部临床意义</option>
+            {Object.entries(TIER_CONFIG).map(([key, config]) => (
               <option key={key} value={key}>{config.label}</option>
             ))}
           </select>

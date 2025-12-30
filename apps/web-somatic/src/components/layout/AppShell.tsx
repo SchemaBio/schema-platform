@@ -34,7 +34,6 @@ const pathLabelMap: Record<string, string> = {
   // 样本管理子页面
   new: '新建',
   import: '批量导入',
-  pedigree: '家系管理',
   // 实验中心子页面
   sequencers: '测序仪',
   // 数据管理子页面
