@@ -120,7 +120,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
   knowledge: [
     { label: '知识库概览', href: '/knowledge', icon: List },
     { label: '位点收录库', href: '/knowledge/variants', icon: Library },
-    { label: '新增位点', href: '/knowledge/new', icon: Plus },
+    // { label: '新增位点', href: '/knowledge/new', icon: Plus },
   ],
   // 系统设置
   settings: [
