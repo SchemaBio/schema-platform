@@ -67,7 +67,7 @@ export const mainNavItems: NavItem[] = [
   { label: '实验中心', href: '/lab', icon: FlaskConical },
   { label: '数据管理', href: '/data', icon: HardDrive },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
-  { label: '报告中心', href: '/reports', icon: FileText },
+  { label: '报告中心', href: '/analysis', icon: FileText },
   { label: '知识中心', href: '/knowledge', icon: BookOpen },
 ];
 
