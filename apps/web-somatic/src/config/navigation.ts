@@ -87,8 +87,8 @@ export const sidebarNavConfig: SidebarNavConfig = {
   ],
   // 数据管理 - 生信工程师操作
   data: [
-    { label: '数据列表', href: '/data', icon: List },
-    { label: '数据匹配', href: '/data/matching', icon: Database },
+    { label: '数据匹配', href: '/data', icon: Database },
+    { label: '数据列表', href: '/data/list', icon: List },
   ],
   // 流程中心 - 生信工程师操作
   pipeline: [
