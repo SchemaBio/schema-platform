@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { Button, Input, Select, TextArea } from '@schema/ui-kit';
-import { X, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
-import type { Gender, SampleType, SampleSource, SamplingMethod, TestPurpose, ClinicalStage } from '../types';
+import { X, Upload, Image as ImageIcon, Trash2, Calendar } from 'lucide-react';
+import type { Gender, SampleType, SampleSource, SamplingMethod, TestPurpose, ClinicalStage, NucleicAcidType } from '../types';
 import { 
   SAMPLE_TYPE_OPTIONS, 
   SAMPLE_SOURCE_OPTIONS, 
@@ -11,6 +11,7 @@ import {
   TEST_PURPOSE_OPTIONS, 
   CLINICAL_STAGE_OPTIONS,
   TUMOR_TYPE_OPTIONS,
+  NUCLEIC_ACID_TYPE_OPTIONS,
 } from '../types';
 
 interface NewSampleModalProps {
@@ -27,6 +28,9 @@ interface HEImage {
 }
 
 export interface NewSampleFormData {
+  // 内部编号
+  internalId: string;
+  
   // 患者信息
   name: string;
   gender: Gender;
@@ -35,6 +39,7 @@ export interface NewSampleFormData {
   
   // 样本信息
   sampleType: SampleType;
+  nucleicAcidType: NucleicAcidType;
   isPaired: boolean;
   pairedSampleId: string;
   
@@ -76,11 +81,13 @@ const genderOptions = [
 
 export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProps) {
   const [formData, setFormData] = React.useState<NewSampleFormData>({
+    internalId: '',
     name: '',
     gender: 'unknown',
     age: '',
     birthDate: '',
     sampleType: 'FFPE',
+    nucleicAcidType: 'DNA',
     isPaired: false,
     pairedSampleId: '',
     tumorType: '',
@@ -102,6 +109,7 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
     heImages: [],
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const dateInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleChange = (field: keyof NewSampleFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -156,11 +164,13 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
     onClose();
     formData.heImages.forEach(img => URL.revokeObjectURL(img.preview));
     setFormData({
+      internalId: '',
       name: '',
       gender: 'unknown',
       age: '',
       birthDate: '',
       sampleType: 'FFPE',
+      nucleicAcidType: 'DNA',
       isPaired: false,
       pairedSampleId: '',
       tumorType: '',
@@ -201,10 +211,26 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* 内部编号 */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-fg-default mb-3">样本编号</h3>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-2">
+                <label className="block text-xs text-fg-muted mb-1">内部编号 *</label>
+                <Input
+                  value={formData.internalId}
+                  onChange={(e) => handleChange('internalId', e.target.value)}
+                  placeholder="请输入内部编号，如：XH-2024-001"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
           {/* 患者信息 */}
           <div className="mb-6">
             <h3 className="text-sm font-medium text-fg-default mb-3">患者信息</h3>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs text-fg-muted mb-1">姓名 *</label>
                 <Input
@@ -231,13 +257,32 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
                   placeholder="岁"
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 mt-4">
               <div>
                 <label className="block text-xs text-fg-muted mb-1">出生日期</label>
-                <Input
-                  type="date"
-                  value={formData.birthDate}
-                  onChange={(e) => handleChange('birthDate', e.target.value)}
-                />
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="text"
+                    value={formData.birthDate}
+                    onChange={(e) => handleChange('birthDate', e.target.value)}
+                    placeholder="1990-01-15"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => dateInputRef.current?.showPicker()}
+                    className="p-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
+                  >
+                    <Calendar className="w-4 h-4 text-gray-500" />
+                  </button>
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={formData.birthDate}
+                    onChange={(e) => handleChange('birthDate', e.target.value)}
+                    className="sr-only"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -296,6 +341,14 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
                 />
               </div>
               <div>
+                <label className="block text-xs text-fg-muted mb-1">核酸类型 *</label>
+                <Select
+                  value={formData.nucleicAcidType}
+                  onChange={(value) => handleChange('nucleicAcidType', Array.isArray(value) ? value[0] : value)}
+                  options={NUCLEIC_ACID_TYPE_OPTIONS}
+                />
+              </div>
+              <div>
                 <label className="block text-xs text-fg-muted mb-1">样本来源</label>
                 <Select
                   value={formData.sampleSource}
@@ -311,6 +364,8 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
                   options={SAMPLING_METHOD_OPTIONS}
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-4 gap-4 mt-4">
               <div>
                 <label className="block text-xs text-fg-muted mb-1">取样部位</label>
                 <Input

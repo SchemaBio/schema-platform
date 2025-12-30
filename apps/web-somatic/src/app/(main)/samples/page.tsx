@@ -7,7 +7,7 @@ import { Search, Plus, Download, Upload, ChevronRight, ChevronLeft, List, X, Tra
 import { SampleDetailPanel, NewSampleModal } from './components';
 import { mockSamples } from './mock-data';
 import type { Sample, OpenTab } from './types';
-import { STATUS_CONFIG, GENDER_CONFIG } from './types';
+import { STATUS_CONFIG, GENDER_CONFIG, TUMOR_TYPE_ICONS } from './types';
 
 const statusDotColors: Record<Sample['status'], string> = {
   pending: 'bg-neutral-emphasis',
@@ -88,6 +88,12 @@ S001,张三,男,58,FFPE,肺癌,III,穿刺活检,北京协和医院,肿瘤内科,
       width: 140,
     },
     {
+      id: 'internalId',
+      header: '内部编号',
+      accessor: 'internalId',
+      width: 120,
+    },
+    {
       id: 'name',
       header: '姓名',
       accessor: (row) => (
@@ -117,11 +123,15 @@ S001,张三,男,58,FFPE,肺癌,III,穿刺活检,北京协和医院,肿瘤内科,
       id: 'tumorType',
       header: '肿瘤类型',
       accessor: (row) => (
-        <Tag variant="danger">{row.tumorType}</Tag>
+        <div className="flex items-center gap-1.5">
+          <span className="text-base">{TUMOR_TYPE_ICONS[row.tumorType] || '🔘'}</span>
+          <span className="text-fg-default">{row.tumorType}</span>
+        </div>
       ),
-      width: 100,
+      width: 110,
     },
     { id: 'sampleType', header: '样本类型', accessor: 'sampleType', width: 100 },
+    { id: 'nucleicAcidType', header: '核酸类型', accessor: 'nucleicAcidType', width: 80 },
     {
       id: 'status',
       header: '状态',

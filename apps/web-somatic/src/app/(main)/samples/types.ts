@@ -3,6 +3,9 @@
 export type SampleStatus = 'pending' | 'matched' | 'analyzing' | 'completed';
 export type Gender = 'male' | 'female' | 'unknown';
 
+// 核酸类型
+export type NucleicAcidType = 'DNA' | 'RNA';
+
 // 样本类型（肿瘤特异）
 export type SampleType = 'FFPE' | '新鲜组织' | '全血' | 'cfDNA' | '胸腹水' | '骨髓' | '其他';
 
@@ -29,11 +32,15 @@ export interface HEImageInfo {
 
 export interface Sample {
   id: string;
+  // 内部编号（用户自定义）
+  internalId: string;
   name: string;
   gender: Gender;
   age: number;
   birthDate: string;
   sampleType: SampleType;
+  // 核酸类型
+  nucleicAcidType: NucleicAcidType;
   // 肿瘤类型/原发部位
   tumorType: string;
   // 配对样本编号（如有）
@@ -160,6 +167,11 @@ export const SAMPLE_TYPE_OPTIONS = [
   { value: '其他', label: '其他' },
 ];
 
+export const NUCLEIC_ACID_TYPE_OPTIONS = [
+  { value: 'DNA', label: 'DNA' },
+  { value: 'RNA', label: 'RNA' },
+];
+
 export const SAMPLE_SOURCE_OPTIONS = [
   { value: 'primary', label: '原发灶' },
   { value: 'metastasis', label: '转移灶' },
@@ -199,7 +211,7 @@ export const TREATMENT_TYPE_OPTIONS = [
   { value: 'other', label: '其他' },
 ];
 
-// 常见肿瘤类型
+// 常见肿瘤类型（实体瘤）
 export const TUMOR_TYPE_OPTIONS = [
   { value: '肺癌', label: '肺癌' },
   { value: '乳腺癌', label: '乳腺癌' },
@@ -210,8 +222,33 @@ export const TUMOR_TYPE_OPTIONS = [
   { value: '卵巢癌', label: '卵巢癌' },
   { value: '前列腺癌', label: '前列腺癌' },
   { value: '甲状腺癌', label: '甲状腺癌' },
-  { value: '淋巴瘤', label: '淋巴瘤' },
-  { value: '白血病', label: '白血病' },
+  { value: '肾癌', label: '肾癌' },
+  { value: '膀胱癌', label: '膀胱癌' },
+  { value: '食管癌', label: '食管癌' },
+  { value: '宫颈癌', label: '宫颈癌' },
+  { value: '子宫内膜癌', label: '子宫内膜癌' },
   { value: '黑色素瘤', label: '黑色素瘤' },
+  { value: '脑胶质瘤', label: '脑胶质瘤' },
   { value: '其他', label: '其他' },
 ];
+
+// 肿瘤类型对应的图标映射
+export const TUMOR_TYPE_ICONS: Record<string, string> = {
+  '肺癌': '🫁',
+  '乳腺癌': '🎀',
+  '结直肠癌': '🔴',
+  '胃癌': '🟠',
+  '肝癌': '🟤',
+  '胰腺癌': '🟡',
+  '卵巢癌': '🟣',
+  '前列腺癌': '🔵',
+  '甲状腺癌': '🦋',
+  '肾癌': '🫘',
+  '膀胱癌': '💧',
+  '食管癌': '🔶',
+  '宫颈癌': '🌸',
+  '子宫内膜癌': '🌺',
+  '黑色素瘤': '⬛',
+  '脑胶质瘤': '🧠',
+  '其他': '🔘',
+};
