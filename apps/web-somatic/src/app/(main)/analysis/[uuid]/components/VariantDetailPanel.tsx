@@ -1,60 +1,45 @@
 'use client';
 
 import * as React from 'react';
-import { X, ExternalLink, FileText, Database, Dna, Edit2, Check, Plus, Trash2 } from 'lucide-react';
+import { X, ExternalLink, FileText, Database, Dna, Pill, Target, Activity, Edit2, Check } from 'lucide-react';
 import { Tag } from '@schema/ui-kit';
-import type { SNVIndel, ACMGClassification } from '../types';
-import { ACMG_CONFIG } from '../mock-data';
-
-// ACMG 证据项定义
-const ACMG_CRITERIA_OPTIONS = {
-  pathogenic: {
-    veryStrong: ['PVS1'],
-    strong: ['PS1', 'PS2', 'PS3', 'PS4'],
-    moderate: ['PM1', 'PM2', 'PM3', 'PM4', 'PM5', 'PM6'],
-    supporting: ['PP1', 'PP2', 'PP3', 'PP4', 'PP5'],
-  },
-  benign: {
-    standalone: ['BA1'],
-    strong: ['BS1', 'BS2', 'BS3', 'BS4'],
-    supporting: ['BP1', 'BP2', 'BP3', 'BP4', 'BP5', 'BP6', 'BP7'],
-  },
-};
+import type { SNVIndel, TierClassification } from '../types';
+import { TIER_CONFIG } from '../mock-data';
 
 interface VariantDetailPanelProps {
   variant: SNVIndel | null;
   isOpen: boolean;
   onClose: () => void;
   onOpenIGV?: (chromosome: string, position: number) => void;
-  onUpdateClassification?: (variantId: string, classification: ACMGClassification, criteria: string[]) => void;
+  onUpdateTier?: (variantId: string, tier: TierClassification) => void;
 }
 
 // 信息项组件
-function InfoItem({ label, value, link }: { label: string; value?: React.ReactNode; link?: string }) {
+function InfoItem({ label, value, link, mono }: { label: string; value?: React.ReactNode; link?: string; mono?: boolean }) {
   if (value === undefined || value === null || value === '' || value === '-') {
     return (
       <div className="flex justify-between py-1.5 border-b border-border-subtle last:border-0">
-        <span className="text-fg-muted text-sm">{label}</span>
-        <span className="text-fg-subtle text-sm">-</span>
+        <span className="text-fg-muted text-xs">{label}</span>
+        <span className="text-fg-subtle text-xs">-</span>
       </div>
     );
   }
 
   return (
-    <div className="flex justify-between py-1.5 border-b border-border-subtle last:border-0">
-      <span className="text-fg-muted text-sm">{label}</span>
+    <div className="flex justify-between py-1.5 border-b border-border-subtle last:border-0 gap-2">
+      <span className="text-fg-muted text-xs shrink-0">{label}</span>
       {link ? (
         <a
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-accent-fg text-sm hover:underline flex items-center gap-1"
+          className="text-accent-fg text-xs hover:underline flex items-center gap-1 text-right"
         >
           {value}
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="w-3 h-3 shrink-0" />
         </a>
       ) : (
-        <span className="text-fg-default text-sm font-medium">{value}</span>
+        <span className={`text-fg-default text-xs text-right break-all ${mono ? 'font-mono' : ''}`}>{value}</span>
       )}
     </div>
   );
@@ -63,213 +48,56 @@ function InfoItem({ label, value, link }: { label: string; value?: React.ReactNo
 // 分组标题组件
 function SectionTitle({ icon: Icon, title, action }: { icon: React.ElementType; title: string; action?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between mb-3 mt-5 first:mt-0">
-      <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 text-fg-muted" />
-        <h4 className="text-sm font-medium text-fg-default">{title}</h4>
+    <div className="flex items-center justify-between mb-2 mt-4 first:mt-0">
+      <div className="flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5 text-fg-muted" />
+        <h4 className="text-xs font-medium text-fg-default">{title}</h4>
       </div>
       {action}
     </div>
   );
 }
 
-// ACMG 分类编辑器组件
-function ACMGClassificationEditor({
-  currentClassification,
-  currentCriteria,
+// Tier 分类编辑器
+function TierEditor({
+  currentTier,
   onSave,
   onCancel,
 }: {
-  currentClassification: ACMGClassification;
-  currentCriteria: string[];
-  onSave: (classification: ACMGClassification, criteria: string[]) => void;
+  currentTier: TierClassification;
+  onSave: (tier: TierClassification) => void;
   onCancel: () => void;
 }) {
-  const [classification, setClassification] = React.useState<ACMGClassification>(currentClassification);
-  const [selectedCriteria, setSelectedCriteria] = React.useState<Set<string>>(new Set(currentCriteria));
-
-  const toggleCriteria = (criterion: string) => {
-    const newSet = new Set(selectedCriteria);
-    if (newSet.has(criterion)) {
-      newSet.delete(criterion);
-    } else {
-      newSet.add(criterion);
-    }
-    setSelectedCriteria(newSet);
-  };
-
-  const handleSave = () => {
-    onSave(classification, Array.from(selectedCriteria));
-  };
+  const [tier, setTier] = React.useState<TierClassification>(currentTier);
 
   return (
-    <div className="space-y-4">
-      {/* 分类选择 */}
-      <div>
-        <label className="block text-sm text-fg-muted mb-2">ACMG 分类</label>
-        <select
-          value={classification}
-          onChange={(e) => setClassification(e.target.value as ACMGClassification)}
-          className="w-full px-3 py-2 text-sm border border-border rounded-md bg-canvas-default text-fg-default"
-        >
-          {Object.entries(ACMG_CONFIG).map(([key, config]) => (
-            <option key={key} value={key}>{config.label}</option>
-          ))}
-        </select>
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        {Object.entries(TIER_CONFIG).map(([key, config]) => (
+          <button
+            key={key}
+            onClick={() => setTier(key as TierClassification)}
+            className={`px-3 py-2 text-xs rounded-md border transition-colors ${
+              tier === key
+                ? 'border-accent-emphasis bg-accent-subtle text-accent-fg'
+                : 'border-border-default bg-canvas-default text-fg-muted hover:bg-canvas-inset'
+            }`}
+          >
+            {config.label}
+          </button>
+        ))}
       </div>
-
-      {/* 致病性证据 */}
-      <div>
-        <label className="block text-sm text-fg-muted mb-2">致病性证据</label>
-        <div className="space-y-2">
-          <div>
-            <span className="text-xs text-fg-subtle">非常强 (PVS)</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {ACMG_CRITERIA_OPTIONS.pathogenic.veryStrong.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => toggleCriteria(c)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    selectedCriteria.has(c)
-                      ? 'bg-danger-emphasis text-fg-on-emphasis'
-                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className="text-xs text-fg-subtle">强 (PS)</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {ACMG_CRITERIA_OPTIONS.pathogenic.strong.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => toggleCriteria(c)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    selectedCriteria.has(c)
-                      ? 'bg-danger-subtle text-danger-fg'
-                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className="text-xs text-fg-subtle">中等 (PM)</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {ACMG_CRITERIA_OPTIONS.pathogenic.moderate.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => toggleCriteria(c)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    selectedCriteria.has(c)
-                      ? 'bg-warning-subtle text-warning-fg'
-                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className="text-xs text-fg-subtle">支持 (PP)</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {ACMG_CRITERIA_OPTIONS.pathogenic.supporting.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => toggleCriteria(c)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    selectedCriteria.has(c)
-                      ? 'bg-warning-subtle text-warning-fg'
-                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 良性证据 */}
-      <div>
-        <label className="block text-sm text-fg-muted mb-2">良性证据</label>
-        <div className="space-y-2">
-          <div>
-            <span className="text-xs text-fg-subtle">独立 (BA)</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {ACMG_CRITERIA_OPTIONS.benign.standalone.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => toggleCriteria(c)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    selectedCriteria.has(c)
-                      ? 'bg-success-emphasis text-fg-on-emphasis'
-                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className="text-xs text-fg-subtle">强 (BS)</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {ACMG_CRITERIA_OPTIONS.benign.strong.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => toggleCriteria(c)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    selectedCriteria.has(c)
-                      ? 'bg-success-subtle text-success-fg'
-                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span className="text-xs text-fg-subtle">支持 (BP)</span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {ACMG_CRITERIA_OPTIONS.benign.supporting.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => toggleCriteria(c)}
-                  className={`px-2 py-1 text-xs rounded transition-colors ${
-                    selectedCriteria.has(c)
-                      ? 'bg-success-subtle text-success-fg'
-                      : 'bg-canvas-inset text-fg-muted hover:bg-canvas-subtle'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 操作按钮 */}
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2">
         <button
-          onClick={handleSave}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90 transition-colors"
+          onClick={() => onSave(tier)}
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90"
         >
-          <Check className="w-4 h-4" />
+          <Check className="w-3 h-3" />
           保存
         </button>
         <button
           onClick={onCancel}
-          className="px-3 py-2 text-sm border border-border rounded-md hover:bg-canvas-inset transition-colors"
+          className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-canvas-inset"
         >
           取消
         </button>
@@ -278,25 +106,20 @@ function ACMGClassificationEditor({
   );
 }
 
-export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpdateClassification }: VariantDetailPanelProps) {
-  const [isEditingACMG, setIsEditingACMG] = React.useState(false);
-  const [localClassification, setLocalClassification] = React.useState<ACMGClassification | null>(null);
-  const [localCriteria, setLocalCriteria] = React.useState<string[] | null>(null);
+export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpdateTier }: VariantDetailPanelProps) {
+  const [isEditingTier, setIsEditingTier] = React.useState(false);
+  const [localTier, setLocalTier] = React.useState<TierClassification | null>(null);
 
-  // 当 variant 变化时重置编辑状态
   React.useEffect(() => {
-    setIsEditingACMG(false);
-    setLocalClassification(null);
-    setLocalCriteria(null);
+    setIsEditingTier(false);
+    setLocalTier(null);
   }, [variant?.id]);
 
   if (!isOpen || !variant) return null;
 
-  const currentClassification = localClassification ?? variant.acmgClassification;
-  const currentCriteria = localCriteria ?? variant.acmgCriteria ?? [];
-  const acmgConfig = ACMG_CONFIG[currentClassification];
+  const currentTier = localTier ?? variant.clinicalSignificance;
+  const tierConfig = TIER_CONFIG[currentTier];
   
-  // 格式化频率显示
   const formatFrequency = (freq?: number) => {
     if (freq === undefined || freq === null) return undefined;
     if (freq === 0) return '0';
@@ -304,50 +127,177 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
     return (freq * 100).toFixed(4) + '%';
   };
 
-  // 格式化评分显示
   const formatScore = (score?: number, precision = 2) => {
     if (score === undefined || score === null) return undefined;
     return score.toFixed(precision);
   };
 
-  // 保存 ACMG 分类
-  const handleSaveACMG = (classification: ACMGClassification, criteria: string[]) => {
-    setLocalClassification(classification);
-    setLocalCriteria(criteria);
-    setIsEditingACMG(false);
-    onUpdateClassification?.(variant.id, classification, criteria);
+  const handleSaveTier = (tier: TierClassification) => {
+    setLocalTier(tier);
+    setIsEditingTier(false);
+    onUpdateTier?.(variant.id, tier);
+  };
+
+  // 获取变异类型标签
+  const getTypeVariant = (type: string): 'info' | 'warning' | 'danger' | 'success' => {
+    switch (type) {
+      case 'SNV': return 'info';
+      case 'Insertion': return 'success';
+      case 'Deletion': return 'danger';
+      case 'Complex': return 'warning';
+      default: return 'info';
+    }
   };
 
   return (
     <>
-      {/* 背景遮罩 */}
-      <div 
-        className="fixed inset-0 bg-black/20 z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
       
-      {/* 侧边面板 */}
-      <div className="fixed right-0 top-0 h-full w-[480px] bg-white dark:bg-[#0d1117] border-l border-border shadow-xl z-50 flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-[420px] bg-white dark:bg-[#0d1117] border-l border-border shadow-xl z-50 flex flex-col">
         {/* 头部 */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-canvas-subtle">
-          <div className="flex items-center gap-3">
-            <h3 className="text-base font-medium text-fg-default">变异详情</h3>
-            <Tag variant={acmgConfig.variant}>{acmgConfig.label}</Tag>
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-canvas-subtle">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-fg-default">{variant.gene}</span>
+            <span className="text-sm font-mono text-fg-muted">{variant.hgvsp || variant.hgvsc}</span>
+            <Tag variant={tierConfig.variant} className="text-xs">{tierConfig.label}</Tag>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-fg-muted hover:text-fg-default hover:bg-canvas-inset rounded transition-colors"
-            aria-label="关闭"
-          >
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-1 text-fg-muted hover:text-fg-default rounded">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* 内容区域 */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {/* 基本信息 (NCCL规范) */}
-          <SectionTitle icon={Dna} title="基因组位置" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
+        {/* 内容 */}
+        <div className="flex-1 overflow-y-auto p-3">
+          {/* 临床意义 - 体细胞突变核心 */}
+          <SectionTitle 
+            icon={Target} 
+            title="临床意义 (Tier分类)"
+            action={
+              !isEditingTier && (
+                <button
+                  onClick={() => setIsEditingTier(true)}
+                  className="flex items-center gap-1 px-1.5 py-0.5 text-xs text-fg-muted hover:text-fg-default hover:bg-canvas-inset rounded"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  编辑
+                </button>
+              )
+            }
+          />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            {isEditingTier ? (
+              <TierEditor
+                currentTier={currentTier}
+                onSave={handleSaveTier}
+                onCancel={() => setIsEditingTier(false)}
+              />
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag variant={tierConfig.variant}>{tierConfig.label}</Tag>
+                  <span className="text-xs text-fg-muted">
+                    {currentTier === 'Tier I' && '强临床意义 - FDA获批/指南推荐'}
+                    {currentTier === 'Tier II' && '潜在临床意义 - 临床试验/小规模研究'}
+                    {currentTier === 'Tier III' && '意义未明 - 需进一步研究'}
+                    {currentTier === 'Tier IV' && '良性/可能良性'}
+                  </span>
+                </div>
+                <InfoItem label="疾病关联" value={variant.diseaseAssociation} />
+              </>
+            )}
+          </div>
+
+          {/* 靶向药物信息 */}
+          <SectionTitle icon={Pill} title="靶向药物" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            {(currentTier === 'Tier I' || currentTier === 'Tier II') ? (
+              <>
+                <div className="text-xs text-fg-muted mb-2">
+                  {variant.gene === 'EGFR' && variant.hgvsp === 'p.L858R' && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-success-subtle text-success-fg rounded text-xs">敏感</span>
+                        <span>奥希替尼、吉非替尼、厄洛替尼、阿法替尼</span>
+                      </div>
+                    </div>
+                  )}
+                  {variant.gene === 'EGFR' && variant.hgvsp === 'p.T790M' && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-success-subtle text-success-fg rounded text-xs">敏感</span>
+                        <span>奥希替尼</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-danger-subtle text-danger-fg rounded text-xs">耐药</span>
+                        <span>吉非替尼、厄洛替尼</span>
+                      </div>
+                    </div>
+                  )}
+                  {variant.gene === 'KRAS' && variant.hgvsp === 'p.G12D' && (
+                    <div className="text-fg-muted">暂无获批靶向药物</div>
+                  )}
+                  {variant.gene === 'BRAF' && variant.hgvsp === 'p.V600E' && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-success-subtle text-success-fg rounded text-xs">敏感</span>
+                        <span>达拉非尼+曲美替尼、维莫非尼</span>
+                      </div>
+                    </div>
+                  )}
+                  {variant.gene === 'PIK3CA' && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-success-subtle text-success-fg rounded text-xs">敏感</span>
+                        <span>阿培利司 (乳腺癌)</span>
+                      </div>
+                    </div>
+                  )}
+                  {!['EGFR', 'KRAS', 'BRAF', 'PIK3CA'].includes(variant.gene) && (
+                    <div className="text-fg-muted">暂无相关靶向药物信息</div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-xs text-fg-muted">该变异暂无明确靶向药物关联</div>
+            )}
+          </div>
+
+          {/* 肿瘤数据库 */}
+          <SectionTitle icon={Database} title="肿瘤数据库" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem 
+              label="OncoKB" 
+              value={variant.gene}
+              link={`https://www.oncokb.org/gene/${variant.gene}`}
+            />
+            <InfoItem 
+              label="COSMIC" 
+              value={variant.gene}
+              link={`https://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=${variant.gene}`}
+            />
+            <InfoItem 
+              label="ClinVar" 
+              value={variant.clinvarId}
+              link={variant.clinvarId ? `https://www.ncbi.nlm.nih.gov/clinvar/variation/${variant.clinvarId.replace('VCV', '')}` : undefined}
+            />
+            <InfoItem label="ClinVar 意义" value={variant.clinvarSignificance} />
+          </div>
+
+          {/* 变异信息 */}
+          <SectionTitle icon={Dna} title="变异信息" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem label="基因" value={variant.gene} />
+            <InfoItem label="类型" value={<Tag variant={getTypeVariant(variant.variantType)}>{variant.variantType}</Tag>} />
+            <InfoItem label="转录本" value={variant.transcript} mono />
+            <InfoItem label="cHGVS" value={variant.hgvsc} mono />
+            <InfoItem label="pHGVS" value={variant.hgvsp} mono />
+            <InfoItem label="Consequence" value={variant.consequence} />
+            <InfoItem label="Affected Exon" value={variant.affectedExon} />
+          </div>
+
+          {/* 基因组位置 */}
+          <SectionTitle icon={Activity} title="基因组位置" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
             <InfoItem label="Chr" value={variant.chromosome.replace('chr', '')} />
             <InfoItem 
               label="Start" 
@@ -365,150 +315,68 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
                 ? '-' 
                 : String(variant.end ?? variant.position)
             } />
-            <InfoItem label="Ref" value={<span className="font-mono">{variant.ref}</span>} />
-            <InfoItem label="Alt" value={<span className="font-mono">{variant.alt}</span>} />
-          </div>
-
-          {/* 基因与转录本信息 */}
-          <SectionTitle icon={Dna} title="基因与转录本" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="Gene" value={variant.gene} />
-            <InfoItem label="Type" value={variant.variantType} />
-            <InfoItem label="Transcript" value={variant.transcript} />
-            <InfoItem label="cHGVS" value={<span className="font-mono text-sm">{variant.hgvsc}</span>} />
-            <InfoItem label="pHGVS" value={<span className="font-mono text-sm">{variant.hgvsp}</span>} />
-            <InfoItem label="Consequence" value={variant.consequence} />
-            <InfoItem label="Affected_Exon" value={variant.affectedExon} />
-            <InfoItem label="Zygosity" value={
-              variant.zygosity === 'Heterozygous' ? '杂合' :
-              variant.zygosity === 'Homozygous' ? '纯合' : '半合'
-            } />
+            <InfoItem label="Ref" value={variant.ref} mono />
+            <InfoItem label="Alt" value={variant.alt} mono />
           </div>
 
           {/* 测序质量 */}
           <SectionTitle icon={FileText} title="测序质量" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="VAF%" value={`${(variant.alleleFrequency * 100).toFixed(2)}`} />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem label="VAF" value={`${(variant.alleleFrequency * 100).toFixed(2)}%`} />
             <InfoItem label="Depth" value={`${variant.depth}X`} />
+            <InfoItem label="Alt Reads" value={variant.altReads !== undefined ? String(variant.altReads) : (variant.depth && variant.alleleFrequency ? Math.round(variant.depth * variant.alleleFrequency).toString() : undefined)} />
+            <InfoItem label="去重深度" value={variant.dedupDepth !== undefined ? `${variant.dedupDepth}X` : undefined} />
+            <InfoItem label="去重Alt Reads" value={variant.dedupAltReads !== undefined ? String(variant.dedupAltReads) : undefined} />
+            <InfoItem label="去重VAF" value={variant.dedupVAF !== undefined ? `${(variant.dedupVAF * 100).toFixed(2)}%` : undefined} />
           </div>
 
           {/* 人群频率 */}
           <SectionTitle icon={Database} title="人群频率" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="gnomAD 总体" value={formatFrequency(variant.gnomadAF)} />
-            <InfoItem label="gnomAD 东亚" value={formatFrequency(variant.gnomadEasAF)} />
-            <InfoItem label="ExAC" value={formatFrequency(variant.exacAF)} />
-          </div>
-
-          {/* 功能预测 */}
-          <SectionTitle icon={Dna} title="功能预测" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem 
-              label="SIFT" 
-              value={variant.siftScore !== undefined ? 
-                `${formatScore(variant.siftScore)} (${variant.siftPrediction})` : undefined
-              } 
-            />
-            <InfoItem 
-              label="PolyPhen-2" 
-              value={variant.polyphenScore !== undefined ? 
-                `${formatScore(variant.polyphenScore)} (${variant.polyphenPrediction})` : undefined
-              } 
-            />
-            <InfoItem label="CADD" value={formatScore(variant.caddScore)} />
-            <InfoItem label="REVEL" value={formatScore(variant.revelScore)} />
-            <InfoItem label="SpliceAI" value={formatScore(variant.spliceAI)} />
-          </div>
-
-          {/* ACMG 分类 */}
-          <SectionTitle 
-            icon={FileText} 
-            title="ACMG 分类" 
-            action={
-              !isEditingACMG && (
-                <button
-                  onClick={() => setIsEditingACMG(true)}
-                  className="flex items-center gap-1 px-2 py-1 text-xs text-fg-muted hover:text-fg-default hover:bg-canvas-inset rounded transition-colors"
-                >
-                  <Edit2 className="w-3 h-3" />
-                  编辑
-                </button>
-              )
-            }
-          />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            {isEditingACMG ? (
-              <ACMGClassificationEditor
-                currentClassification={currentClassification}
-                currentCriteria={currentCriteria}
-                onSave={handleSaveACMG}
-                onCancel={() => setIsEditingACMG(false)}
-              />
-            ) : (
-              <>
-                <InfoItem label="分类" value={<Tag variant={acmgConfig.variant}>{acmgConfig.label}</Tag>} />
-                <InfoItem 
-                  label="证据项" 
-                  value={currentCriteria.length ? (
-                    <div className="flex flex-wrap gap-1">
-                      {currentCriteria.map((c) => (
-                        <span key={c} className="px-1.5 py-0.5 text-xs bg-canvas-inset rounded">
-                          {c}
-                        </span>
-                      ))}
-                    </div>
-                  ) : undefined}
-                />
-              </>
-            )}
-          </div>
-
-          {/* 临床意义 */}
-          <SectionTitle icon={Database} title="临床意义" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem 
-              label="ClinVar" 
-              value={variant.clinvarId}
-              link={variant.clinvarId ? `https://www.ncbi.nlm.nih.gov/clinvar/variation/${variant.clinvarId.replace('VCV', '')}` : undefined}
-            />
-            <InfoItem label="ClinVar 意义" value={variant.clinvarSignificance} />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem label="gnomAD" value={formatFrequency(variant.gnomadAF)} />
+            <InfoItem label="gnomAD EAS" value={formatFrequency(variant.gnomadEasAF)} />
             <InfoItem 
               label="dbSNP" 
               value={variant.rsId}
               link={variant.rsId ? `https://www.ncbi.nlm.nih.gov/snp/${variant.rsId}` : undefined}
             />
+          </div>
+
+          {/* 有害性评估 */}
+          <SectionTitle icon={Dna} title="有害性评估" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem label="InterVar" value={variant.intervarClassification} />
+            <InfoItem label="AlphaMissense" value={variant.alphaMissenseScore !== undefined ? `${formatScore(variant.alphaMissenseScore)} (${variant.alphaMissensePrediction})` : undefined} />
+            <InfoItem label="Maverick" value={variant.maverickScore !== undefined ? `${formatScore(variant.maverickScore)} (${variant.maverickPrediction})` : undefined} />
+            <InfoItem label="CADD" value={formatScore(variant.caddScore)} />
+            <InfoItem label="REVEL" value={formatScore(variant.revelScore)} />
+            <InfoItem label="SpliceAI" value={formatScore(variant.spliceAI)} />
             <InfoItem 
-              label="OMIM" 
-              value={variant.omimId}
-              link={variant.omimId ? `https://omim.org/entry/${variant.omimId}` : undefined}
+              label="SIFT" 
+              value={variant.siftScore !== undefined ? `${formatScore(variant.siftScore)} (${variant.siftPrediction})` : undefined} 
             />
-            <InfoItem label="疾病关联" value={variant.diseaseAssociation} />
-            <InfoItem label="遗传模式" value={
-              variant.inheritanceMode === 'AD' ? '常染色体显性' :
-              variant.inheritanceMode === 'AR' ? '常染色体隐性' :
-              variant.inheritanceMode === 'XL' ? 'X连锁' :
-              variant.inheritanceMode === 'XLD' ? 'X连锁显性' :
-              variant.inheritanceMode === 'XLR' ? 'X连锁隐性' :
-              variant.inheritanceMode
-            } />
+            <InfoItem 
+              label="PolyPhen-2" 
+              value={variant.polyphenScore !== undefined ? `${formatScore(variant.polyphenScore)} (${variant.polyphenPrediction})` : undefined} 
+            />
           </div>
 
           {/* 文献 */}
           {variant.pubmedIds && variant.pubmedIds.length > 0 && (
             <>
               <SectionTitle icon={FileText} title="相关文献" />
-              <div className="bg-canvas-subtle rounded-lg p-3">
-                <div className="flex flex-wrap gap-2">
+              <div className="bg-canvas-subtle rounded-md p-2.5">
+                <div className="flex flex-wrap gap-1.5">
                   {variant.pubmedIds.map((pmid) => (
                     <a
                       key={pmid}
                       href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-canvas-inset text-accent-fg rounded hover:bg-accent-subtle transition-colors"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-canvas-inset text-accent-fg rounded hover:bg-accent-subtle"
                     >
                       PMID:{pmid}
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   ))}
                 </div>
@@ -517,18 +385,18 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
           )}
         </div>
 
-        {/* 底部操作栏 */}
-        <div className="border-t border-border p-4 bg-canvas-subtle">
+        {/* 底部 */}
+        <div className="border-t border-border p-3 bg-canvas-subtle">
           <div className="flex gap-2">
             <button
               onClick={() => onOpenIGV?.(variant.chromosome.startsWith('chr') ? variant.chromosome : `chr${variant.chromosome}`, variant.start ?? variant.position)}
-              className="flex-1 px-4 py-2 text-sm bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90 transition-colors"
+              className="flex-1 px-3 py-1.5 text-xs bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90"
             >
               在 IGV 中查看
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm border border-border rounded-md hover:bg-canvas-inset transition-colors"
+              className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-canvas-inset"
             >
               关闭
             </button>

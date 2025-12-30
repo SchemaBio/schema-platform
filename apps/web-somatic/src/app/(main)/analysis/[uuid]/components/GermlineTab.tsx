@@ -9,6 +9,7 @@ import { DEFAULT_FILTER_STATE } from '../types';
 import { ACMG_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 import { IGVViewer, PositionLink } from './IGVViewer';
+import { GermlineDetailPanel } from './GermlineDetailPanel';
 
 // 突变类型 (NCCL规范)
 type VariantType = 'SNV' | 'Insertion' | 'Deletion' | 'Complex';
@@ -190,6 +191,52 @@ const mockGermlineVariants: GermlineVariant[] = [
     clinvarSignificance: 'Pathogenic', gnomadAF: 0.00002,
     reviewed: false, reported: false,
   },
+  // 内含子变异
+  {
+    id: 'germ-009',
+    chr: '17', start: 43091434, end: 43091434, ref: 'G', alt: 'A',
+    gene: 'BRCA1', type: 'SNV', transcript: 'NM_007294.4',
+    cHGVS: 'c.4987-6T>C', pHGVS: '-',
+    consequence: 'Splice_Site_mutation', affectedExon: 'Intron 16',
+    vaf: 0.49, depth: 285, zygosity: 'Heterozygous',
+    acmgClassification: 'VUS',
+    acmgCriteria: ['PM2', 'PP3'],
+    diseaseAssociation: '遗传性乳腺癌-卵巢癌综合征',
+    inheritanceMode: 'AD',
+    gnomadAF: 0.00005,
+    reviewed: false, reported: false,
+  },
+  // 5'UTR变异
+  {
+    id: 'germ-010',
+    chr: '17', start: 7590868, end: 7590868, ref: 'C', alt: 'T',
+    gene: 'TP53', type: 'SNV', transcript: 'NM_000546.6',
+    cHGVS: 'c.-28G>A', pHGVS: '-',
+    consequence: 'Other', affectedExon: "5'UTR",
+    vaf: 0.47, depth: 310, zygosity: 'Heterozygous',
+    acmgClassification: 'VUS',
+    acmgCriteria: ['PM2'],
+    diseaseAssociation: 'Li-Fraumeni综合征',
+    inheritanceMode: 'AD',
+    gnomadAF: 0.0001,
+    reviewed: false, reported: false,
+  },
+  // 启动子变异
+  {
+    id: 'germ-011',
+    chr: '3', start: 37034841, end: 37034841, ref: 'G', alt: 'A',
+    gene: 'MLH1', type: 'SNV', transcript: 'NM_000249.4',
+    cHGVS: 'c.-93G>A', pHGVS: '-',
+    consequence: 'Other', affectedExon: 'Promoter',
+    vaf: 0.50, depth: 295, zygosity: 'Heterozygous',
+    acmgClassification: 'Likely_Pathogenic',
+    acmgCriteria: ['PS3', 'PM2'],
+    diseaseAssociation: 'Lynch综合征',
+    inheritanceMode: 'AD',
+    rsId: 'rs267607766', clinvarId: 'VCV000089123',
+    clinvarSignificance: 'Likely pathogenic', gnomadAF: 0.00001,
+    reviewed: false, reported: false,
+  },
 ];
 
 async function getGermlineVariants(_taskId: string, filterState: TableFilterState): Promise<PaginatedResult<GermlineVariant>> {
@@ -231,6 +278,10 @@ export function GermlineTab({
     position: number;
   }>({ isOpen: false, chromosome: '', position: 0 });
 
+  // 详情面板状态
+  const [selectedVariant, setSelectedVariant] = React.useState<GermlineVariant | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
 
@@ -240,6 +291,17 @@ export function GermlineTab({
 
   const handleCloseIGV = React.useCallback(() => {
     setIgvState(prev => ({ ...prev, isOpen: false }));
+  }, []);
+
+  // 点击行打开详情面板
+  const handleRowClick = React.useCallback((variant: GermlineVariant) => {
+    setSelectedVariant(variant);
+    setDetailPanelOpen(true);
+  }, []);
+
+  // 关闭详情面板
+  const handleCloseDetailPanel = React.useCallback(() => {
+    setDetailPanelOpen(false);
   }, []);
 
   React.useEffect(() => {
@@ -359,8 +421,8 @@ export function GermlineTab({
       id: 'ref',
       header: 'Ref',
       accessor: (row) => (
-        <span className="font-mono text-xs" title={row.ref}>
-          {row.ref.length > 8 ? `${row.ref.substring(0, 8)}...` : row.ref}
+        <span className="font-mono text-xs whitespace-pre-wrap break-all">
+          {row.ref}
         </span>
       ),
       width: 80,
@@ -369,8 +431,8 @@ export function GermlineTab({
       id: 'alt',
       header: 'Alt',
       accessor: (row) => (
-        <span className="font-mono text-xs" title={row.alt}>
-          {row.alt.length > 8 ? `${row.alt.substring(0, 8)}...` : row.alt}
+        <span className="font-mono text-xs whitespace-pre-wrap break-all">
+          {row.alt}
         </span>
       ),
       width: 80,
@@ -382,17 +444,87 @@ export function GermlineTab({
       accessor: (row) => <Tag variant={getTypeVariant(row.type)}>{row.type}</Tag>,
       width: 90,
     },
-    { id: 'transcript', header: 'Transcript', accessor: 'transcript', width: 120 },
-    { id: 'cHGVS', header: 'cHGVS', accessor: 'cHGVS', width: 140 },
-    { id: 'pHGVS', header: 'pHGVS', accessor: 'pHGVS', width: 120 },
+    {
+      id: 'transcript',
+      header: 'Transcript',
+      accessor: (row) => (
+        <span className="font-mono text-xs whitespace-pre-wrap break-all">
+          {row.transcript}
+        </span>
+      ),
+      width: 120,
+    },
+    {
+      id: 'cHGVS',
+      header: 'cHGVS',
+      accessor: (row) => (
+        <span className="font-mono text-xs whitespace-pre-wrap break-all">
+          {row.cHGVS}
+        </span>
+      ),
+      width: 140,
+    },
+    {
+      id: 'pHGVS',
+      header: 'pHGVS',
+      accessor: (row) => (
+        <span className="font-mono text-xs whitespace-pre-wrap break-all">
+          {row.pHGVS}
+        </span>
+      ),
+      width: 120,
+    },
     {
       id: 'vaf',
       header: 'VAF%',
       accessor: (row) => `${(row.vaf * 100).toFixed(2)}`,
       width: 70,
     },
-    { id: 'consequence', header: 'Consequence', accessor: 'consequence', width: 100 },
-    { id: 'affectedExon', header: 'Affected_Exon', accessor: 'affectedExon', width: 100 },
+    {
+      id: 'consequence',
+      header: 'Consequence',
+      accessor: (row) => (
+        <span className="text-xs whitespace-pre-wrap break-all">
+          {row.consequence}
+        </span>
+      ),
+      width: 100,
+    },
+    {
+      id: 'affectedExon',
+      header: 'Affected_Exon',
+      accessor: (row) => {
+        const value = row.affectedExon;
+        const isIntron = /intron|IVS/i.test(value);
+        const isPromoter = /promoter|upstream/i.test(value);
+        const isUTR = /UTR|5'|3'/i.test(value);
+        
+        if (isIntron || isPromoter || isUTR) {
+          let bgColor = 'bg-neutral-subtle';
+          let textColor = 'text-fg-muted';
+          
+          if (isIntron) {
+            bgColor = 'bg-attention-subtle';
+            textColor = 'text-attention-fg';
+          } else if (isPromoter) {
+            bgColor = 'bg-accent-subtle';
+            textColor = 'text-accent-fg';
+          } else if (isUTR) {
+            bgColor = 'bg-done-subtle';
+            textColor = 'text-done-fg';
+          }
+          
+          return (
+            <span className={`px-1.5 py-0.5 rounded text-xs ${bgColor} ${textColor}`}>
+              {value}
+            </span>
+          );
+        }
+        
+        return <span className="text-xs">{value}</span>;
+      },
+      width: 100,
+    },
     {
       id: 'acmgClassification',
       header: '临床意义',
@@ -459,6 +591,7 @@ export function GermlineTab({
           rowKey="id"
           striped
           density="compact"
+          onRowClick={handleRowClick}
         />
       ) : (
         <div className="text-center py-12 text-fg-muted">
@@ -471,6 +604,14 @@ export function GermlineTab({
         position={igvState.position}
         isOpen={igvState.isOpen}
         onClose={handleCloseIGV}
+      />
+
+      {/* 变异详情面板 */}
+      <GermlineDetailPanel
+        variant={selectedVariant}
+        isOpen={detailPanelOpen}
+        onClose={handleCloseDetailPanel}
+        onOpenIGV={handleOpenIGV}
       />
     </div>
   );

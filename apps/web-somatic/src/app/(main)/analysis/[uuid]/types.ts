@@ -84,6 +84,10 @@ export interface SNVIndel extends VariantReviewStatus {
   zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
   alleleFrequency: number;       // 等位基因频率 (VAF)
   depth: number;                 // 覆盖深度
+  altReads?: number;             // 突变reads数目
+  dedupDepth?: number;           // 去重深度
+  dedupAltReads?: number;        // 去重突变reads数目
+  dedupVAF?: number;             // 去重VAF
   acmgClassification: ACMGClassification;
   clinicalSignificance: TierClassification;  // 临床意义 (Tier分类)
   transcript: string;            // 转录本 (含版本号，如 NM_005228.5)
@@ -105,6 +109,11 @@ export interface SNVIndel extends VariantReviewStatus {
   caddScore?: number;            // CADD 评分
   revelScore?: number;           // REVEL 评分
   spliceAI?: number;             // SpliceAI 评分
+  intervarClassification?: string; // InterVar 自动分类
+  alphaMissenseScore?: number;   // AlphaMissense 评分
+  alphaMissensePrediction?: string; // AlphaMissense 预测
+  maverickScore?: number;        // Maverick 评分
+  maverickPrediction?: string;   // Maverick 预测
   acmgCriteria?: string[];       // ACMG 证据项
   pubmedIds?: string[];          // PubMed 文献 ID
   omimId?: string;               // OMIM ID

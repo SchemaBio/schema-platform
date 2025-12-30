@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { X, ExternalLink, FileText, Database, Dna, Pill, Activity } from 'lucide-react';
+import { X, ExternalLink, FileText, Database, Dna, Pill, Activity, Target } from 'lucide-react';
 import { Tag } from '@schema/ui-kit';
 
 // 突变类型 (NCCL规范)
@@ -57,31 +57,31 @@ interface HotspotDetailPanelProps {
 }
 
 // 信息项组件
-function InfoItem({ label, value, link }: { label: string; value?: React.ReactNode; link?: string }) {
+function InfoItem({ label, value, link, mono }: { label: string; value?: React.ReactNode; link?: string; mono?: boolean }) {
   if (value === undefined || value === null || value === '' || value === '-') {
     return (
       <div className="flex justify-between py-1.5 border-b border-border-subtle last:border-0">
-        <span className="text-fg-muted text-sm">{label}</span>
-        <span className="text-fg-subtle text-sm">-</span>
+        <span className="text-fg-muted text-xs">{label}</span>
+        <span className="text-fg-subtle text-xs">-</span>
       </div>
     );
   }
 
   return (
-    <div className="flex justify-between py-1.5 border-b border-border-subtle last:border-0">
-      <span className="text-fg-muted text-sm">{label}</span>
+    <div className="flex justify-between py-1.5 border-b border-border-subtle last:border-0 gap-2">
+      <span className="text-fg-muted text-xs shrink-0">{label}</span>
       {link ? (
         <a
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-accent-fg text-sm hover:underline flex items-center gap-1"
+          className="text-accent-fg text-xs hover:underline flex items-center gap-1 text-right"
         >
           {value}
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="w-3 h-3 shrink-0" />
         </a>
       ) : (
-        <span className="text-fg-default text-sm font-medium">{value}</span>
+        <span className={`text-fg-default text-xs text-right break-all ${mono ? 'font-mono' : ''}`}>{value}</span>
       )}
     </div>
   );
@@ -90,9 +90,9 @@ function InfoItem({ label, value, link }: { label: string; value?: React.ReactNo
 // 分组标题组件
 function SectionTitle({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
-    <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
-      <Icon className="w-4 h-4 text-fg-muted" />
-      <h4 className="text-sm font-medium text-fg-default">{title}</h4>
+    <div className="flex items-center gap-1.5 mb-2 mt-4 first:mt-0">
+      <Icon className="w-3.5 h-3.5 text-fg-muted" />
+      <h4 className="text-xs font-medium text-fg-default">{title}</h4>
     </div>
   );
 }
@@ -118,11 +118,12 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
     }
   };
 
-  const getTierVariant = (tier: string): 'danger' | 'warning' | 'info' => {
+  const getTierVariant = (tier: string): 'danger' | 'warning' | 'info' | 'neutral' => {
     switch (tier) {
       case 'Tier I': return 'danger';
       case 'Tier II': return 'warning';
-      default: return 'info';
+      case 'Tier III': return 'info';
+      default: return 'neutral';
     }
   };
 
@@ -152,38 +153,144 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
     return labels[consequence] || consequence;
   };
 
+  // Affected Exon 特殊标记
+  const renderAffectedExon = (value: string) => {
+    const isIntron = /intron|IVS/i.test(value);
+    const isPromoter = /promoter|upstream/i.test(value);
+    const isUTR = /UTR|5'|3'/i.test(value);
+    
+    if (isIntron || isPromoter || isUTR) {
+      let bgColor = 'bg-neutral-subtle';
+      let textColor = 'text-fg-muted';
+      
+      if (isIntron) {
+        bgColor = 'bg-attention-subtle';
+        textColor = 'text-attention-fg';
+      } else if (isPromoter) {
+        bgColor = 'bg-accent-subtle';
+        textColor = 'text-accent-fg';
+      } else if (isUTR) {
+        bgColor = 'bg-done-subtle';
+        textColor = 'text-done-fg';
+      }
+      
+      return (
+        <span className={`px-1.5 py-0.5 rounded text-xs ${bgColor} ${textColor}`}>
+          {value}
+        </span>
+      );
+    }
+    
+    return value;
+  };
+
   return (
     <>
-      {/* 背景遮罩 */}
-      <div 
-        className="fixed inset-0 bg-black/20 z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
       
-      {/* 侧边面板 */}
-      <div className="fixed right-0 top-0 h-full w-[520px] bg-white dark:bg-[#0d1117] border-l border-border shadow-xl z-50 flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-[420px] bg-white dark:bg-[#0d1117] border-l border-border shadow-xl z-50 flex flex-col">
         {/* 头部 */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-canvas-subtle">
-          <div className="flex items-center gap-3">
-            <h3 className="text-base font-medium text-fg-default">热点突变详情</h3>
-            <Tag variant={getHotspotTypeVariant(hotspot.hotspotType)}>
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-canvas-subtle">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-fg-default">{hotspot.gene}</span>
+            <span className="text-sm font-mono text-fg-muted">{hotspot.pHGVS}</span>
+            <Tag variant={getHotspotTypeVariant(hotspot.hotspotType)} className="text-xs">
               {getHotspotTypeLabel(hotspot.hotspotType)}
             </Tag>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-fg-muted hover:text-fg-default hover:bg-canvas-inset rounded transition-colors"
-            aria-label="关闭"
-          >
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-1 text-fg-muted hover:text-fg-default rounded">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* 内容区域 */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {/* 基因组位置信息 (NCCL规范) */}
-          <SectionTitle icon={Dna} title="基因组位置" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
+        {/* 内容 */}
+        <div className="flex-1 overflow-y-auto p-3">
+          {/* 临床意义 */}
+          <SectionTitle icon={Target} title="临床意义 (Tier分类)" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <div className="flex items-center gap-2 mb-2">
+              <Tag variant={getTierVariant(hotspot.clinicalSignificance)}>{hotspot.clinicalSignificance}</Tag>
+              <span className="text-xs text-fg-muted">
+                {hotspot.clinicalSignificance === 'Tier I' && '强临床意义 - FDA获批/指南推荐'}
+                {hotspot.clinicalSignificance === 'Tier II' && '潜在临床意义 - 临床试验/小规模研究'}
+                {hotspot.clinicalSignificance === 'Tier III' && '意义未明 - 需进一步研究'}
+              </span>
+            </div>
+            <InfoItem 
+              label="热点类型" 
+              value={<Tag variant={getHotspotTypeVariant(hotspot.hotspotType)}>{getHotspotTypeLabel(hotspot.hotspotType)}</Tag>} 
+            />
+            <InfoItem 
+              label="OncoKB Level" 
+              value={hotspot.oncokbLevel}
+              link={hotspot.oncokbLevel ? `https://www.oncokb.org/gene/${hotspot.gene}/${hotspot.pHGVS.replace('p.', '')}` : undefined}
+            />
+          </div>
+
+          {/* 靶向药物 */}
+          <SectionTitle icon={Pill} title="靶向药物" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            {hotspot.drugAssociation.length > 0 ? (
+              <div className="space-y-1.5">
+                {hotspot.drugAssociation.map((drug) => (
+                  <div key={drug} className="flex items-center justify-between py-1 border-b border-border-subtle last:border-0">
+                    <div className="flex items-center gap-1.5">
+                      {hotspot.hotspotType === 'Sensitizing' && (
+                        <span className="px-1.5 py-0.5 bg-success-subtle text-success-fg rounded text-xs">敏感</span>
+                      )}
+                      {hotspot.hotspotType === 'Resistance' && (
+                        <span className="px-1.5 py-0.5 bg-danger-subtle text-danger-fg rounded text-xs">耐药</span>
+                      )}
+                      <span className="text-xs text-fg-default">{drug}</span>
+                    </div>
+                    <a
+                      href={`https://www.drugbank.com/unearth/q?query=${encodeURIComponent(drug)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent-fg text-xs hover:underline flex items-center gap-0.5"
+                    >
+                      详情
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-xs text-fg-muted">暂无相关药物信息</span>
+            )}
+          </div>
+
+          {/* 肿瘤数据库 */}
+          <SectionTitle icon={Database} title="肿瘤数据库" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem 
+              label="OncoKB" 
+              value={hotspot.gene}
+              link={`https://www.oncokb.org/gene/${hotspot.gene}`}
+            />
+            <InfoItem 
+              label="COSMIC" 
+              value={hotspot.cosmicId}
+              link={hotspot.cosmicId ? `https://cancer.sanger.ac.uk/cosmic/mutation/overview?id=${hotspot.cosmicId.replace('COSM', '')}` : undefined}
+            />
+            <InfoItem label="相关癌种" value={hotspot.cancerType.join(', ')} />
+          </div>
+
+          {/* 变异信息 */}
+          <SectionTitle icon={Dna} title="变异信息" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem label="基因" value={hotspot.gene} />
+            <InfoItem label="类型" value={<Tag variant={getTypeVariant(hotspot.type)}>{hotspot.type}</Tag>} />
+            <InfoItem label="转录本" value={hotspot.transcript} mono />
+            <InfoItem label="cHGVS" value={hotspot.cHGVS} mono />
+            <InfoItem label="pHGVS" value={hotspot.pHGVS} mono />
+            <InfoItem label="Consequence" value={getConsequenceLabel(hotspot.consequence)} />
+            <InfoItem label="Affected Exon" value={renderAffectedExon(hotspot.affectedExon)} />
+          </div>
+
+          {/* 基因组位置 */}
+          <SectionTitle icon={Activity} title="基因组位置" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
             <InfoItem label="Chr" value={hotspot.chr} />
             <InfoItem 
               label="Start" 
@@ -197,126 +304,34 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
               }
             />
             <InfoItem label="End" value={hotspot.type === 'Insertion' || hotspot.end < 0 ? '-' : String(hotspot.end)} />
-            <InfoItem label="Ref" value={<span className="font-mono">{hotspot.ref}</span>} />
-            <InfoItem label="Alt" value={<span className="font-mono">{hotspot.alt}</span>} />
-          </div>
-
-          {/* 基因与转录本信息 */}
-          <SectionTitle icon={Dna} title="基因与转录本" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="Gene" value={hotspot.gene} />
-            <InfoItem 
-              label="Type" 
-              value={<Tag variant={getTypeVariant(hotspot.type)}>{hotspot.type}</Tag>}
-            />
-            <InfoItem label="Transcript" value={hotspot.transcript} />
-            <InfoItem label="cHGVS" value={<span className="font-mono text-sm">{hotspot.cHGVS}</span>} />
-            <InfoItem label="pHGVS" value={<span className="font-mono text-sm">{hotspot.pHGVS}</span>} />
-            <InfoItem label="Consequence" value={getConsequenceLabel(hotspot.consequence)} />
-            <InfoItem label="Affected_Exon" value={hotspot.affectedExon} />
+            <InfoItem label="Ref" value={hotspot.ref} mono />
+            <InfoItem label="Alt" value={hotspot.alt} mono />
           </div>
 
           {/* 测序质量 */}
-          <SectionTitle icon={Activity} title="测序质量" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem label="VAF%" value={`${(hotspot.vaf * 100).toFixed(2)}`} />
+          <SectionTitle icon={FileText} title="测序质量" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem label="VAF" value={`${(hotspot.vaf * 100).toFixed(2)}%`} />
             <InfoItem label="Depth" value={`${hotspot.depth}X`} />
-          </div>
-
-          {/* 临床意义 */}
-          <SectionTitle icon={FileText} title="临床意义" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            <InfoItem 
-              label="热点类型" 
-              value={
-                <Tag variant={getHotspotTypeVariant(hotspot.hotspotType)}>
-                  {getHotspotTypeLabel(hotspot.hotspotType)}
-                </Tag>
-              } 
-            />
-            <InfoItem 
-              label="临床等级" 
-              value={
-                <Tag variant={getTierVariant(hotspot.clinicalSignificance)}>
-                  {hotspot.clinicalSignificance}
-                </Tag>
-              } 
-            />
-            <InfoItem 
-              label="OncoKB Level" 
-              value={hotspot.oncokbLevel}
-              link={hotspot.oncokbLevel ? `https://www.oncokb.org/gene/${hotspot.gene}/${hotspot.pHGVS.replace('p.', '')}` : undefined}
-            />
-            <InfoItem 
-              label="COSMIC ID" 
-              value={hotspot.cosmicId}
-              link={hotspot.cosmicId ? `https://cancer.sanger.ac.uk/cosmic/mutation/overview?id=${hotspot.cosmicId.replace('COSM', '')}` : undefined}
-            />
-          </div>
-
-          {/* 相关肿瘤类型 */}
-          <SectionTitle icon={Database} title="相关肿瘤类型" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            {hotspot.cancerType.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {hotspot.cancerType.map((cancer) => (
-                  <span 
-                    key={cancer} 
-                    className="px-2 py-1 text-xs bg-canvas-inset text-fg-default rounded"
-                  >
-                    {cancer}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <span className="text-fg-muted text-sm">-</span>
-            )}
-          </div>
-
-          {/* 药物关联 */}
-          <SectionTitle icon={Pill} title="药物关联" />
-          <div className="bg-canvas-subtle rounded-lg p-3">
-            {hotspot.drugAssociation.length > 0 ? (
-              <div className="space-y-2">
-                {hotspot.drugAssociation.map((drug) => (
-                  <div 
-                    key={drug} 
-                    className="flex items-center justify-between py-1.5 border-b border-border-subtle last:border-0"
-                  >
-                    <span className="text-fg-default text-sm">{drug}</span>
-                    <a
-                      href={`https://www.drugbank.com/unearth/q?query=${encodeURIComponent(drug)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-accent-fg text-xs hover:underline flex items-center gap-1"
-                    >
-                      查看详情
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <span className="text-fg-muted text-sm">暂无相关药物信息</span>
-            )}
+            <InfoItem label="Alt Reads" value={Math.round(hotspot.depth * hotspot.vaf).toString()} />
           </div>
 
           {/* 临床试验 */}
           {hotspot.clinicalTrials && hotspot.clinicalTrials.length > 0 && (
             <>
               <SectionTitle icon={FileText} title="相关临床试验" />
-              <div className="bg-canvas-subtle rounded-lg p-3">
-                <div className="flex flex-wrap gap-2">
+              <div className="bg-canvas-subtle rounded-md p-2.5">
+                <div className="flex flex-wrap gap-1.5">
                   {hotspot.clinicalTrials.map((trial) => (
                     <a
                       key={trial}
                       href={`https://clinicaltrials.gov/study/${trial}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-canvas-inset text-accent-fg rounded hover:bg-accent-subtle transition-colors"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-canvas-inset text-accent-fg rounded hover:bg-accent-subtle"
                     >
                       {trial}
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   ))}
                 </div>
@@ -328,18 +343,18 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
           {hotspot.pubmedIds && hotspot.pubmedIds.length > 0 && (
             <>
               <SectionTitle icon={FileText} title="相关文献" />
-              <div className="bg-canvas-subtle rounded-lg p-3">
-                <div className="flex flex-wrap gap-2">
+              <div className="bg-canvas-subtle rounded-md p-2.5">
+                <div className="flex flex-wrap gap-1.5">
                   {hotspot.pubmedIds.map((pmid) => (
                     <a
                       key={pmid}
                       href={`https://pubmed.ncbi.nlm.nih.gov/${pmid}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-canvas-inset text-accent-fg rounded hover:bg-accent-subtle transition-colors"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-canvas-inset text-accent-fg rounded hover:bg-accent-subtle"
                     >
                       PMID:{pmid}
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   ))}
                 </div>
@@ -348,18 +363,18 @@ export function HotspotDetailPanel({ hotspot, isOpen, onClose, onOpenIGV }: Hots
           )}
         </div>
 
-        {/* 底部操作栏 */}
-        <div className="border-t border-border p-4 bg-canvas-subtle">
+        {/* 底部 */}
+        <div className="border-t border-border p-3 bg-canvas-subtle">
           <div className="flex gap-2">
             <button
               onClick={() => onOpenIGV?.(`chr${hotspot.chr}`, hotspot.start)}
-              className="flex-1 px-4 py-2 text-sm bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90 transition-colors"
+              className="flex-1 px-3 py-1.5 text-xs bg-accent-emphasis text-fg-on-emphasis rounded-md hover:bg-accent-emphasis/90"
             >
               在 IGV 中查看
             </button>
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm border border-border rounded-md hover:bg-canvas-inset transition-colors"
+              className="px-3 py-1.5 text-xs border border-border rounded-md hover:bg-canvas-inset"
             >
               关闭
             </button>

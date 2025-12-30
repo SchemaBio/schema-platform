@@ -16,6 +16,7 @@ export { ReportTab } from './ReportTab';
 export { IGVViewer, PositionLink } from './IGVViewer';
 export { VariantDetailPanel } from './VariantDetailPanel';
 export { HotspotDetailPanel } from './HotspotDetailPanel';
+export { GermlineDetailPanel } from './GermlineDetailPanel';
 export { CNVDetailPanel } from './CNVDetailPanel';
 export { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 

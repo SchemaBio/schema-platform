@@ -408,21 +408,21 @@ export function HotspotTab({
       id: 'ref',
       header: 'Ref',
       accessor: (row) => (
-        <span className="font-mono text-xs" title={row.ref}>
-          {row.ref.length > 8 ? `${row.ref.substring(0, 8)}...` : row.ref}
+        <span className="font-mono text-xs break-all whitespace-normal">
+          {row.ref}
         </span>
       ),
-      width: 80,
+      width: 100,
     },
     {
       id: 'alt',
       header: 'Alt',
       accessor: (row) => (
-        <span className="font-mono text-xs" title={row.alt}>
-          {row.alt.length > 8 ? `${row.alt.substring(0, 8)}...` : row.alt}
+        <span className="font-mono text-xs break-all whitespace-normal">
+          {row.alt}
         </span>
       ),
-      width: 80,
+      width: 100,
     },
     {
       id: 'gene',
@@ -444,20 +444,26 @@ export function HotspotTab({
     {
       id: 'transcript',
       header: 'Transcript',
-      accessor: 'transcript',
+      accessor: (row) => (
+        <span className="text-xs break-all whitespace-normal">{row.transcript}</span>
+      ),
       width: 120,
     },
     {
       id: 'cHGVS',
       header: 'cHGVS',
-      accessor: 'cHGVS',
-      width: 140,
+      accessor: (row) => (
+        <span className="font-mono text-xs break-all whitespace-normal">{row.cHGVS}</span>
+      ),
+      width: 150,
     },
     {
       id: 'pHGVS',
       header: 'pHGVS',
-      accessor: 'pHGVS',
-      width: 120,
+      accessor: (row) => (
+        <span className="font-mono text-xs break-all whitespace-normal">{row.pHGVS}</span>
+      ),
+      width: 130,
     },
     {
       id: 'vaf',
@@ -470,17 +476,48 @@ export function HotspotTab({
       id: 'consequence',
       header: 'Consequence',
       accessor: (row) => (
-        <span title={row.consequence}>
+        <span className="text-xs break-all whitespace-normal">
           {getConsequenceLabel(row.consequence)}
         </span>
       ),
-      width: 100,
+      width: 110,
     },
     {
       id: 'affectedExon',
-      header: 'Affected_Exon',
-      accessor: 'affectedExon',
-      width: 100,
+      header: 'Affected Exon',
+      accessor: (row) => {
+        const value = row.affectedExon ?? '-';
+        // 检测非外显子区域：内含子、启动子、UTR等
+        const isIntron = /intron|IVS/i.test(value);
+        const isPromoter = /promoter|upstream/i.test(value);
+        const isUTR = /UTR|5'|3'/i.test(value);
+        const isNonExonic = isIntron || isPromoter || isUTR;
+        
+        if (isNonExonic) {
+          let bgColor = 'bg-neutral-subtle';
+          let textColor = 'text-fg-muted';
+          
+          if (isIntron) {
+            bgColor = 'bg-attention-subtle';
+            textColor = 'text-attention-fg';
+          } else if (isPromoter) {
+            bgColor = 'bg-accent-subtle';
+            textColor = 'text-accent-fg';
+          } else if (isUTR) {
+            bgColor = 'bg-done-subtle';
+            textColor = 'text-done-fg';
+          }
+          
+          return (
+            <span className={`px-1.5 py-0.5 rounded text-xs ${bgColor} ${textColor}`}>
+              {value}
+            </span>
+          );
+        }
+        
+        return <span className="text-xs">{value}</span>;
+      },
+      width: 110,
     },
     {
       id: 'clinicalSignificance',
