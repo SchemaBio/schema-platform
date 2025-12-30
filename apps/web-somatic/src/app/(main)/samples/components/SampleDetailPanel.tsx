@@ -2,23 +2,24 @@
 
 import * as React from 'react';
 import { Tag } from '@schema/ui-kit';
-import { User, Stethoscope, FileText, FolderKanban, Users, Activity } from 'lucide-react';
+import { User, Stethoscope, FileText, FolderKanban, Activity, Image as ImageIcon, X, Pill, Target } from 'lucide-react';
 import { getSampleDetail } from '../mock-data';
 import type { SampleDetail } from '../types';
-import { STATUS_CONFIG, GENDER_CONFIG } from '../types';
+import { STATUS_CONFIG, GENDER_CONFIG, SAMPLE_SOURCE_OPTIONS, SAMPLING_METHOD_OPTIONS, TEST_PURPOSE_OPTIONS, TREATMENT_TYPE_OPTIONS } from '../types';
 
 interface SampleDetailPanelProps {
   sampleId: string;
 }
 
-type TabType = 'basic' | 'clinical' | 'submission' | 'project' | 'family' | 'analysis';
+type TabType = 'basic' | 'tumor' | 'treatment' | 'submission' | 'project' | 'heImages' | 'analysis';
 
 const TAB_CONFIGS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'basic', label: '基本信息', icon: <User className="w-4 h-4" /> },
-  { id: 'clinical', label: '临床诊断', icon: <Stethoscope className="w-4 h-4" /> },
+  { id: 'tumor', label: '肿瘤信息', icon: <Stethoscope className="w-4 h-4" /> },
+  { id: 'treatment', label: '治疗与检测', icon: <Pill className="w-4 h-4" /> },
   { id: 'submission', label: '送检信息', icon: <FileText className="w-4 h-4" /> },
   { id: 'project', label: '项目信息', icon: <FolderKanban className="w-4 h-4" /> },
-  { id: 'family', label: '家族史', icon: <Users className="w-4 h-4" /> },
+  { id: 'heImages', label: 'HE 染色', icon: <ImageIcon className="w-4 h-4" /> },
   { id: 'analysis', label: '分析任务', icon: <Activity className="w-4 h-4" /> },
 ];
 
@@ -42,10 +43,16 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
   );
 }
 
+// 获取选项标签
+function getOptionLabel(options: { value: string; label: string }[], value: string): string {
+  return options.find(o => o.value === value)?.label || value;
+}
+
 export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
   const [sample, setSample] = React.useState<SampleDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<TabType>('basic');
+  const [previewImage, setPreviewImage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     async function loadSample() {
@@ -81,13 +88,12 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
       case 'basic':
         return (
           <div className="space-y-4">
-            <InfoCard title="个人信息">
+            <InfoCard title="患者信息">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InfoItem label="姓名" value={sample.name} />
                 <InfoItem label="性别" value={<span className={genderInfo.color}>{genderInfo.label}</span>} />
                 <InfoItem label="年龄" value={`${sample.age}岁`} />
                 <InfoItem label="出生日期" value={sample.birthDate} />
-                <InfoItem label="民族" value={sample.ethnicity} />
                 <InfoItem label="身份证号" value={sample.idCard} />
                 <InfoItem label="联系电话" value={sample.phone} />
               </div>
@@ -96,8 +102,17 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InfoItem label="样本编号" value={sample.id} />
                 <InfoItem label="样本类型" value={sample.sampleType} />
-                <InfoItem label="家系编号" value={sample.pedigreeId} />
-                <InfoItem label="家系名称" value={sample.pedigreeName} />
+                <InfoItem 
+                  label="是否配对" 
+                  value={
+                    <Tag variant={sample.sourceInfo.isPaired ? 'success' : 'neutral'}>
+                      {sample.sourceInfo.isPaired ? '是' : '否'}
+                    </Tag>
+                  } 
+                />
+                {sample.sourceInfo.isPaired && (
+                  <InfoItem label="配对样本" value={sample.sourceInfo.pairedSampleId} />
+                )}
                 <InfoItem label="创建时间" value={sample.createdAt} />
                 <InfoItem label="更新时间" value={sample.updatedAt} />
               </div>
@@ -105,29 +120,143 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
           </div>
         );
 
-      case 'clinical':
+      case 'tumor':
         return (
           <div className="space-y-4">
-            <InfoCard title="诊断信息">
-              <div className="space-y-4">
-                <InfoItem label="主要诊断" value={sample.clinicalDiagnosis.mainDiagnosis} />
+            <InfoCard title="肿瘤诊断">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <InfoItem 
-                  label="临床症状" 
+                  label="肿瘤类型" 
+                  value={<Tag variant="danger">{sample.tumorInfo.tumorType}</Tag>} 
+                />
+                <InfoItem label="病理分型" value={sample.tumorInfo.pathologyType} />
+                <InfoItem 
+                  label="临床分期" 
                   value={
-                    sample.clinicalDiagnosis.symptoms.length > 0 
-                      ? sample.clinicalDiagnosis.symptoms.map((s, i) => (
-                          <Tag key={i} variant="neutral" className="mr-1 mb-1">{s}</Tag>
-                        ))
-                      : '-'
+                    sample.tumorInfo.clinicalStage && (
+                      <Tag variant="warning">{sample.tumorInfo.clinicalStage} 期</Tag>
+                    )
                   } 
                 />
-                <InfoItem label="发病年龄" value={sample.clinicalDiagnosis.onsetAge} />
+                <InfoItem 
+                  label="肿瘤细胞含量" 
+                  value={sample.tumorInfo.tumorPurity ? `${sample.tumorInfo.tumorPurity}%` : undefined} 
+                />
               </div>
             </InfoCard>
-            <InfoCard title="病史描述">
-              <p className="text-sm text-fg-default whitespace-pre-wrap">
-                {sample.clinicalDiagnosis.diseaseHistory || '暂无病史描述'}
-              </p>
+            {sample.tumorInfo.tnmStage && (
+              <InfoCard title="TNM 分期">
+                <div className="grid grid-cols-3 gap-4">
+                  <InfoItem label="T 分期" value={sample.tumorInfo.tnmStage.t} />
+                  <InfoItem label="N 分期" value={sample.tumorInfo.tnmStage.n} />
+                  <InfoItem label="M 分期" value={sample.tumorInfo.tnmStage.m} />
+                </div>
+              </InfoCard>
+            )}
+            <InfoCard title="样本来源">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <InfoItem 
+                  label="来源类型" 
+                  value={getOptionLabel(SAMPLE_SOURCE_OPTIONS, sample.sourceInfo.sampleSource)} 
+                />
+                <InfoItem 
+                  label="取样方式" 
+                  value={getOptionLabel(SAMPLING_METHOD_OPTIONS, sample.sourceInfo.samplingMethod)} 
+                />
+                <InfoItem label="取样日期" value={sample.sourceInfo.samplingDate} />
+                <InfoItem label="取样部位" value={sample.sourceInfo.samplingLocation} />
+              </div>
+            </InfoCard>
+          </div>
+        );
+
+      case 'treatment':
+        return (
+          <div className="space-y-4">
+            <InfoCard title="既往治疗">
+              <div className="space-y-3">
+                <InfoItem 
+                  label="是否有既往治疗" 
+                  value={
+                    <Tag variant={sample.treatmentInfo.hasPriorTreatment ? 'warning' : 'neutral'}>
+                      {sample.treatmentInfo.hasPriorTreatment ? '有' : '无'}
+                    </Tag>
+                  } 
+                />
+                {sample.treatmentInfo.hasPriorTreatment && sample.treatmentInfo.priorTreatments && (
+                  <div className="mt-3 space-y-2">
+                    {sample.treatmentInfo.priorTreatments.map((treatment, index) => (
+                      <div key={index} className="flex items-center gap-4 p-2 bg-canvas-default rounded">
+                        <Tag variant="info">
+                          {getOptionLabel(TREATMENT_TYPE_OPTIONS, treatment.type)}
+                        </Tag>
+                        <span className="text-sm text-fg-default flex-1">{treatment.detail || '-'}</span>
+                        {treatment.date && (
+                          <span className="text-xs text-fg-muted">{treatment.date}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+                  <InfoItem label="当前用药" value={sample.treatmentInfo.currentMedication} />
+                  <InfoItem 
+                    label="是否耐药" 
+                    value={
+                      <Tag variant={sample.treatmentInfo.isResistant ? 'danger' : 'neutral'}>
+                        {sample.treatmentInfo.isResistant ? '是' : '否'}
+                      </Tag>
+                    } 
+                  />
+                  <InfoItem 
+                    label="是否复发" 
+                    value={
+                      <Tag variant={sample.treatmentInfo.isRecurrent ? 'danger' : 'neutral'}>
+                        {sample.treatmentInfo.isRecurrent ? '是' : '否'}
+                      </Tag>
+                    } 
+                  />
+                </div>
+              </div>
+            </InfoCard>
+            <InfoCard title="检测需求">
+              <div className="space-y-3">
+                <InfoItem 
+                  label="检测目的" 
+                  value={
+                    <Tag variant="info">
+                      {getOptionLabel(TEST_PURPOSE_OPTIONS, sample.testRequirement.testPurpose)}
+                    </Tag>
+                  } 
+                />
+                {sample.testRequirement.focusGenes && sample.testRequirement.focusGenes.length > 0 && (
+                  <InfoItem 
+                    label="重点关注基因" 
+                    value={
+                      <div className="flex flex-wrap gap-1">
+                        {sample.testRequirement.focusGenes.map((gene, i) => (
+                          <Tag key={i} variant="neutral">{gene}</Tag>
+                        ))}
+                      </div>
+                    } 
+                  />
+                )}
+                {sample.testRequirement.focusPathways && sample.testRequirement.focusPathways.length > 0 && (
+                  <InfoItem 
+                    label="重点关注通路" 
+                    value={
+                      <div className="flex flex-wrap gap-1">
+                        {sample.testRequirement.focusPathways.map((pathway, i) => (
+                          <Tag key={i} variant="neutral">{pathway}</Tag>
+                        ))}
+                      </div>
+                    } 
+                  />
+                )}
+                {sample.testRequirement.clinicalQuestion && (
+                  <InfoItem label="临床问题" value={sample.testRequirement.clinicalQuestion} />
+                )}
+              </div>
             </InfoCard>
           </div>
         );
@@ -188,39 +317,36 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
           </InfoCard>
         );
 
-      case 'family':
+      case 'heImages':
         return (
           <div className="space-y-4">
-            <InfoCard title="家族史概况">
-              <InfoItem 
-                label="是否有家族史" 
-                value={
-                  <Tag variant={sample.familyHistory.hasHistory ? 'warning' : 'neutral'}>
-                    {sample.familyHistory.hasHistory ? '有' : '无'}
-                  </Tag>
-                } 
-              />
-            </InfoCard>
-            {sample.familyHistory.hasHistory && sample.familyHistory.affectedMembers && (
-              <InfoCard title="患病亲属">
-                <div className="space-y-3">
-                  {sample.familyHistory.affectedMembers.map((member, index) => (
-                    <div key={index} className="flex items-center gap-4 p-2 bg-canvas-default rounded">
-                      <span className="text-sm font-medium text-fg-default w-16">{member.relation}</span>
-                      <span className="text-sm text-fg-default flex-1">{member.condition}</span>
-                      {member.onsetAge && (
-                        <span className="text-xs text-fg-muted">发病年龄: {member.onsetAge}</span>
-                      )}
+            <InfoCard title="HE 染色图片">
+              {sample.heImages && sample.heImages.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {sample.heImages.map((image) => (
+                    <div
+                      key={image.id}
+                      className="group relative bg-canvas-default rounded-lg overflow-hidden border border-border-default hover:border-accent-emphasis transition-colors cursor-pointer"
+                      onClick={() => setPreviewImage(image.url)}
+                    >
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img
+                          src={image.thumbnail}
+                          alt={image.description || 'HE 染色图片'}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs text-fg-default truncate">{image.description || '无描述'}</p>
+                        <p className="text-xs text-fg-muted">{image.uploadedAt}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </InfoCard>
-            )}
-            {sample.familyHistory.pedigreeNote && (
-              <InfoCard title="家系备注">
-                <p className="text-sm text-fg-default">{sample.familyHistory.pedigreeNote}</p>
-              </InfoCard>
-            )}
+              ) : (
+                <p className="text-sm text-fg-muted">暂无 HE 染色图片</p>
+              )}
+            </InfoCard>
           </div>
         );
 
@@ -264,12 +390,14 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
           <h3 className="text-base font-medium text-fg-default">{sample.name}</h3>
           <span className={`text-sm ${genderInfo.color}`}>{genderInfo.label}</span>
           <span className="text-sm text-fg-muted">{sample.age}岁</span>
+          <Tag variant="danger">{sample.tumorInfo.tumorType}</Tag>
           <Tag variant={statusInfo.variant}>{statusInfo.label}</Tag>
         </div>
         <div className="flex items-center gap-4 text-xs text-fg-muted">
           <span>样本编号: {sample.id}</span>
           <span>样本类型: {sample.sampleType}</span>
-          <span>家系: {sample.pedigreeName}</span>
+          {sample.tumorInfo.clinicalStage && <span>分期: {sample.tumorInfo.clinicalStage}期</span>}
+          {sample.sourceInfo.isPaired && <span>配对样本: {sample.sourceInfo.pairedSampleId}</span>}
         </div>
       </div>
 
@@ -302,6 +430,27 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
 
       {/* 标签页内容 */}
       <div>{renderTabContent()}</div>
+
+      {/* 图片预览弹窗 */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            onClick={() => setPreviewImage(null)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={previewImage}
+            alt="HE 染色图片预览"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

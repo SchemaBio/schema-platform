@@ -52,13 +52,13 @@ export default function SamplesPage() {
   }, [activeTabId]);
 
   const handleDownloadTemplate = () => {
-    const templateContent = `样本编号,姓名,性别,出生日期,样本类型,家系编号,送检医院,送检科室,送检医生,主要诊断,临床症状
-S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,遗传性心肌病,心悸;胸闷`;
+    const templateContent = `样本编号,姓名,性别,年龄,样本类型,肿瘤类型,临床分期,取样方式,送检医院,送检科室,送检医生,检测目的
+S001,张三,男,58,FFPE,肺癌,III,穿刺活检,北京协和医院,肿瘤内科,王医生,初诊用药指导`;
     const blob = new Blob(['\ufeff' + templateContent], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = '样本导入模板.csv';
+    link.download = '肿瘤样本导入模板.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -69,7 +69,7 @@ S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,
     if (!searchQuery) return mockSamples;
     const query = searchQuery.toLowerCase();
     return mockSamples.filter(
-      (s) => s.id.toLowerCase().includes(query) || s.name.includes(query) || s.pedigreeId.toLowerCase().includes(query)
+      (s) => s.id.toLowerCase().includes(query) || s.name.includes(query) || s.tumorType.includes(query)
     );
   }, [searchQuery]);
 
@@ -80,9 +80,12 @@ S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,
       accessor: (row) => (
         <div onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }}>
           <span className="text-accent-fg hover:underline cursor-pointer">{row.id}</span>
+          {row.pairedSampleId && (
+            <div className="text-xs text-fg-muted">配对: {row.pairedSampleId}</div>
+          )}
         </div>
       ),
-      width: 130,
+      width: 140,
     },
     {
       id: 'name',
@@ -99,21 +102,18 @@ S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,
           </div>
         </div>
       ),
-      width: 140,
+      width: 130,
     },
-    { id: 'sampleType', header: '样本类型', accessor: 'sampleType', width: 90 },
     {
-      id: 'pedigree',
-      header: '家系',
+      id: 'tumorType',
+      header: '肿瘤类型',
       accessor: (row) => (
-        <div>
-          <div className="text-fg-default">{row.pedigreeId}</div>
-          {row.pedigreeName !== '-' && <div className="text-xs text-fg-muted">{row.pedigreeName}</div>}
-        </div>
+        <Tag variant="danger">{row.tumorType}</Tag>
       ),
-      width: 120,
+      width: 100,
     },
-    { id: 'dataCount', header: '关联数据', accessor: (row) => `${row.dataCount} 个`, width: 90 },
+    { id: 'sampleType', header: '样本类型', accessor: 'sampleType', width: 100 },
+    { id: 'dataCount', header: '关联数据', accessor: (row) => `${row.dataCount} 个`, width: 80 },
     {
       id: 'status',
       header: '状态',
@@ -176,7 +176,7 @@ S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,
                       <div className={`w-2 h-2 rounded-full ${statusDotColors[sample.status]}`} />
                       <span className={`text-sm ${isActive ? 'text-accent-fg font-medium' : 'text-fg-default'}`}>{sample.id}</span>
                     </div>
-                    <div className="text-xs text-fg-muted ml-4 truncate">{sample.name} · {GENDER_CONFIG[sample.gender].label} · {sample.age}岁</div>
+                    <div className="text-xs text-fg-muted ml-4 truncate">{sample.name} · {sample.tumorType}</div>
                   </div>
                 );
               })}
@@ -189,7 +189,7 @@ S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,
             <h2 className="text-lg font-medium text-fg-default mb-4">样本管理</h2>
             <div className="flex items-center justify-between mb-4">
               <div className="w-64">
-                <Input placeholder="搜索样本编号、姓名、家系..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftElement={<Search className="w-4 h-4" />} />
+                <Input placeholder="搜索样本编号、姓名、肿瘤类型..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftElement={<Search className="w-4 h-4" />} />
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="secondary" leftIcon={<Download className="w-4 h-4" />} onClick={handleDownloadTemplate}>下载模板</Button>
