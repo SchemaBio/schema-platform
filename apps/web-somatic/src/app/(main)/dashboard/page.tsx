@@ -10,8 +10,8 @@ import {
   CheckCircle,
   AlertCircle,
   TrendingUp,
-  Calendar,
   ArrowRight,
+  Workflow,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -161,32 +161,32 @@ export default function DashboardPage() {
         {/* 快捷操作 */}
         <div className="flex items-center gap-3">
           <Link
-            href="/samples/new"
+            href="/samples"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
             <Users className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">新建样本</span>
-          </Link>
-          <Link
-            href="/analysis/new"
-            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
-          >
-            <FlaskConical className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">新建任务</span>
-          </Link>
-          <Link
-            href="/reports/new"
-            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">生成报告</span>
+            <span className="text-sm text-fg-default">样本管理</span>
           </Link>
           <Link
             href="/lab"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
-            <Calendar className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">导入数据</span>
+            <FlaskConical className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">实验中心</span>
+          </Link>
+          <Link
+            href="/pipeline"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <Workflow className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">流程中心</span>
+          </Link>
+          <Link
+            href="/reports"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">报告中心</span>
           </Link>
         </div>
       </div>
