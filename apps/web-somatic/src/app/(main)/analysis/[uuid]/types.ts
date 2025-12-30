@@ -233,7 +233,7 @@ export const TAB_CONFIGS: TabConfig[] = [
   { id: 'germline', label: '胚系位点' },
   { id: 'chemotherapy', label: '化疗位点' },
   { id: 'cnv-gene', label: 'CNV(Gene)' },
-  { id: 'cnv-exon', label: 'CNV(Exon)' },
+  // { id: 'cnv-exon', label: 'CNV(Exon)' },
   { id: 'cnv-chrom', label: 'CNV(Chrom)' },
   { id: 'fusion', label: 'Fusion' },
   { id: 'neoantigen', label: '新抗原' },

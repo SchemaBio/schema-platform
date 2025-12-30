@@ -18,6 +18,7 @@ export { VariantDetailPanel } from './VariantDetailPanel';
 export { HotspotDetailPanel } from './HotspotDetailPanel';
 export { GermlineDetailPanel } from './GermlineDetailPanel';
 export { CNVDetailPanel } from './CNVDetailPanel';
+export { CNVGeneDetailPanel } from './CNVGeneDetailPanel';
 export { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 
 // CNV 致病性评估组件

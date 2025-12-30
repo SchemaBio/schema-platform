@@ -8,17 +8,27 @@ import type { TableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
 import { getGeneLists, type GeneListOption } from '../mock-data';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
+import { CNVGeneDetailPanel } from './CNVGeneDetailPanel';
+
+// 外显子CNV数据
+interface ExonCNV {
+  exon: string;
+  copyNumber: number;
+  log2Ratio: number;
+}
 
 // 基因水平CNV类型
 interface CNVGene {
   id: string;
   gene: string;
+  transcript: string;
   chromosome: string;
-  startPosition: number;
-  endPosition: number;
   type: 'Amplification' | 'Deletion';
   copyNumber: number;
   logRatio: number;
+  bafDeviation: number;
+  relatedCancers: string[];
+  exonData: ExonCNV[];
   reviewed: boolean;
   reported: boolean;
 }
@@ -31,12 +41,130 @@ interface CNVGeneTabProps {
 
 // Mock数据
 const mockCNVGenes: CNVGene[] = [
-  { id: '1', gene: 'EGFR', chromosome: 'chr7', startPosition: 55019017, endPosition: 55211628, type: 'Amplification', copyNumber: 8, logRatio: 2.0, reviewed: false, reported: false },
-  { id: '2', gene: 'MET', chromosome: 'chr7', startPosition: 116672196, endPosition: 116798386, type: 'Amplification', copyNumber: 6, logRatio: 1.58, reviewed: false, reported: false },
-  { id: '3', gene: 'ERBB2', chromosome: 'chr17', startPosition: 39687914, endPosition: 39730426, type: 'Amplification', copyNumber: 12, logRatio: 2.58, reviewed: true, reported: true },
-  { id: '4', gene: 'CDKN2A', chromosome: 'chr9', startPosition: 21967751, endPosition: 21995300, type: 'Deletion', copyNumber: 0, logRatio: -3.0, reviewed: true, reported: false },
-  { id: '5', gene: 'PTEN', chromosome: 'chr10', startPosition: 87863113, endPosition: 87971930, type: 'Deletion', copyNumber: 1, logRatio: -1.0, reviewed: false, reported: false },
-  { id: '6', gene: 'MYC', chromosome: 'chr8', startPosition: 127735434, endPosition: 127742951, type: 'Amplification', copyNumber: 10, logRatio: 2.32, reviewed: false, reported: false },
+  { 
+    id: '1', 
+    gene: 'EGFR', 
+    transcript: 'NM_005228.5',
+    chromosome: 'chr7', 
+    type: 'Amplification', 
+    copyNumber: 8, 
+    logRatio: 2.0, 
+    bafDeviation: 0.35,
+    relatedCancers: ['非小细胞肺癌', '胶质母细胞瘤', '结直肠癌'],
+    exonData: [
+      { exon: 'Exon 1', copyNumber: 8, log2Ratio: 2.0 },
+      { exon: 'Exon 2', copyNumber: 8, log2Ratio: 1.95 },
+      { exon: 'Exon 3', copyNumber: 9, log2Ratio: 2.17 },
+      { exon: 'Exon 4', copyNumber: 8, log2Ratio: 2.0 },
+      { exon: 'Exon 5', copyNumber: 7, log2Ratio: 1.81 },
+      { exon: 'Exon 18', copyNumber: 8, log2Ratio: 2.0 },
+      { exon: 'Exon 19', copyNumber: 9, log2Ratio: 2.17 },
+      { exon: 'Exon 20', copyNumber: 8, log2Ratio: 2.0 },
+      { exon: 'Exon 21', copyNumber: 8, log2Ratio: 1.95 },
+    ],
+    reviewed: false, 
+    reported: false 
+  },
+  { 
+    id: '2', 
+    gene: 'MET', 
+    transcript: 'NM_000245.4',
+    chromosome: 'chr7', 
+    type: 'Amplification', 
+    copyNumber: 6, 
+    logRatio: 1.58, 
+    bafDeviation: 0.28,
+    relatedCancers: ['非小细胞肺癌', '胃癌', '肝细胞癌'],
+    exonData: [
+      { exon: 'Exon 1', copyNumber: 6, log2Ratio: 1.58 },
+      { exon: 'Exon 2', copyNumber: 6, log2Ratio: 1.55 },
+      { exon: 'Exon 14', copyNumber: 7, log2Ratio: 1.81 },
+      { exon: 'Exon 15', copyNumber: 6, log2Ratio: 1.58 },
+      { exon: 'Exon 16', copyNumber: 6, log2Ratio: 1.55 },
+    ],
+    reviewed: false, 
+    reported: false 
+  },
+  { 
+    id: '3', 
+    gene: 'ERBB2', 
+    transcript: 'NM_004448.4',
+    chromosome: 'chr17', 
+    type: 'Amplification', 
+    copyNumber: 12, 
+    logRatio: 2.58, 
+    bafDeviation: 0.42,
+    relatedCancers: ['乳腺癌', '胃癌', '卵巢癌'],
+    exonData: [
+      { exon: 'Exon 1', copyNumber: 12, log2Ratio: 2.58 },
+      { exon: 'Exon 2', copyNumber: 11, log2Ratio: 2.46 },
+      { exon: 'Exon 3', copyNumber: 12, log2Ratio: 2.58 },
+      { exon: 'Exon 4', copyNumber: 13, log2Ratio: 2.70 },
+      { exon: 'Exon 5', copyNumber: 12, log2Ratio: 2.58 },
+    ],
+    reviewed: true, 
+    reported: true 
+  },
+  { 
+    id: '4', 
+    gene: 'CDKN2A', 
+    transcript: 'NM_000077.5',
+    chromosome: 'chr9', 
+    type: 'Deletion', 
+    copyNumber: 0, 
+    logRatio: -3.0, 
+    bafDeviation: 0.50,
+    relatedCancers: ['黑色素瘤', '胰腺癌', '胶质母细胞瘤'],
+    exonData: [
+      { exon: 'Exon 1', copyNumber: 0, log2Ratio: -3.0 },
+      { exon: 'Exon 2', copyNumber: 0, log2Ratio: -3.0 },
+      { exon: 'Exon 3', copyNumber: 0, log2Ratio: -3.0 },
+    ],
+    reviewed: true, 
+    reported: false 
+  },
+  { 
+    id: '5', 
+    gene: 'PTEN', 
+    transcript: 'NM_000314.8',
+    chromosome: 'chr10', 
+    type: 'Deletion', 
+    copyNumber: 1, 
+    logRatio: -1.0, 
+    bafDeviation: 0.25,
+    relatedCancers: ['前列腺癌', '子宫内膜癌', '胶质母细胞瘤'],
+    exonData: [
+      { exon: 'Exon 1', copyNumber: 1, log2Ratio: -1.0 },
+      { exon: 'Exon 2', copyNumber: 1, log2Ratio: -0.95 },
+      { exon: 'Exon 3', copyNumber: 1, log2Ratio: -1.0 },
+      { exon: 'Exon 4', copyNumber: 2, log2Ratio: 0.0 },
+      { exon: 'Exon 5', copyNumber: 1, log2Ratio: -1.0 },
+      { exon: 'Exon 6', copyNumber: 1, log2Ratio: -0.95 },
+      { exon: 'Exon 7', copyNumber: 1, log2Ratio: -1.0 },
+      { exon: 'Exon 8', copyNumber: 1, log2Ratio: -1.05 },
+      { exon: 'Exon 9', copyNumber: 1, log2Ratio: -1.0 },
+    ],
+    reviewed: false, 
+    reported: false 
+  },
+  { 
+    id: '6', 
+    gene: 'MYC', 
+    transcript: 'NM_002467.6',
+    chromosome: 'chr8', 
+    type: 'Amplification', 
+    copyNumber: 10, 
+    logRatio: 2.32, 
+    bafDeviation: 0.38,
+    relatedCancers: ['伯基特淋巴瘤', '乳腺癌', '卵巢癌'],
+    exonData: [
+      { exon: 'Exon 1', copyNumber: 10, log2Ratio: 2.32 },
+      { exon: 'Exon 2', copyNumber: 10, log2Ratio: 2.30 },
+      { exon: 'Exon 3', copyNumber: 11, log2Ratio: 2.46 },
+    ],
+    reviewed: false, 
+    reported: false 
+  },
 ];
 
 async function getCNVGenes(_taskId: string, filterState: TableFilterState): Promise<PaginatedResult<CNVGene>> {
@@ -66,8 +194,23 @@ export function CNVGeneTab({
   const [geneLists, setGeneLists] = React.useState<GeneListOption[]>([]);
   const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
 
+  // 详情面板状态
+  const [selectedVariant, setSelectedVariant] = React.useState<CNVGene | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
+
+  // 点击行打开详情面板
+  const handleRowClick = React.useCallback((variant: CNVGene) => {
+    setSelectedVariant(variant);
+    setDetailPanelOpen(true);
+  }, []);
+
+  // 关闭详情面板
+  const handleCloseDetailPanel = React.useCallback(() => {
+    setDetailPanelOpen(false);
+  }, []);
 
   // 加载基因列表
   React.useEffect(() => {
@@ -159,14 +302,22 @@ export function CNVGeneTab({
       id: 'gene',
       header: '基因',
       accessor: 'gene',
-      width: 100,
+      width: 80,
       sortable: true,
+    },
+    {
+      id: 'transcript',
+      header: '转录本',
+      accessor: (row) => (
+        <span className="font-mono text-xs">{row.transcript}</span>
+      ),
+      width: 120,
     },
     {
       id: 'chromosome',
       header: '染色体',
       accessor: 'chromosome',
-      width: 80,
+      width: 70,
     },
     {
       id: 'type',
@@ -182,21 +333,32 @@ export function CNVGeneTab({
       id: 'copyNumber',
       header: '拷贝数',
       accessor: (row) => row.copyNumber,
-      width: 80,
+      width: 70,
       sortable: true,
     },
     {
       id: 'logRatio',
       header: 'Log2 Ratio',
       accessor: (row) => row.logRatio.toFixed(2),
-      width: 100,
+      width: 90,
       sortable: true,
     },
     {
-      id: 'position',
-      header: '位置',
-      accessor: (row) => `${row.startPosition.toLocaleString()}-${row.endPosition.toLocaleString()}`,
-      width: 200,
+      id: 'bafDeviation',
+      header: 'BAF偏移',
+      accessor: (row) => `${(row.bafDeviation * 100).toFixed(1)}%`,
+      width: 80,
+    },
+    {
+      id: 'relatedCancers',
+      header: '相关癌种',
+      accessor: (row) => (
+        <span className="text-xs whitespace-pre-wrap">
+          {row.relatedCancers.slice(0, 2).join('、')}
+          {row.relatedCancers.length > 2 && '...'}
+        </span>
+      ),
+      width: 150,
     },
   ];
 
@@ -262,12 +424,20 @@ export function CNVGeneTab({
           rowKey="id"
           striped
           density="compact"
+          onRowClick={handleRowClick}
         />
       ) : (
         <div className="text-center py-12 text-fg-muted">
           暂无基因水平CNV数据
         </div>
       )}
+
+      {/* CNV详情面板 */}
+      <CNVGeneDetailPanel
+        variant={selectedVariant}
+        isOpen={detailPanelOpen}
+        onClose={handleCloseDetailPanel}
+      />
     </div>
   );
 }
