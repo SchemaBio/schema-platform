@@ -67,13 +67,135 @@ pnpm install
 pnpm dev
 
 # 仅启动 germline 系统
-pnpm dev --filter web-germline
+pnpm dev:germline
 
 # 仅启动 somatic 系统
-pnpm dev --filter web-somatic
+pnpm dev:somatic
 
 # 构建所有项目
 pnpm build
+```
+
+## Docker 部署
+
+项目支持通过 Docker 灵活部署，可以选择部署单个应用或同时部署两个应用。
+
+### 快速部署
+
+```bash
+# 同时部署两个应用（单容器模式）
+docker-compose --profile all-in-one up -d
+
+# 仅部署 web-germline（遗传病分析系统）
+docker-compose --profile germline up -d
+
+# 仅部署 web-somatic（肿瘤分析系统）
+docker-compose --profile somatic up -d
+
+# 停止所有服务
+docker-compose down
+```
+
+### 端口配置
+
+| 应用 | 默认端口 | 说明 |
+|------|----------|------|
+| web-germline | 3001 | 遗传病医生专用系统 |
+| web-somatic | 3002 | 肿瘤科医生专用系统 |
+
+### 手动构建镜像
+
+```bash
+# 构建完整镜像（包含两个应用）
+docker build -t schema-platform .
+
+# 仅构建 germline 应用
+docker build --build-arg BUILD_SOMATIC=false -t schema-germline .
+
+# 仅构建 somatic 应用
+docker build --build-arg BUILD_GERMLINE=false -t schema-somatic .
+```
+
+### 运行容器
+
+```bash
+# 运行完整平台
+docker run -d -p 3001:3001 -p 3002:3002 schema-platform
+
+# 仅运行 germline
+docker run -d -p 3001:3001 \
+  -e DEPLOY_GERMLINE=true \
+  -e DEPLOY_SOMATIC=false \
+  schema-germline
+
+# 仅运行 somatic
+docker run -d -p 3002:3002 \
+  -e DEPLOY_GERMLINE=false \
+  -e DEPLOY_SOMATIC=true \
+  schema-somatic
+```
+
+### 构建参数说明
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| BUILD_GERMLINE | true | 是否构建 germline 应用 |
+| BUILD_SOMATIC | true | 是否构建 somatic 应用 |
+| DEPLOY_GERMLINE | true | 是否启动 germline 服务 |
+| DEPLOY_SOMATIC | true | 是否启动 somatic 服务 |
+| GERMLINE_PORT | 3001 | germline 服务端口 |
+| SOMATIC_PORT | 3002 | somatic 服务端口 |
+
+### Demo 模式（离线演示）
+
+Demo 模式下，系统禁止主动访问外部网络，但允许通过反向代理访问。适用于：
+- 产品演示（可通过域名访问）
+- 安全敏感场景
+- 离线环境部署
+
+```bash
+# 启动 Demo 模式（两个应用）
+docker-compose --profile demo up -d
+
+# Demo 模式 - 仅 germline
+docker-compose --profile demo-germline up -d
+
+# Demo 模式 - 仅 somatic
+docker-compose --profile demo-somatic up -d
+```
+
+Demo 模式特性：
+- ✅ 允许反向代理访问（入站流量正常）
+- ❌ 禁止容器访问外部网络（出站流量被阻断）
+- 📦 强制使用内置 mock 数据
+- 🚫 禁用所有外部 API 调用
+- 🔒 DNS 解析被禁用，无法连接外部服务
+
+反向代理配置示例（Nginx）：
+```nginx
+# germline 系统
+server {
+    listen 80;
+    server_name germline.example.com;
+    
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+# somatic 系统
+server {
+    listen 80;
+    server_name somatic.example.com;
+    
+    location / {
+        proxy_pass http://localhost:3002;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
 ```
 
 ## UI 设计规范

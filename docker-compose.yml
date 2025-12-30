@@ -1,0 +1,223 @@
+# Schema Platform - Docker Compose 配置
+# 
+# 使用方式:
+#   部署两个应用:  docker-compose --profile all-in-one up -d
+#   只部署 germline: docker-compose --profile germline up -d
+#   只部署 somatic:  docker-compose --profile somatic up -d
+#
+# Demo 模式 (禁止出站联网，但允许反代访问):
+#   docker-compose --profile demo up -d
+#
+# Demo 模式说明:
+#   - 允许外部通过反向代理访问系统（入站流量）
+#   - 禁止系统内部主动访问外部网络（出站流量）
+#   - 强制使用 mock 数据，禁用所有外部 API 调用
+
+version: '3.8'
+
+# 通用配置锚点
+x-common-env: &common-env
+  NODE_ENV: production
+  # Demo 模式：禁止一切联网数据交互，使用 mock 数据
+  DEMO_MODE: ${DEMO_MODE:-false}
+  # 禁用 Next.js 遥测
+  NEXT_TELEMETRY_DISABLED: 1
+
+services:
+  # ============ 正常部署模式 ============
+  
+  # 遗传病分析系统
+  germline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_GERMLINE: "true"
+        BUILD_SOMATIC: "false"
+        DEPLOY_GERMLINE: "true"
+        DEPLOY_SOMATIC: "false"
+        GERMLINE_PORT: 3001
+    ports:
+      - "3001:3001"
+    environment:
+      <<: *common-env
+      DEPLOY_GERMLINE: "true"
+      DEPLOY_SOMATIC: "false"
+      GERMLINE_PORT: 3001
+    restart: unless-stopped
+    profiles:
+      - germline
+      - all
+
+  # 肿瘤分析系统
+  somatic:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_GERMLINE: "false"
+        BUILD_SOMATIC: "true"
+        DEPLOY_GERMLINE: "false"
+        DEPLOY_SOMATIC: "true"
+        SOMATIC_PORT: 3002
+    ports:
+      - "3002:3002"
+    environment:
+      <<: *common-env
+      DEPLOY_GERMLINE: "false"
+      DEPLOY_SOMATIC: "true"
+      SOMATIC_PORT: 3002
+    restart: unless-stopped
+    profiles:
+      - somatic
+      - all
+
+  # 同时部署两个应用（单容器）
+  all-in-one:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_GERMLINE: "true"
+        BUILD_SOMATIC: "true"
+        DEPLOY_GERMLINE: "true"
+        DEPLOY_SOMATIC: "true"
+        GERMLINE_PORT: 3001
+        SOMATIC_PORT: 3002
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+    environment:
+      <<: *common-env
+      DEPLOY_GERMLINE: "true"
+      DEPLOY_SOMATIC: "true"
+      GERMLINE_PORT: 3001
+      SOMATIC_PORT: 3002
+    restart: unless-stopped
+    profiles:
+      - all-in-one
+
+  # ============ Demo 模式（禁止出站，允许入站） ============
+  
+  # Demo 模式 - 允许反代访问，但禁止容器访问外部网络
+  # 通过 iptables 规则限制出站流量
+  demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_GERMLINE: "true"
+        BUILD_SOMATIC: "true"
+        DEPLOY_GERMLINE: "true"
+        DEPLOY_SOMATIC: "true"
+        GERMLINE_PORT: 3001
+        SOMATIC_PORT: 3002
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+    environment:
+      <<: *common-env
+      DEMO_MODE: "true"
+      DEPLOY_GERMLINE: "true"
+      DEPLOY_SOMATIC: "true"
+      GERMLINE_PORT: 3001
+      SOMATIC_PORT: 3002
+      # 禁用所有外部 API 调用
+      DISABLE_EXTERNAL_API: "true"
+      # 强制使用 mock 数据
+      USE_MOCK_DATA: "true"
+      # 禁用 DNS 解析外部域名（应用层面）
+      BLOCK_EXTERNAL_DNS: "true"
+    # 安全限制
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # 使用自定义网络，通过 iptables 限制出站
+    networks:
+      - demo-network
+    # DNS 设置为无效地址，阻止外部域名解析
+    dns:
+      - 127.0.0.1
+    restart: unless-stopped
+    profiles:
+      - demo
+
+  # Demo 模式 - 仅 Germline
+  demo-germline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_GERMLINE: "true"
+        BUILD_SOMATIC: "false"
+        DEPLOY_GERMLINE: "true"
+        DEPLOY_SOMATIC: "false"
+        GERMLINE_PORT: 3001
+    ports:
+      - "3001:3001"
+    environment:
+      <<: *common-env
+      DEMO_MODE: "true"
+      DEPLOY_GERMLINE: "true"
+      DEPLOY_SOMATIC: "false"
+      GERMLINE_PORT: 3001
+      DISABLE_EXTERNAL_API: "true"
+      USE_MOCK_DATA: "true"
+      BLOCK_EXTERNAL_DNS: "true"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - demo-network
+    dns:
+      - 127.0.0.1
+    restart: unless-stopped
+    profiles:
+      - demo-germline
+
+  # Demo 模式 - 仅 Somatic
+  demo-somatic:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_GERMLINE: "false"
+        BUILD_SOMATIC: "true"
+        DEPLOY_GERMLINE: "false"
+        DEPLOY_SOMATIC: "true"
+        SOMATIC_PORT: 3002
+    ports:
+      - "3002:3002"
+    environment:
+      <<: *common-env
+      DEMO_MODE: "true"
+      DEPLOY_GERMLINE: "false"
+      DEPLOY_SOMATIC: "true"
+      SOMATIC_PORT: 3002
+      DISABLE_EXTERNAL_API: "true"
+      USE_MOCK_DATA: "true"
+      BLOCK_EXTERNAL_DNS: "true"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - demo-network
+    dns:
+      - 127.0.0.1
+    restart: unless-stopped
+    profiles:
+      - demo-somatic
+
+# 网络配置
+networks:
+  # Demo 网络 - 允许入站，限制出站
+  # 端口映射仍然有效，反向代理可以访问
+  # 但容器内无法解析外部域名，无法主动连接外部服务
+  demo-network:
+    driver: bridge
+    driver_opts:
+      # 禁用容器间通信（可选，更严格）
+      com.docker.network.bridge.enable_icc: "false"

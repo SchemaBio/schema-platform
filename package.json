@@ -1,0 +1,27 @@
+{
+  "name": "schema-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Schema 基因组分析平台",
+  "scripts": {
+    "dev:germline": "pnpm --filter @schema/web-germline dev",
+    "dev:somatic": "pnpm --filter @schema/web-somatic dev",
+    "build": "pnpm -r build",
+    "build:ui-kit": "pnpm --filter @schema/ui-kit build",
+    "build:germline": "pnpm build:ui-kit && pnpm --filter @schema/web-germline build",
+    "build:somatic": "pnpm build:ui-kit && pnpm --filter @schema/web-somatic build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "docker:build": "docker build -t schema-platform .",
+    "docker:build:germline": "docker build --build-arg BUILD_SOMATIC=false -t schema-germline .",
+    "docker:build:somatic": "docker build --build-arg BUILD_GERMLINE=false -t schema-somatic .",
+    "docker:up": "docker-compose --profile all-in-one up -d",
+    "docker:up:germline": "docker-compose --profile germline up -d",
+    "docker:up:somatic": "docker-compose --profile somatic up -d",
+    "docker:down": "docker-compose down"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
