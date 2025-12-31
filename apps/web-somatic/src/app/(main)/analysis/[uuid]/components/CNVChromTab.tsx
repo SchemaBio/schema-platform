@@ -7,16 +7,20 @@ import { Search } from 'lucide-react';
 import type { TableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
+import { CNVChromDetailPanel } from './CNVChromDetailPanel';
 
 // 染色体臂水平CNV类型
 interface CNVChrom {
   id: string;
   chromosome: string;
   arm: 'p' | 'q';
-  type: 'Gain' | 'Loss';
+  type: 'Gain' | 'Loss' | 'Normal';
   copyNumber: number;
   logRatio: number;
-  size: number; // bp
+  bafDeviation: number;
+  size: number;
+  relatedCancers: string[];
+  clinicalSignificance: string;
   reviewed: boolean;
   reported: boolean;
 }
@@ -27,15 +31,80 @@ interface CNVChromTabProps {
   onFilterChange?: (state: TableFilterState) => void;
 }
 
-// Mock数据
-const mockCNVChroms: CNVChrom[] = [
-  { id: '1', chromosome: 'chr1', arm: 'q', type: 'Gain', copyNumber: 3, logRatio: 0.58, size: 125000000, reviewed: false, reported: false },
-  { id: '2', chromosome: 'chr7', arm: 'p', type: 'Gain', copyNumber: 4, logRatio: 1.0, size: 58000000, reviewed: true, reported: true },
-  { id: '3', chromosome: 'chr8', arm: 'q', type: 'Gain', copyNumber: 3, logRatio: 0.58, size: 98000000, reviewed: false, reported: false },
-  { id: '4', chromosome: 'chr9', arm: 'p', type: 'Loss', copyNumber: 1, logRatio: -1.0, size: 47000000, reviewed: true, reported: false },
-  { id: '5', chromosome: 'chr17', arm: 'p', type: 'Loss', copyNumber: 1, logRatio: -1.0, size: 22000000, reviewed: false, reported: false },
-  { id: '6', chromosome: 'chr20', arm: 'q', type: 'Gain', copyNumber: 3, logRatio: 0.58, size: 30000000, reviewed: false, reported: false },
-];
+// 染色体大小（hg38）
+const CHROMOSOME_SIZES: Record<string, { p: number; q: number }> = {
+  'chr1': { p: 125000000, q: 123400000 }, 'chr2': { p: 93300000, q: 149000000 },
+  'chr3': { p: 90900000, q: 107500000 }, 'chr4': { p: 50000000, q: 140300000 },
+  'chr5': { p: 48800000, q: 132400000 }, 'chr6': { p: 59800000, q: 111200000 },
+  'chr7': { p: 60100000, q: 99400000 }, 'chr8': { p: 45200000, q: 101400000 },
+  'chr9': { p: 43000000, q: 95500000 }, 'chr10': { p: 39800000, q: 93900000 },
+  'chr11': { p: 53400000, q: 81600000 }, 'chr12': { p: 35500000, q: 97900000 },
+  'chr13': { p: 17700000, q: 96800000 }, 'chr14': { p: 17200000, q: 90000000 },
+  'chr15': { p: 19000000, q: 83200000 }, 'chr16': { p: 36800000, q: 53500000 },
+  'chr17': { p: 25100000, q: 58100000 }, 'chr18': { p: 18500000, q: 62100000 },
+  'chr19': { p: 26200000, q: 32600000 }, 'chr20': { p: 28100000, q: 36800000 },
+  'chr21': { p: 12000000, q: 34800000 }, 'chr22': { p: 15000000, q: 35600000 },
+  'chrX': { p: 60600000, q: 95400000 }, 'chrY': { p: 10400000, q: 47000000 },
+};
+
+// 相关癌种映射
+const CANCER_ASSOCIATIONS: Record<string, string[]> = {
+  'chr1q': ['乳腺癌', '肝细胞癌', '神经母细胞瘤'],
+  'chr7p': ['非小细胞肺癌', '胶质母细胞瘤'],
+  'chr7q': ['非小细胞肺癌', '结直肠癌'],
+  'chr8q': ['前列腺癌', '乳腺癌', '肝细胞癌'],
+  'chr9p': ['黑色素瘤', '胶质母细胞瘤', '膀胱癌'],
+  'chr17p': ['结直肠癌', '乳腺癌', '卵巢癌'],
+  'chr17q': ['乳腺癌', '卵巢癌'],
+  'chr20q': ['结直肠癌', '胃癌'],
+};
+
+// 生成所有染色体臂的Mock数据
+function generateAllChromosomeArms(): CNVChrom[] {
+  const chromosomes = ['chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13','chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX','chrY'];
+  const arms: ('p' | 'q')[] = ['p', 'q'];
+  const result: CNVChrom[] = [];
+  
+  const abnormals: Record<string, { type: 'Gain' | 'Loss'; cn: number; lr: number }> = {
+    'chr1q': { type: 'Gain', cn: 3, lr: 0.58 },
+    'chr7p': { type: 'Gain', cn: 4, lr: 1.0 },
+    'chr7q': { type: 'Gain', cn: 3, lr: 0.58 },
+    'chr8q': { type: 'Gain', cn: 3, lr: 0.58 },
+    'chr9p': { type: 'Loss', cn: 1, lr: -1.0 },
+    'chr17p': { type: 'Loss', cn: 1, lr: -1.0 },
+    'chr17q': { type: 'Gain', cn: 4, lr: 1.0 },
+    'chr20q': { type: 'Gain', cn: 3, lr: 0.58 },
+  };
+  
+  let id = 1;
+  chromosomes.forEach(chr => {
+    arms.forEach(arm => {
+      const key = `${chr}${arm}`;
+      const sizes = CHROMOSOME_SIZES[chr] || { p: 50000000, q: 50000000 };
+      const size = arm === 'p' ? sizes.p : sizes.q;
+      const abnormal = abnormals[key];
+      
+      result.push({
+        id: String(id++),
+        chromosome: chr,
+        arm,
+        type: abnormal?.type || 'Normal',
+        copyNumber: abnormal?.cn || 2,
+        logRatio: abnormal?.lr || 0,
+        bafDeviation: abnormal ? (abnormal.type === 'Gain' ? 0.15 + Math.random() * 0.1 : 0.25 + Math.random() * 0.15) : Math.random() * 0.05,
+        size,
+        relatedCancers: CANCER_ASSOCIATIONS[key] || [],
+        clinicalSignificance: abnormal ? (abnormal.type === 'Gain' ? '染色体臂获得' : '染色体臂丢失') : '正常',
+        reviewed: false,
+        reported: false,
+      });
+    });
+  });
+  
+  return result;
+}
+
+const mockCNVChroms = generateAllChromosomeArms();
 
 async function getCNVChroms(_taskId: string, filterState: TableFilterState): Promise<PaginatedResult<CNVChrom>> {
   await new Promise(resolve => setTimeout(resolve, 300));
@@ -63,8 +132,23 @@ export function CNVChromTab({
   const [loading, setLoading] = React.useState(true);
   const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
 
+  // 详情面板状态
+  const [selectedVariant, setSelectedVariant] = React.useState<CNVChrom | null>(null);
+  const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
+
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
+
+  // 点击行打开详情面板
+  const handleRowClick = React.useCallback((variant: CNVChrom) => {
+    setSelectedVariant(variant);
+    setDetailPanelOpen(true);
+  }, []);
+
+  // 关闭详情面板
+  const handleCloseDetailPanel = React.useCallback(() => {
+    setDetailPanelOpen(false);
+  }, []);
 
   // 加载数据
   React.useEffect(() => {
@@ -149,15 +233,15 @@ export function CNVChromTab({
       id: 'region',
       header: '染色体臂',
       accessor: (row) => `${row.chromosome}${row.arm}`,
-      width: 100,
+      width: 90,
       sortable: true,
     },
     {
       id: 'type',
       header: '类型',
       accessor: (row) => (
-        <Tag variant={row.type === 'Gain' ? 'danger' : 'info'}>
-          {row.type === 'Gain' ? '获得' : '丢失'}
+        <Tag variant={row.type === 'Gain' ? 'danger' : row.type === 'Loss' ? 'info' : 'neutral'}>
+          {row.type === 'Gain' ? '获得' : row.type === 'Loss' ? '丢失' : '正常'}
         </Tag>
       ),
       width: 80,
@@ -166,22 +250,38 @@ export function CNVChromTab({
       id: 'copyNumber',
       header: '拷贝数',
       accessor: (row) => row.copyNumber,
-      width: 80,
+      width: 70,
       sortable: true,
     },
     {
       id: 'logRatio',
       header: 'Log2 Ratio',
       accessor: (row) => row.logRatio.toFixed(2),
-      width: 100,
+      width: 90,
       sortable: true,
+    },
+    {
+      id: 'bafDeviation',
+      header: 'BAF偏移',
+      accessor: (row) => `${(row.bafDeviation * 100).toFixed(1)}%`,
+      width: 80,
     },
     {
       id: 'size',
       header: '大小',
       accessor: (row) => formatSize(row.size),
-      width: 100,
+      width: 90,
       sortable: true,
+    },
+    {
+      id: 'relatedCancers',
+      header: '相关癌种',
+      accessor: (row) => (
+        <span className="text-xs">
+          {row.relatedCancers.length > 0 ? row.relatedCancers.slice(0, 2).join('、') + (row.relatedCancers.length > 2 ? '...' : '') : '-'}
+        </span>
+      ),
+      width: 140,
     },
   ];
 
@@ -230,12 +330,21 @@ export function CNVChromTab({
           rowKey="id"
           striped
           density="compact"
+          onRowClick={handleRowClick}
         />
       ) : (
         <div className="text-center py-12 text-fg-muted">
           暂无染色体臂水平CNV数据
         </div>
       )}
+
+      {/* CNV详情面板 */}
+      <CNVChromDetailPanel
+        variant={selectedVariant}
+        allVariants={mockCNVChroms}
+        isOpen={detailPanelOpen}
+        onClose={handleCloseDetailPanel}
+      />
     </div>
   );
 }
