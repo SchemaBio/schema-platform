@@ -162,6 +162,9 @@ docker-compose --profile demo-germline up -d
 
 # Demo 模式 - 仅 somatic
 docker-compose --profile demo-somatic up -d
+
+# 重新构建示例
+docker compose --profile somatic up -d --build
 ```
 
 Demo 模式特性：
