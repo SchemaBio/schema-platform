@@ -1,9 +1,59 @@
 'use client';
 
 import * as React from 'react';
-import { X, ExternalLink, FileText, Database, Dna, Activity, BarChart3 } from 'lucide-react';
+import { X, ExternalLink, FileText, Database, Dna, Activity, BarChart3, GripHorizontal } from 'lucide-react';
 import { Tag, DataTable } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
+
+// 拖动 Hook
+function useDraggable(initialPosition: { x: number; y: number } = { x: 0, y: 0 }) {
+  const [position, setPosition] = React.useState(initialPosition);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const dragStartRef = React.useRef({ x: 0, y: 0 });
+  const positionRef = React.useRef(position);
+
+  React.useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = {
+      x: e.clientX - positionRef.current.x,
+      y: e.clientY - positionRef.current.y,
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setPosition({
+        x: e.clientX - dragStartRef.current.x,
+        y: e.clientY - dragStartRef.current.y,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const resetPosition = React.useCallback(() => {
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  return { position, isDragging, handleMouseDown, resetPosition };
+}
 
 // 外显子CNV数据
 interface ExonCNV {
@@ -111,6 +161,14 @@ function generateMockCNVData(gene: string, logRatio: number, chromosome: string)
 function CNVPlotModal({ variant, isOpen, onClose }: { variant: CNVGene; isOpen: boolean; onClose: () => void }) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const { position, isDragging, handleMouseDown, resetPosition } = useDraggable();
+  
+  // 当关闭时重置位置
+  React.useEffect(() => {
+    if (!isOpen) {
+      resetPosition();
+    }
+  }, [isOpen, resetPosition]);
   
   const { dataPoints, geneStart, geneEnd, regionStart, regionEnd } = React.useMemo(
     () => generateMockCNVData(variant.gene, variant.logRatio, variant.chromosome),
@@ -282,10 +340,20 @@ function CNVPlotModal({ variant, isOpen, onClose }: { variant: CNVGene; isOpen: 
   if (!isOpen) return null;
   
   return (
-    <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] max-w-[calc(100vw-520px)] bg-white dark:bg-[#0d1117] rounded-lg shadow-2xl z-[51]">
-      {/* 头部 */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+    <div 
+      className="fixed left-1/2 top-1/2 w-[900px] max-w-[calc(100vw-520px)] bg-white dark:bg-[#0d1117] rounded-lg shadow-2xl z-[51]"
+      style={{ 
+        transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
+        cursor: isDragging ? 'grabbing' : 'default',
+      }}
+    >
+      {/* 头部 - 可拖动 */}
+      <div 
+        className="flex items-center justify-between px-5 py-3 border-b border-border cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={handleMouseDown}
+      >
         <div className="flex items-center gap-3">
+          <GripHorizontal className="w-4 h-4 text-fg-muted" />
           <BarChart3 className="w-5 h-5 text-fg-muted" />
           <span className="font-medium text-fg-default">
             {variant.gene} 染色体区域CNV图
@@ -294,6 +362,12 @@ function CNVPlotModal({ variant, isOpen, onClose }: { variant: CNVGene; isOpen: 
             {variant.type === 'Amplification' ? '扩增' : '缺失'}
           </Tag>
         </div>
+        <button 
+          onClick={(e) => { e.stopPropagation(); onClose(); }} 
+          className="p-1 text-fg-muted hover:text-fg-default rounded hover:bg-canvas-inset"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
       
       {/* 绘图区 */}
