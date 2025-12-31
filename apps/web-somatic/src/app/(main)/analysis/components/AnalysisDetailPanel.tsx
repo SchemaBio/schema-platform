@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { getTaskDetail, getSampleInfo } from '../[uuid]/mock-data';
-import type { AnalysisTaskDetail, TabType, AnalysisStatus, SampleInfo } from '../[uuid]/types';
+import { getTaskDetail, getSampleInfo, getQCResult } from '../[uuid]/mock-data';
+import type { AnalysisTaskDetail, TabType, AnalysisStatus, SampleInfo, QCResult } from '../[uuid]/types';
 import { TAB_CONFIGS } from '../[uuid]/types';
 import {
   QCResultTab,
@@ -38,6 +38,7 @@ const FILTERED_TAB_CONFIGS = TAB_CONFIGS.filter(tab => tab.id !== 'sample-info')
 export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   const [task, setTask] = React.useState<AnalysisTaskDetail | null>(null);
   const [sampleInfo, setSampleInfo] = React.useState<SampleInfo | null>(null);
+  const [qcResult, setQcResult] = React.useState<QCResult | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<TabType>('qc');
 
@@ -62,12 +63,14 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   React.useEffect(() => {
     async function loadTask() {
       setLoading(true);
-      const [taskData, sampleData] = await Promise.all([
+      const [taskData, sampleData, qcData] = await Promise.all([
         getTaskDetail(taskId),
         getSampleInfo(taskId),
+        getQCResult(taskId),
       ]);
       setTask(taskData);
       setSampleInfo(sampleData);
+      setQcResult(qcData);
       setLoading(false);
     }
     loadTask();
@@ -150,6 +153,7 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             taskId={taskId}
             filterState={getFilterState('cnv-chrom')}
             onFilterChange={(state) => setFilterState('cnv-chrom', state)}
+            predictedGender={qcResult?.predictedGender || 'Unknown'}
           />
         );
       case 'fusion':

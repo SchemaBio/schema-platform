@@ -29,6 +29,7 @@ interface CNVChromTabProps {
   taskId: string;
   filterState?: TableFilterState;
   onFilterChange?: (state: TableFilterState) => void;
+  predictedGender?: 'Male' | 'Female' | 'Unknown';
 }
 
 // 染色体大小（hg38）
@@ -60,7 +61,7 @@ const CANCER_ASSOCIATIONS: Record<string, string[]> = {
 };
 
 // 生成所有染色体臂的Mock数据
-function generateAllChromosomeArms(): CNVChrom[] {
+function generateAllChromosomeArms(predictedGender: 'Male' | 'Female' | 'Unknown' = 'Male'): CNVChrom[] {
   const chromosomes = ['chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13','chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22','chrX','chrY'];
   const arms: ('p' | 'q')[] = ['p', 'q'];
   const result: CNVChrom[] = [];
@@ -78,19 +79,69 @@ function generateAllChromosomeArms(): CNVChrom[] {
   
   let id = 1;
   chromosomes.forEach(chr => {
+    // 根据性别决定是否包含Y染色体
+    if (chr === 'chrY' && predictedGender === 'Female') {
+      // 女性Y染色体拷贝数为0是正常的
+      arms.forEach(arm => {
+        const sizes = CHROMOSOME_SIZES[chr] || { p: 50000000, q: 50000000 };
+        const size = arm === 'p' ? sizes.p : sizes.q;
+        result.push({
+          id: String(id++),
+          chromosome: chr,
+          arm,
+          type: 'Normal',
+          copyNumber: 0,
+          logRatio: -3,
+          bafDeviation: 0,
+          size,
+          relatedCancers: [],
+          clinicalSignificance: '正常（女性无Y染色体）',
+          reviewed: false,
+          reported: false,
+        });
+      });
+      return;
+    }
+    
     arms.forEach(arm => {
       const key = `${chr}${arm}`;
       const sizes = CHROMOSOME_SIZES[chr] || { p: 50000000, q: 50000000 };
       const size = arm === 'p' ? sizes.p : sizes.q;
       const abnormal = abnormals[key];
       
+      // 判断性染色体的正常拷贝数
+      let normalCopyNumber = 2;
+      if (chr === 'chrX') {
+        normalCopyNumber = predictedGender === 'Male' ? 1 : 2;
+      } else if (chr === 'chrY') {
+        normalCopyNumber = predictedGender === 'Male' ? 1 : 0;
+      }
+      
+      // 判断是否异常
+      let type: 'Gain' | 'Loss' | 'Normal' = 'Normal';
+      let copyNumber = normalCopyNumber;
+      let logRatio = 0;
+      
+      if (abnormal) {
+        type = abnormal.type;
+        copyNumber = abnormal.cn;
+        logRatio = abnormal.lr;
+      } else if (chr === 'chrX' || chr === 'chrY') {
+        // 性染色体使用正常值
+        copyNumber = normalCopyNumber;
+        logRatio = predictedGender === 'Male' ? -1 : 0; // 男性X/Y为1拷贝，log2(1/2)=-1
+        if (chr === 'chrY' && predictedGender === 'Male') {
+          logRatio = -1;
+        }
+      }
+      
       result.push({
         id: String(id++),
         chromosome: chr,
         arm,
-        type: abnormal?.type || 'Normal',
-        copyNumber: abnormal?.cn || 2,
-        logRatio: abnormal?.lr || 0,
+        type,
+        copyNumber,
+        logRatio,
         bafDeviation: abnormal ? (abnormal.type === 'Gain' ? 0.15 + Math.random() * 0.1 : 0.25 + Math.random() * 0.15) : Math.random() * 0.05,
         size,
         relatedCancers: CANCER_ASSOCIATIONS[key] || [],
@@ -104,11 +155,9 @@ function generateAllChromosomeArms(): CNVChrom[] {
   return result;
 }
 
-const mockCNVChroms = generateAllChromosomeArms();
-
-async function getCNVChroms(_taskId: string, filterState: TableFilterState): Promise<PaginatedResult<CNVChrom>> {
+async function getCNVChroms(allData: CNVChrom[], filterState: TableFilterState): Promise<PaginatedResult<CNVChrom>> {
   await new Promise(resolve => setTimeout(resolve, 300));
-  let data = [...mockCNVChroms];
+  let data = [...allData];
   
   if (filterState.searchQuery) {
     const query = filterState.searchQuery.toLowerCase();
@@ -119,18 +168,43 @@ async function getCNVChroms(_taskId: string, filterState: TableFilterState): Pro
     data = data.filter(item => item.type === filterState.filters.type);
   }
   
+  // 排序：异常的放在前面，然后按染色体顺序
+  data.sort((a, b) => {
+    // 先按是否异常排序
+    const aIsAbnormal = a.type !== 'Normal' ? 0 : 1;
+    const bIsAbnormal = b.type !== 'Normal' ? 0 : 1;
+    if (aIsAbnormal !== bIsAbnormal) return aIsAbnormal - bIsAbnormal;
+    
+    // 再按染色体编号排序
+    const chrOrder = (chr: string) => {
+      const num = chr.replace('chr', '');
+      if (num === 'X') return 23;
+      if (num === 'Y') return 24;
+      return parseInt(num, 10);
+    };
+    const chrDiff = chrOrder(a.chromosome) - chrOrder(b.chromosome);
+    if (chrDiff !== 0) return chrDiff;
+    
+    // 最后按臂排序 (p在前)
+    return a.arm === 'p' ? -1 : 1;
+  });
+  
   return { data, total: data.length, page: filterState.page, pageSize: filterState.pageSize };
 }
 
 export function CNVChromTab({ 
   taskId, 
   filterState: externalFilterState, 
-  onFilterChange 
+  onFilterChange,
+  predictedGender = 'Male'
 }: CNVChromTabProps) {
   const [internalFilterState, setInternalFilterState] = React.useState<TableFilterState>(DEFAULT_FILTER_STATE);
   const [result, setResult] = React.useState<PaginatedResult<CNVChrom> | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
+
+  // 根据性别生成数据
+  const mockCNVChroms = React.useMemo(() => generateAllChromosomeArms(predictedGender), [predictedGender]);
 
   // 详情面板状态
   const [selectedVariant, setSelectedVariant] = React.useState<CNVChrom | null>(null);
@@ -154,12 +228,12 @@ export function CNVChromTab({
   React.useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await getCNVChroms(taskId, filterState);
+      const data = await getCNVChroms(mockCNVChroms, filterState);
       setResult(data);
       setLoading(false);
     }
     loadData();
-  }, [taskId, filterState]);
+  }, [mockCNVChroms, filterState]);
 
   const handleSearch = React.useCallback((query: string) => {
     setFilterState({ ...filterState, searchQuery: query, page: 1 });
@@ -230,10 +304,16 @@ export function CNVChromTab({
       width: 60,
     },
     {
+      id: 'chromosome',
+      header: 'Chrom',
+      accessor: (row) => row.chromosome.replace('chr', ''),
+      width: 60,
+    },
+    {
       id: 'region',
-      header: '染色体臂',
-      accessor: (row) => `${row.chromosome}${row.arm}`,
-      width: 90,
+      header: '臂',
+      accessor: (row) => `${row.chromosome.replace('chr', '')}${row.arm}`,
+      width: 60,
       sortable: true,
     },
     {
