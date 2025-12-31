@@ -153,7 +153,7 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             taskId={taskId}
             filterState={getFilterState('cnv-chrom')}
             onFilterChange={(state) => setFilterState('cnv-chrom', state)}
-            predictedGender={qcResult?.predictedGender || 'Unknown'}
+            gender={sampleInfo?.gender || qcResult?.predictedGender || 'Unknown'}
           />
         );
       case 'fusion':

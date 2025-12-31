@@ -3,9 +3,9 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PageContent } from '@/components/layout';
-import { getTaskDetail, getQCResult } from './mock-data';
+import { getTaskDetail, getQCResult, getSampleInfo } from './mock-data';
 import { useTabState } from './hooks/useTabState';
-import type { AnalysisTaskDetail, QCResult } from './types';
+import type { AnalysisTaskDetail, QCResult, SampleInfo } from './types';
 import {
   TaskHeader,
   ResultTabs,
@@ -31,6 +31,7 @@ export default function AnalysisDetailPage() {
   const uuid = params.uuid as string;
   const [task, setTask] = React.useState<AnalysisTaskDetail | null>(null);
   const [qcResult, setQcResult] = React.useState<QCResult | null>(null);
+  const [sampleInfo, setSampleInfo] = React.useState<SampleInfo | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [notFound, setNotFound] = React.useState(false);
 
@@ -41,15 +42,17 @@ export default function AnalysisDetailPage() {
   React.useEffect(() => {
     async function loadTask() {
       setLoading(true);
-      const [taskData, qcData] = await Promise.all([
+      const [taskData, qcData, sampleData] = await Promise.all([
         getTaskDetail(uuid),
-        getQCResult(uuid)
+        getQCResult(uuid),
+        getSampleInfo(uuid)
       ]);
       if (!taskData) {
         setNotFound(true);
       } else {
         setTask(taskData);
         setQcResult(qcData);
+        setSampleInfo(sampleData);
       }
       setLoading(false);
     }
@@ -155,7 +158,7 @@ export default function AnalysisDetailPage() {
             taskId={uuid}
             filterState={getFilterState('cnv-chrom')}
             onFilterChange={(state) => setFilterState('cnv-chrom', state)}
-            predictedGender={qcResult?.predictedGender || 'Unknown'}
+            gender={sampleInfo?.gender || qcResult?.predictedGender || 'Unknown'}
           />
         );
       case 'fusion':

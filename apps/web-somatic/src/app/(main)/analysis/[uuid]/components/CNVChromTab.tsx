@@ -29,7 +29,7 @@ interface CNVChromTabProps {
   taskId: string;
   filterState?: TableFilterState;
   onFilterChange?: (state: TableFilterState) => void;
-  predictedGender?: 'Male' | 'Female' | 'Unknown';
+  gender?: 'Male' | 'Female' | 'Unknown';
 }
 
 // 染色体大小（hg38）
@@ -196,7 +196,7 @@ export function CNVChromTab({
   taskId, 
   filterState: externalFilterState, 
   onFilterChange,
-  predictedGender = 'Male'
+  gender = 'Male'
 }: CNVChromTabProps) {
   const [internalFilterState, setInternalFilterState] = React.useState<TableFilterState>(DEFAULT_FILTER_STATE);
   const [result, setResult] = React.useState<PaginatedResult<CNVChrom> | null>(null);
@@ -204,7 +204,7 @@ export function CNVChromTab({
   const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
 
   // 根据性别生成数据
-  const mockCNVChroms = React.useMemo(() => generateAllChromosomeArms(predictedGender), [predictedGender]);
+  const mockCNVChroms = React.useMemo(() => generateAllChromosomeArms(gender), [gender]);
 
   // 详情面板状态
   const [selectedVariant, setSelectedVariant] = React.useState<CNVChrom | null>(null);
