@@ -13,8 +13,6 @@
 #   - 禁止系统内部主动访问外部网络（出站流量）
 #   - 强制使用 mock 数据，禁用所有外部 API 调用
 
-version: '3.8'
-
 # 通用配置锚点
 x-common-env: &common-env
   NODE_ENV: production
