@@ -6,12 +6,14 @@ module.exports = {
         // Canvas colors (backgrounds)
         canvas: {
           DEFAULT: 'var(--color-canvas-default)',
+          default: 'var(--color-canvas-default)',
           subtle: 'var(--color-canvas-subtle)',
           inset: 'var(--color-canvas-inset)',
         },
         // Foreground colors (text)
         fg: {
           DEFAULT: 'var(--color-fg-default)',
+          default: 'var(--color-fg-default)',
           muted: 'var(--color-fg-muted)',
           subtle: 'var(--color-fg-subtle)',
           'on-emphasis': 'var(--color-fg-on-emphasis)',
@@ -19,6 +21,7 @@ module.exports = {
         // Border colors
         border: {
           DEFAULT: 'var(--color-border-default)',
+          default: 'var(--color-border-default)',
           muted: 'var(--color-border-muted)',
           subtle: 'var(--color-border-subtle)',
         },
