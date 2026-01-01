@@ -403,6 +403,7 @@ export function CNVSegmentTab({
         variantType="segment"
         isOpen={detailPanelOpen}
         onClose={handleCloseDetailPanel}
+        allSegments={result?.data || []}
       />
 
       {/* CNV 评估面板 */}

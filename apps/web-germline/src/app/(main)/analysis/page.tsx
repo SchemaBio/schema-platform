@@ -4,7 +4,8 @@ import * as React from 'react';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, Plus, Eye, RotateCcw, X, ChevronRight, ChevronLeft, List } from 'lucide-react';
-import { AnalysisDetailPanel } from './components/AnalysisDetailPanel';
+import { AnalysisDetailPanel, NewTaskModal } from './components';
+import type { NewTaskFormData } from './components';
 
 interface AnalysisTask {
   id: string;
@@ -111,9 +112,30 @@ interface OpenTab {
 
 export default function AnalysisPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [tasks, setTasks] = React.useState<AnalysisTask[]>(mockTasks);
   const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
   const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true); // 默认收起
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
+  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = React.useState(false);
+
+  const handleCreateTask = (data: NewTaskFormData) => {
+    const newTask: AnalysisTask = {
+      id: `task-${Date.now()}`,
+      name: data.taskName,
+      sampleId: data.sampleId,
+      sampleName: data.patientName,
+      pipeline: data.pipelineName,
+      pipelineVersion: data.pipelineVersion,
+      status: 'queued',
+      progress: 0,
+      createdAt: new Date().toLocaleString('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      }).replace(/\//g, '-'),
+      createdBy: '当前用户',
+    };
+    setTasks(prev => [newTask, ...prev]);
+  };
 
   const handleOpenTab = React.useCallback((task: AnalysisTask) => {
     const existingTab = openTabs.find(t => t.taskId === task.id);
@@ -146,9 +168,9 @@ export default function AnalysisPage() {
   }, [activeTabId]);
 
   const filteredTasks = React.useMemo(() => {
-    if (!searchQuery) return mockTasks;
+    if (!searchQuery) return tasks;
     const query = searchQuery.toLowerCase();
-    return mockTasks.filter(
+    return tasks.filter(
       (t) =>
         t.id.toLowerCase().includes(query) ||
         t.sampleId.toLowerCase().includes(query) ||
@@ -338,7 +360,7 @@ export default function AnalysisPage() {
                   leftElement={<Search className="w-4 h-4" />}
                 />
               </div>
-              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
+              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setIsNewTaskModalOpen(true)}>
                 新建任务
               </Button>
             </div>
@@ -395,6 +417,13 @@ export default function AnalysisPage() {
           </div>
         </div>
       )}
+
+      {/* 新建任务弹窗 */}
+      <NewTaskModal
+        isOpen={isNewTaskModalOpen}
+        onClose={() => setIsNewTaskModalOpen(false)}
+        onSubmit={handleCreateTask}
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import type {
   STR,
   MitochondrialVariant,
   UPDRegion,
+  SangerValidation,
   TableFilterState,
   PaginatedResult,
   ACMGClassification,
@@ -63,20 +64,36 @@ const mockQCResults: Record<string, QCResult> = {
     mappedReads: 122500000,
     mappingRate: 0.98,
     averageDepth: 150.5,
+    dedupDepth: 132.4,
     targetCoverage: 0.995,
     duplicateRate: 0.12,
     q30Rate: 0.92,
     insertSize: 180,
+    gcRatio: 0.48,
+    uniformity: 0.94,
+    captureEfficiency: 0.72,
+    predictedGender: 'Male',
+    contaminationRate: 0.005,
+    mtCoverage: 0.998,
+    mtDepth: 2850.5,
   },
   'b2c3d4e5-f6a7-8901-bcde-f12345678901': {
     totalReads: 130000000,
     mappedReads: 126100000,
     mappingRate: 0.97,
     averageDepth: 145.2,
+    dedupDepth: 123.4,
     targetCoverage: 0.988,
     duplicateRate: 0.15,
     q30Rate: 0.89,
     insertSize: 175,
+    gcRatio: 0.46,
+    uniformity: 0.91,
+    captureEfficiency: 0.68,
+    predictedGender: 'Male',
+    contaminationRate: 0.008,
+    mtCoverage: 0.995,
+    mtDepth: 2420.3,
   },
 };
 
@@ -546,6 +563,84 @@ const mockUPDRegions: UPDRegion[] = [
   },
 ];
 
+// ============ Mock Sanger验证数据 ============
+const mockSangerValidations: SangerValidation[] = [
+  {
+    id: 'sanger-001',
+    variantId: 'snv-001',
+    variantType: 'SNV',
+    gene: 'BRCA1',
+    chromosome: 'chr17',
+    position: 43094464,
+    hgvsc: 'c.5266dupC',
+    hgvsp: 'p.Gln1756ProfsTer74',
+    zygosity: 'Heterozygous',
+    status: 'Completed',
+    result: 'Confirmed',
+    primerForward: 'ATGCTGAGTTTGTGTGTGAAC',
+    primerReverse: 'TCAGCTCAGCTTCTGATGAC',
+    productSize: 385,
+    requestedBy: '王工',
+    requestedAt: '2024-12-21 09:00',
+    completedAt: '2024-12-23 14:30',
+    completedBy: '张工',
+    notes: '验证成功，峰图清晰',
+  },
+  {
+    id: 'sanger-002',
+    variantId: 'snv-002',
+    variantType: 'SNV',
+    gene: 'TP53',
+    chromosome: 'chr17',
+    position: 7577538,
+    hgvsc: 'c.743G>A',
+    hgvsp: 'p.Arg248Gln',
+    zygosity: 'Heterozygous',
+    status: 'Completed',
+    result: 'Confirmed',
+    primerForward: 'CCTGAGGTGTAGACGCCAAC',
+    primerReverse: 'AGTGTGATGATGGTGAGGATG',
+    productSize: 420,
+    requestedBy: '王工',
+    requestedAt: '2024-12-21 09:15',
+    completedAt: '2024-12-23 15:00',
+    completedBy: '张工',
+  },
+  {
+    id: 'sanger-003',
+    variantId: 'snv-003',
+    variantType: 'Indel',
+    gene: 'CFTR',
+    chromosome: 'chr7',
+    position: 117559590,
+    hgvsc: 'c.1521_1523delCTT',
+    hgvsp: 'p.Phe508del',
+    zygosity: 'Heterozygous',
+    status: 'InProgress',
+    result: null,
+    primerForward: 'GCAGAGTACCTGAAACAGGA',
+    primerReverse: 'CATTCACAGTAGCTTACCCA',
+    productSize: 298,
+    requestedBy: '李工',
+    requestedAt: '2024-12-26 10:00',
+  },
+  {
+    id: 'sanger-004',
+    variantId: 'snv-004',
+    variantType: 'SNV',
+    gene: 'MLH1',
+    chromosome: 'chr3',
+    position: 37053568,
+    hgvsc: 'c.655A>G',
+    hgvsp: 'p.Ile219Val',
+    zygosity: 'Homozygous',
+    status: 'Pending',
+    result: null,
+    requestedBy: '李工',
+    requestedAt: '2024-12-27 09:30',
+  },
+];
+
 // ============ 数据获取函数 ============
 
 export async function getTaskDetail(uuid: string): Promise<AnalysisTaskDetail | null> {
@@ -758,6 +853,19 @@ export async function getUPDRegions(
     filterState,
     ['chromosome'],
     ['chromosome', 'startPosition', 'length', 'type']
+  );
+}
+
+export async function getSangerValidations(
+  _uuid: string,
+  filterState: TableFilterState
+): Promise<PaginatedResult<SangerValidation>> {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  return applyFilterAndPagination(
+    mockSangerValidations,
+    filterState,
+    ['gene', 'hgvsc', 'chromosome'],
+    ['gene', 'chromosome', 'position', 'status', 'result']
   );
 }
 

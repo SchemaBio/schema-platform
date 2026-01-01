@@ -25,10 +25,18 @@ export interface QCResult {
   mappedReads: number;           // 比对读数
   mappingRate: number;           // 比对率 (0-1)
   averageDepth: number;          // 平均覆盖深度
+  dedupDepth: number;            // 去重深度
   targetCoverage: number;        // 目标区域覆盖率 (0-1)
   duplicateRate: number;         // 重复率 (0-1)
   q30Rate: number;               // Q30比例 (0-1)
   insertSize: number;            // 插入片段大小
+  gcRatio: number;               // GC比例 (0-1)
+  uniformity: number;            // 均一性 (0-1)
+  captureEfficiency: number;     // 捕获效率 (0-1)
+  predictedGender: 'Male' | 'Female' | 'Unknown';  // 性别预测
+  contaminationRate: number;     // 污染比例 (0-1)
+  mtCoverage: number;            // 线粒体覆盖度 (0-1)
+  mtDepth: number;               // 线粒体深度
 }
 
 export type QCMetricKey = keyof QCResult;
@@ -192,8 +200,34 @@ export interface UPDRegion extends VariantReviewStatus {
   parentOfOrigin?: ParentOfOrigin;
 }
 
+// ============ Sanger验证 ============
+export type SangerStatus = 'Pending' | 'InProgress' | 'Completed' | 'Failed';
+export type SangerResult = 'Confirmed' | 'NotConfirmed' | 'Inconclusive' | null;
+
+export interface SangerValidation {
+  id: string;
+  variantId: string;             // 关联的变异ID
+  variantType: 'SNV' | 'Indel' | 'CNV';
+  gene: string;
+  chromosome: string;
+  position: number;
+  hgvsc: string;                 // cDNA变化
+  hgvsp?: string;                // 蛋白质变化
+  zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
+  status: SangerStatus;
+  result: SangerResult;
+  primerForward?: string;        // 正向引物
+  primerReverse?: string;        // 反向引物
+  productSize?: number;          // 产物大小(bp)
+  requestedBy: string;           // 申请人
+  requestedAt: string;           // 申请时间
+  completedAt?: string;          // 完成时间
+  completedBy?: string;          // 完成人
+  notes?: string;                // 备注
+}
+
 // ============ 标签页类型 ============
-export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'report';
+export type TabType = 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'sanger' | 'report';
 
 export interface TabConfig {
   id: TabType;
@@ -201,7 +235,6 @@ export interface TabConfig {
 }
 
 export const TAB_CONFIGS: TabConfig[] = [
-  { id: 'sample-info', label: '样本信息' },
   { id: 'qc', label: '质控结果' },
   { id: 'snv-indel', label: 'SNV/InDel' },
   { id: 'cnv-segment', label: 'CNV(Region)' },
@@ -209,6 +242,7 @@ export const TAB_CONFIGS: TabConfig[] = [
   { id: 'str', label: '动态突变' },
   { id: 'mt', label: '线粒体' },
   { id: 'upd', label: 'UPD' },
+  { id: 'sanger', label: 'Sanger验证' },
   { id: 'report', label: '报告生成' },
 ];
 

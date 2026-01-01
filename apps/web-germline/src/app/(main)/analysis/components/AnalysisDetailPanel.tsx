@@ -1,12 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { getTaskDetail } from '../[uuid]/mock-data';
-import { useTabState } from '../[uuid]/hooks/useTabState';
-import type { AnalysisTaskDetail, TabType, AnalysisStatus } from '../[uuid]/types';
+import { getTaskDetail, getSampleInfo } from '../[uuid]/mock-data';
+import type { AnalysisTaskDetail, TabType, AnalysisStatus, SampleInfo } from '../[uuid]/types';
 import { TAB_CONFIGS } from '../[uuid]/types';
 import {
-  SampleInfoTab,
   QCResultTab,
   SNVIndelTab,
   CNVSegmentTab,
@@ -14,6 +12,7 @@ import {
   STRTab,
   MTTab,
   UPDTab,
+  SangerTab,
   ReportTab,
 } from '../[uuid]/components';
 import { Tag } from '@schema/ui-kit';
@@ -32,8 +31,9 @@ const statusConfig: Record<AnalysisStatus, { label: string; variant: 'neutral' |
 
 export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   const [task, setTask] = React.useState<AnalysisTaskDetail | null>(null);
+  const [sampleInfo, setSampleInfo] = React.useState<SampleInfo | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState<TabType>('sample-info');
+  const [activeTab, setActiveTab] = React.useState<TabType>('qc');
 
   // 各标签页的筛选状态
   const [tabStates, setTabStates] = React.useState({
@@ -43,6 +43,7 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
     'str': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'mt': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'upd': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
+    'sanger': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
   });
 
   const getFilterState = (tab: keyof typeof tabStates) => tabStates[tab];
@@ -53,8 +54,12 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   React.useEffect(() => {
     async function loadTask() {
       setLoading(true);
-      const taskData = await getTaskDetail(taskId);
+      const [taskData, sampleData] = await Promise.all([
+        getTaskDetail(taskId),
+        getSampleInfo(taskId),
+      ]);
       setTask(taskData);
+      setSampleInfo(sampleData);
       setLoading(false);
     }
     loadTask();
@@ -81,8 +86,6 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   // 渲染当前标签页内容
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'sample-info':
-        return <SampleInfoTab taskId={taskId} />;
       case 'qc':
         return <QCResultTab taskId={taskId} />;
       case 'snv-indel':
@@ -133,6 +136,14 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             onFilterChange={(state) => setFilterState('upd', state)}
           />
         );
+      case 'sanger':
+        return (
+          <SangerTab
+            taskId={taskId}
+            filterState={getFilterState('sanger')}
+            onFilterChange={(state) => setFilterState('sanger', state)}
+          />
+        );
       case 'report':
         return <ReportTab taskId={taskId} />;
       default:
@@ -140,19 +151,57 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
     }
   };
 
+  const genderLabel: Record<string, string> = {
+    Male: '男',
+    Female: '女',
+    Unknown: '未知',
+  };
+
   return (
     <div className="p-4">
-      {/* 任务信息头部 - 紧凑版 */}
+      {/* 任务信息头部 */}
       <div className="mb-4 pb-3 border-b border-border-default">
-        <div className="flex items-center gap-3 mb-1">
+        <div className="flex items-center gap-3 mb-2">
           <h3 className="text-base font-medium text-fg-default">{task.name}</h3>
           <Tag variant={statusInfo.variant} className="text-xs">{statusInfo.label}</Tag>
         </div>
-        <div className="flex items-center gap-4 text-xs text-fg-muted">
+
+        {/* 基本信息行 */}
+        <div className="flex items-center gap-4 text-xs text-fg-muted mb-2">
           <span>样本: {task.sampleId}</span>
+          {sampleInfo && <span>性别: {genderLabel[sampleInfo.gender]}</span>}
+          {sampleInfo?.age && <span>年龄: {sampleInfo.age}岁</span>}
           <span>流程: {task.pipeline} {task.pipelineVersion}</span>
           <span>创建: {task.createdAt}</span>
         </div>
+
+        {/* 临床信息行 */}
+        {sampleInfo && (
+          <div className="text-xs space-y-1">
+            {sampleInfo.clinicalDiagnosis && (
+              <div className="flex items-start gap-2">
+                <span className="text-fg-muted shrink-0">临床诊断:</span>
+                <span className="text-fg-default">{sampleInfo.clinicalDiagnosis}</span>
+              </div>
+            )}
+            {sampleInfo.phenotypes && sampleInfo.phenotypes.length > 0 && (
+              <div className="flex items-start gap-2">
+                <span className="text-fg-muted shrink-0">表型:</span>
+                <div className="flex flex-wrap gap-1">
+                  {sampleInfo.phenotypes.map((p, i) => (
+                    <Tag key={i} variant="info" className="text-xs">{p}</Tag>
+                  ))}
+                </div>
+              </div>
+            )}
+            {sampleInfo.familyHistory && (
+              <div className="flex items-start gap-2">
+                <span className="text-fg-muted shrink-0">家族史:</span>
+                <span className="text-fg-default">{sampleInfo.familyHistory}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 标签页导航 */}

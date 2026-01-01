@@ -126,7 +126,7 @@ export function IGVViewer({
       />
       
       {/* 模态框 */}
-      <div className="relative bg-canvas-default rounded-lg shadow-xl w-[90vw] max-w-6xl max-h-[85vh] flex flex-col">
+      <div className="relative bg-white dark:bg-[#0d1117] rounded-lg shadow-xl w-[90vw] max-w-6xl max-h-[85vh] flex flex-col">
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="flex items-center gap-3">
