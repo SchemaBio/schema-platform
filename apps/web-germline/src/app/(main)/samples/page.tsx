@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Input, DataTable, Tag, Avatar } from '@schema/ui-kit';
+import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, Download, Upload, Eye, ChevronRight, ChevronLeft, List, X } from 'lucide-react';
+import { Search, Plus, Download, Upload, Eye, ChevronRight, ChevronLeft, List, X, Trash2 } from 'lucide-react';
 import { SampleDetailPanel, NewSampleModal } from './components';
 import { mockSamples } from './mock-data';
 import type { Sample, OpenTab } from './types';
@@ -85,35 +85,49 @@ S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,
       width: 130,
     },
     {
+      id: 'internalId',
+      header: '内部编号',
+      accessor: 'internalId',
+      width: 100,
+    },
+    {
       id: 'name',
       header: '姓名',
       accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <Avatar name={row.name} size="small" />
-          <div>
-            <span className="text-fg-default">{row.name}</span>
-            <div className="text-xs text-fg-muted">
-              <span className={GENDER_CONFIG[row.gender].color}>{GENDER_CONFIG[row.gender].label}</span>
-              <span className="ml-1">{row.age}岁</span>
-            </div>
+        <div>
+          <span className="text-fg-default">{row.name}</span>
+          <div className="text-xs text-fg-muted">
+            <span className={GENDER_CONFIG[row.gender].color}>{GENDER_CONFIG[row.gender].label}</span>
+            <span className="ml-1">{row.age}岁</span>
           </div>
         </div>
       ),
-      width: 140,
+      width: 100,
     },
     { id: 'sampleType', header: '样本类型', accessor: 'sampleType', width: 90 },
+    { id: 'hospital', header: '送检单位', accessor: 'hospital', width: 160 },
+    { id: 'testProject', header: '送检项目', accessor: 'testProject', width: 140 },
     {
       id: 'pedigree',
       header: '家系',
       accessor: (row) => (
-        <div>
-          <div className="text-fg-default">{row.pedigreeId}</div>
-          {row.pedigreeName !== '-' && <div className="text-xs text-fg-muted">{row.pedigreeName}</div>}
-        </div>
+        row.pedigreeId !== '-' ? (
+          <div
+            className="cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.location.href = `/samples/pedigree?id=${row.pedigreeId}`;
+            }}
+          >
+            <div className="text-accent-fg hover:underline">{row.pedigreeId}</div>
+            {row.pedigreeName !== '-' && <div className="text-xs text-fg-muted">{row.pedigreeName}</div>}
+          </div>
+        ) : (
+          <div className="text-fg-muted">-</div>
+        )
       ),
       width: 120,
     },
-    { id: 'dataCount', header: '关联数据', accessor: (row) => `${row.dataCount} 个`, width: 90 },
     {
       id: 'status',
       header: '状态',
@@ -128,10 +142,14 @@ S001,张三,男,1990-01-01,全血,FAM001,北京协和医院,心内科,王医生,
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="small" iconOnly aria-label="查看" onClick={() => handleOpenTab(row)}>
-            <Eye className="w-4 h-4" />
-          </Button>
+        <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            onClick={() => console.log('删除', row.id)}
+            aria-label="删除"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
       width: 60,

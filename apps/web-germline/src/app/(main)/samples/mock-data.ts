@@ -4,6 +4,7 @@ import type { Sample, SampleDetail } from './types';
 export const mockSamples: Sample[] = [
   {
     id: 'S2024120001',
+    internalId: 'INT-001',
     name: '张三',
     gender: 'male',
     age: 28,
@@ -11,6 +12,8 @@ export const mockSamples: Sample[] = [
     sampleType: '全血',
     pedigreeId: 'FAM001',
     pedigreeName: '张氏家系',
+    hospital: '北京协和医院',
+    testProject: '全外显子组测序',
     dataCount: 2,
     status: 'completed',
     createdAt: '2024-12-20',
@@ -18,6 +21,7 @@ export const mockSamples: Sample[] = [
   },
   {
     id: 'S2024120002',
+    internalId: 'INT-002',
     name: '李四',
     gender: 'female',
     age: 35,
@@ -25,6 +29,8 @@ export const mockSamples: Sample[] = [
     sampleType: '唾液',
     pedigreeId: 'FAM001',
     pedigreeName: '张氏家系',
+    hospital: '上海儿童医学中心',
+    testProject: '神经发育障碍Panel',
     dataCount: 1,
     status: 'analyzing',
     createdAt: '2024-12-21',
@@ -32,6 +38,7 @@ export const mockSamples: Sample[] = [
   },
   {
     id: 'S2024120003',
+    internalId: 'INT-003',
     name: '王五',
     gender: 'male',
     age: 5,
@@ -39,6 +46,8 @@ export const mockSamples: Sample[] = [
     sampleType: '全血',
     pedigreeId: 'FAM002',
     pedigreeName: '王氏家系',
+    hospital: '广州妇女儿童医院',
+    testProject: '遗传代谢病Panel',
     dataCount: 0,
     status: 'pending',
     createdAt: '2024-12-22',
@@ -46,6 +55,7 @@ export const mockSamples: Sample[] = [
   },
   {
     id: 'S2024120004',
+    internalId: 'INT-004',
     name: '赵六',
     gender: 'female',
     age: 42,
@@ -53,6 +63,8 @@ export const mockSamples: Sample[] = [
     sampleType: 'DNA',
     pedigreeId: '-',
     pedigreeName: '-',
+    hospital: '浙江大学附属第一医院',
+    testProject: '遗传性肿瘤Panel',
     dataCount: 3,
     status: 'matched',
     createdAt: '2024-12-23',
@@ -60,6 +72,7 @@ export const mockSamples: Sample[] = [
   },
   {
     id: 'S2024120005',
+    internalId: 'INT-005',
     name: '孙七',
     gender: 'male',
     age: 18,
@@ -67,6 +80,8 @@ export const mockSamples: Sample[] = [
     sampleType: '组织',
     pedigreeId: 'FAM003',
     pedigreeName: '孙氏家系',
+    hospital: '中山大学附属第一医院',
+    testProject: '心血管疾病Panel',
     dataCount: 1,
     status: 'completed',
     createdAt: '2024-12-24',
@@ -84,6 +99,11 @@ const mockSampleDetails: Record<string, SampleDetail> = {
     clinicalDiagnosis: {
       mainDiagnosis: '遗传性心肌病待查',
       symptoms: ['心悸', '胸闷', '运动后气短'],
+      hpoTerms: [
+        { id: 'HP:0001635', name: '充血性心力衰竭' },
+        { id: 'HP:0001962', name: '心悸' },
+        { id: 'HP:0002094', name: '呼吸困难' },
+      ],
       onsetAge: '25岁',
       diseaseHistory: '患者于3年前开始出现活动后心悸、胸闷症状，近期加重。',
     },

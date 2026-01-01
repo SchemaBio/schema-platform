@@ -1,10 +1,12 @@
 'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, Eye, ChevronRight, ChevronLeft, List, X, UserPlus, GitBranch } from 'lucide-react';
-import { PedigreeTree, MemberDetailPanel, AddMemberModal } from './components';
+import { Search, Plus, ChevronRight, ChevronLeft, List, X, UserPlus, GitBranch, Trash2, Pencil, Save } from 'lucide-react';
+import { PedigreeTree, MemberDetailPanel, AddMemberModal, LinkSampleModal, NewPedigreeModal } from './components';
+import type { NewPedigreeFormData } from './components/NewPedigreeModal';
 import { mockPedigreeList, getPedigreeDetail } from './mock-data';
 import type { PedigreeListItem, Pedigree, PedigreeMember } from './types';
 
@@ -15,20 +17,73 @@ interface OpenTab {
 }
 
 export default function PedigreePage() {
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
   const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
-  
+
   // 当前查看的家系详情
   const [currentPedigree, setCurrentPedigree] = React.useState<Pedigree | null>(null);
   const [loading, setLoading] = React.useState(false);
-  
+
   // 选中的成员
   const [selectedMember, setSelectedMember] = React.useState<PedigreeMember | null>(null);
-  
+
   // 添加成员弹窗
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
+
+  // 编辑模式
+  const [isEditMode, setIsEditMode] = React.useState(false);
+
+  // 关联样本弹窗
+  const [isLinkSampleOpen, setIsLinkSampleOpen] = React.useState(false);
+  const [linkingMemberId, setLinkingMemberId] = React.useState<string | null>(null);
+
+  // 新建家系弹窗
+  const [isNewPedigreeOpen, setIsNewPedigreeOpen] = React.useState(false);
+
+  // 防止重复打开家系
+  const processedPedigreeId = React.useRef<string | null>(null);
+
+  // 处理 URL 参数，自动打开对应家系
+  React.useEffect(() => {
+    const pedigreeId = searchParams.get('id');
+    if (pedigreeId && pedigreeId !== processedPedigreeId.current) {
+      processedPedigreeId.current = pedigreeId;
+      const pedigree = mockPedigreeList.find(p => p.id === pedigreeId);
+      if (pedigree) {
+        handleOpenTabById(pedigreeId, pedigree.name);
+      }
+    }
+  }, [searchParams]);
+
+  // 通过 ID 打开家系标签
+  const handleOpenTabById = async (pedigreeId: string, name: string) => {
+    const existingTab = openTabs.find(t => t.pedigreeId === pedigreeId);
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      setLoading(true);
+      const detail = await getPedigreeDetail(pedigreeId);
+      setCurrentPedigree(detail);
+      setLoading(false);
+      return;
+    }
+
+    const newTab: OpenTab = {
+      id: `tab-${Date.now()}`,
+      pedigreeId,
+      name,
+    };
+    setOpenTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+
+    setLoading(true);
+    const detail = await getPedigreeDetail(pedigreeId);
+    setCurrentPedigree(detail);
+    setLoading(false);
+    setSelectedMember(null);
+  };
 
   // 打开家系详情标签
   const handleOpenTab = React.useCallback(async (pedigree: PedigreeListItem) => {
@@ -109,6 +164,73 @@ export default function PedigreePage() {
     } : null);
   };
 
+  // 打开关联样本弹窗
+  const handleOpenLinkSample = (memberId: string) => {
+    setLinkingMemberId(memberId);
+    setIsLinkSampleOpen(true);
+  };
+
+  // 关联样本到成员
+  const handleLinkSample = (sampleId: string) => {
+    if (!currentPedigree || !linkingMemberId) return;
+
+    setCurrentPedigree(prev => prev ? {
+      ...prev,
+      members: prev.members.map(m =>
+        m.id === linkingMemberId ? { ...m, sampleId } : m
+      ),
+    } : null);
+
+    // 更新选中成员
+    if (selectedMember?.id === linkingMemberId) {
+      setSelectedMember(prev => prev ? { ...prev, sampleId } : null);
+    }
+
+    setLinkingMemberId(null);
+  };
+
+  // 创建新家系
+  const handleCreatePedigree = (data: NewPedigreeFormData) => {
+    const newPedigreeId = `FAM${String(mockPedigreeList.length + 1).padStart(3, '0')}`;
+    const newMemberId = `M${Date.now()}`;
+
+    const newPedigree: Pedigree = {
+      id: newPedigreeId,
+      name: data.name,
+      probandId: newMemberId,
+      disease: data.disease || undefined,
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      note: data.note || undefined,
+      members: [
+        {
+          id: newMemberId,
+          name: data.probandName,
+          gender: data.probandGender,
+          birthYear: data.probandBirthYear ? parseInt(data.probandBirthYear) : undefined,
+          relation: 'proband',
+          affectedStatus: 'affected',
+          generation: 0,
+          position: 0,
+        },
+      ],
+    };
+
+    // 打开新创建的家系
+    const newTab: OpenTab = {
+      id: `tab-${Date.now()}`,
+      pedigreeId: newPedigreeId,
+      name: data.name,
+    };
+    setOpenTabs(prev => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+    setCurrentPedigree(newPedigree);
+    setSelectedMember(null);
+    setIsEditMode(true); // 自动进入编辑模式
+
+    console.log('创建新家系:', newPedigree);
+  };
+
   // 筛选家系
   const filteredPedigrees = React.useMemo(() => {
     if (!searchQuery) return mockPedigreeList;
@@ -126,7 +248,7 @@ export default function PedigreePage() {
       id: 'id',
       header: '家系编号',
       accessor: (row) => (
-        <span 
+        <span
           className="text-accent-fg hover:underline cursor-pointer"
           onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }}
         >
@@ -135,28 +257,52 @@ export default function PedigreePage() {
       ),
       width: 100,
     },
-    { id: 'name', header: '家系名称', accessor: 'name', width: 120 },
+    {
+      id: 'sampleIds',
+      header: '样本编号',
+      accessor: (row) => (
+        <div className="text-sm">
+          {row.sampleIds.length > 0 ? (
+            row.sampleIds.map((id) => (
+              <div
+                key={id}
+                className={id === row.probandSampleId ? 'text-accent-fg font-medium' : 'text-fg-default'}
+              >
+                {id}{id === row.probandSampleId && ' (先证者)'}
+              </div>
+            ))
+          ) : '-'}
+        </div>
+      ),
+      width: 160,
+    },
     { id: 'probandName', header: '先证者', accessor: 'probandName', width: 80 },
     { id: 'disease', header: '主要疾病', accessor: (row) => row.disease || '-', width: 140 },
-    { 
-      id: 'memberCount', 
-      header: '成员数', 
+    {
+      id: 'memberCount',
+      header: '成员数',
       accessor: (row) => (
         <div className="text-fg-default">
           {row.memberCount} 人
           <span className="text-xs text-fg-muted ml-1">({row.sampledCount} 已采样)</span>
         </div>
-      ), 
-      width: 130 
+      ),
+      width: 130
     },
     { id: 'updatedAt', header: '更新时间', accessor: 'updatedAt', width: 100 },
     {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <Button variant="ghost" size="small" iconOnly aria-label="查看" onClick={() => handleOpenTab(row)}>
-          <Eye className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            onClick={() => console.log('删除', row.id)}
+            aria-label="删除"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       ),
       width: 60,
     },
@@ -216,7 +362,7 @@ export default function PedigreePage() {
               <div className="w-64">
                 <Input placeholder="搜索家系编号、名称、先证者..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftElement={<Search className="w-4 h-4" />} />
               </div>
-              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />}>新建家系</Button>
+              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setIsNewPedigreeOpen(true)}>新建家系</Button>
             </div>
             <DataTable data={filteredPedigrees} columns={columns} rowKey="id" striped density="compact" />
           </div>
@@ -251,9 +397,22 @@ export default function PedigreePage() {
                 </>
               )}
             </div>
-            <Button variant="secondary" size="small" leftIcon={<UserPlus className="w-4 h-4" />} onClick={() => setIsAddMemberOpen(true)}>
-              添加成员
-            </Button>
+            <div className="flex items-center gap-2">
+              {isEditMode ? (
+                <>
+                  <Button variant="secondary" size="small" leftIcon={<UserPlus className="w-4 h-4" />} onClick={() => setIsAddMemberOpen(true)}>
+                    添加成员
+                  </Button>
+                  <Button variant="primary" size="small" leftIcon={<Save className="w-4 h-4" />} onClick={() => setIsEditMode(false)}>
+                    完成编辑
+                  </Button>
+                </>
+              ) : (
+                <Button variant="secondary" size="small" leftIcon={<Pencil className="w-4 h-4" />} onClick={() => setIsEditMode(true)}>
+                  编辑
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* 家系树 */}
@@ -283,7 +442,7 @@ export default function PedigreePage() {
         <MemberDetailPanel
           member={selectedMember}
           onClose={() => setSelectedMember(null)}
-          onLinkSample={(memberId) => console.log('Link sample to', memberId)}
+          onLinkSample={handleOpenLinkSample}
           onRemoveMember={(memberId) => {
             if (currentPedigree) {
               setCurrentPedigree(prev => prev ? {
@@ -302,6 +461,24 @@ export default function PedigreePage() {
         onClose={() => setIsAddMemberOpen(false)}
         onSubmit={handleAddMember}
         existingMembers={currentPedigree?.members || []}
+      />
+
+      {/* 关联样本弹窗 */}
+      <LinkSampleModal
+        isOpen={isLinkSampleOpen}
+        onClose={() => {
+          setIsLinkSampleOpen(false);
+          setLinkingMemberId(null);
+        }}
+        onSelect={handleLinkSample}
+        memberName={currentPedigree?.members.find(m => m.id === linkingMemberId)?.name || ''}
+      />
+
+      {/* 新建家系弹窗 */}
+      <NewPedigreeModal
+        isOpen={isNewPedigreeOpen}
+        onClose={() => setIsNewPedigreeOpen(false)}
+        onSubmit={handleCreatePedigree}
       />
     </div>
   );

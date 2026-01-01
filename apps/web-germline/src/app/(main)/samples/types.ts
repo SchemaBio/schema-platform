@@ -6,6 +6,7 @@ export type SampleType = '全血' | '唾液' | 'DNA' | '组织' | '其他';
 
 export interface Sample {
   id: string;
+  internalId: string;  // 内部编号
   name: string;
   gender: Gender;
   age: number;
@@ -13,6 +14,8 @@ export interface Sample {
   sampleType: SampleType;
   pedigreeId: string;
   pedigreeName: string;
+  hospital: string;     // 送检单位
+  testProject: string;  // 送检项目
   dataCount: number;
   status: SampleStatus;
   createdAt: string;
@@ -29,6 +32,7 @@ export interface SampleDetail extends Sample {
   clinicalDiagnosis: {
     mainDiagnosis: string;
     symptoms: string[];
+    hpoTerms?: { id: string; name: string }[];  // HPO术语
     onsetAge?: string;
     diseaseHistory?: string;
   };

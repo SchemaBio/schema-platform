@@ -45,7 +45,7 @@ function PedigreeSymbol({
       y={y - halfSize}
       width={size}
       height={size}
-      className={`${statusConfig.color} stroke-fg-default stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-accent-emphasis stroke-[3px]' : ''}`}
+      className={`${statusConfig.color} stroke-gray-800 stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-blue-500 stroke-[3px]' : ''}`}
       onClick={onClick}
     />
   ) : member.gender === 'female' ? (
@@ -54,14 +54,14 @@ function PedigreeSymbol({
       cx={x}
       cy={y}
       r={halfSize}
-      className={`${statusConfig.color} stroke-fg-default stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-accent-emphasis stroke-[3px]' : ''}`}
+      className={`${statusConfig.color} stroke-gray-800 stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-blue-500 stroke-[3px]' : ''}`}
       onClick={onClick}
     />
   ) : (
     // 未知：菱形
     <polygon
       points={`${x},${y - halfSize} ${x + halfSize},${y} ${x},${y + halfSize} ${x - halfSize},${y}`}
-      className={`${statusConfig.color} stroke-fg-default stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-accent-emphasis stroke-[3px]' : ''}`}
+      className={`${statusConfig.color} stroke-gray-800 stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-blue-500 stroke-[3px]' : ''}`}
       onClick={onClick}
     />
   );
@@ -248,23 +248,23 @@ export function PedigreeTree({ members, probandId, selectedMemberId, onSelectMem
         <div className="text-xs font-medium text-fg-default mb-2">图例</div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-fg-default bg-canvas-default" />
+            <div className="w-4 h-4 border-2 border-gray-800 bg-white" />
             <span className="text-fg-muted">男性</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full border-2 border-fg-default bg-canvas-default" />
+            <div className="w-4 h-4 rounded-full border-2 border-gray-800 bg-white" />
             <span className="text-fg-muted">女性</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-fg-default bg-danger-emphasis" />
+            <div className="w-4 h-4 border-2 border-gray-800 bg-gray-800" />
             <span className="text-fg-muted">患病</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-fg-default bg-attention-emphasis" />
+            <div className="w-4 h-4 border-2 border-gray-800 bg-amber-400" />
             <span className="text-fg-muted">携带者</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-success-emphasis" />
+            <div className="w-2 h-2 rounded-full bg-green-500" />
             <span className="text-fg-muted">已采样</span>
           </div>
         </div>

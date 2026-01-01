@@ -28,6 +28,7 @@ import {
   Library,
   LayoutDashboard,
   TestTube,
+  Beaker,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -64,10 +65,10 @@ export interface SidebarNavConfig {
 export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   { label: '样本管理', href: '/samples', icon: Users },
-  { label: '实验中心', href: '/lab', icon: TestTube },
+  { label: '实验中心', href: '/lab', icon: FlaskConical },
   { label: '数据管理', href: '/data', icon: HardDrive },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
-  { label: '分析中心', href: '/analysis', icon: FlaskConical },
+  { label: '报告中心', href: '/analysis', icon: FileText },
   // { label: '报告中心', href: '/reports', icon: FileText }, // 暂时关闭
   { label: '知识中心', href: '/knowledge', icon: BookOpen },
 ];
@@ -96,15 +97,16 @@ export const sidebarNavConfig: SidebarNavConfig = {
   // 流程中心 - 生信工程师操作
   pipeline: [
     { label: '流程列表', href: '/pipeline', icon: List },
+    { label: '基因列表', href: '/pipeline/gene-list', icon: Library },
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
     { label: '数据库管理', href: '/pipeline/database', icon: Server },
     { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
-  // 分析中心 - 解读工程师操作
+  // 报告中心 - 解读工程师操作
   analysis: [
     { label: '任务列表', href: '/analysis', icon: List },
-    { label: '新建任务', href: '/analysis/new', icon: Play },
+    // { label: '新建任务', href: '/analysis/new', icon: Play }, // 暂时关闭
     { label: '进行中', href: '/analysis/running', icon: Clock },
     { label: '待解读', href: '/analysis/pending', icon: FlaskConical },
     { label: '已完成', href: '/analysis/completed', icon: CheckCircle },
@@ -121,7 +123,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '知识库概览', href: '/knowledge', icon: List },
     { label: '历史检出位点', href: '/knowledge/history', icon: History },
     { label: '位点收录库', href: '/knowledge/variants', icon: Library },
-    { label: '新增位点', href: '/knowledge/new', icon: Plus },
+    // { label: '新增位点', href: '/knowledge/new', icon: Plus }, // 暂时关闭
   ],
   // 系统设置
   settings: [

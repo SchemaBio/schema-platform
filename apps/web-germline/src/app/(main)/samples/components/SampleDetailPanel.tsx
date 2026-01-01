@@ -1,14 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { Tag } from '@schema/ui-kit';
-import { User, Stethoscope, FileText, FolderKanban, Users, Activity } from 'lucide-react';
+import Link from 'next/link';
+import { Tag, Button, Input, Select, TextArea } from '@schema/ui-kit';
+import { User, Stethoscope, FileText, FolderKanban, Users, Activity, GitBranch, Pencil, Save, X, Plus, Search } from 'lucide-react';
 import { getSampleDetail } from '../mock-data';
 import type { SampleDetail } from '../types';
 import { STATUS_CONFIG, GENDER_CONFIG } from '../types';
 
 interface SampleDetailPanelProps {
   sampleId: string;
+  onClose?: () => void;
 }
 
 type TabType = 'basic' | 'clinical' | 'submission' | 'project' | 'family' | 'analysis';
@@ -22,8 +24,37 @@ const TAB_CONFIGS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'analysis', label: '分析任务', icon: <Activity className="w-4 h-4" /> },
 ];
 
-// 信息项组件
-function InfoItem({ label, value, className }: { label: string; value: React.ReactNode; className?: string }) {
+// 信息项组件（支持编辑模式）
+function InfoItem({
+  label,
+  value,
+  className,
+  isEditing,
+  editValue,
+  onEditChange,
+  type = 'text'
+}: {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+  isEditing?: boolean;
+  editValue?: string;
+  onEditChange?: (value: string) => void;
+  type?: 'text' | 'date' | 'select';
+}) {
+  if (isEditing && onEditChange) {
+    return (
+      <div className={`flex flex-col gap-1 ${className || ''}`}>
+        <span className="text-xs text-fg-muted">{label}</span>
+        <Input
+          value={editValue || ''}
+          onChange={(e) => onEditChange(e.target.value)}
+          type={type === 'date' ? 'date' : 'text'}
+          className="text-sm"
+        />
+      </div>
+    );
+  }
   return (
     <div className={`flex flex-col gap-1 ${className || ''}`}>
       <span className="text-xs text-fg-muted">{label}</span>
@@ -42,20 +73,112 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
   );
 }
 
-export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
+// 常用HPO术语列表（模拟数据）
+const COMMON_HPO_TERMS = [
+  { id: 'HP:0001250', name: '癫痫发作' },
+  { id: 'HP:0001249', name: '智力障碍' },
+  { id: 'HP:0001252', name: '肌张力减退' },
+  { id: 'HP:0001263', name: '发育迟缓' },
+  { id: 'HP:0000252', name: '小头畸形' },
+  { id: 'HP:0001635', name: '充血性心力衰竭' },
+  { id: 'HP:0001962', name: '心悸' },
+  { id: 'HP:0002094', name: '呼吸困难' },
+  { id: 'HP:0000365', name: '听力损失' },
+  { id: 'HP:0000518', name: '白内障' },
+];
+
+// HPO术语输入组件
+function HpoTermInput({ onAdd }: { onAdd: (term: { id: string; name: string }) => void }) {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [showDropdown, setShowDropdown] = React.useState(false);
+
+  const filteredTerms = React.useMemo(() => {
+    if (!searchQuery) return COMMON_HPO_TERMS.slice(0, 5);
+    const query = searchQuery.toLowerCase();
+    return COMMON_HPO_TERMS.filter(
+      t => t.id.toLowerCase().includes(query) || t.name.includes(query)
+    );
+  }, [searchQuery]);
+
+  return (
+    <div className="relative">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Input
+            placeholder="搜索HPO术语（如：HP:0001250 或 癫痫）"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            leftElement={<Search className="w-4 h-4" />}
+          />
+          {showDropdown && filteredTerms.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-48 overflow-auto">
+              {filteredTerms.map((term) => (
+                <button
+                  key={term.id}
+                  className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+                  onClick={() => {
+                    onAdd(term);
+                    setSearchQuery('');
+                    setShowDropdown(false);
+                  }}
+                >
+                  <span className="font-mono text-xs text-blue-500">{term.id}</span>
+                  <span className="text-sm">{term.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {showDropdown && (
+        <div className="fixed inset-0 z-0" onClick={() => setShowDropdown(false)} />
+      )}
+    </div>
+  );
+}
+
+export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps) {
   const [sample, setSample] = React.useState<SampleDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<TabType>('basic');
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editData, setEditData] = React.useState<Partial<SampleDetail>>({});
 
   React.useEffect(() => {
     async function loadSample() {
       setLoading(true);
       const data = await getSampleDetail(sampleId);
       setSample(data);
+      if (data) {
+        setEditData(data);
+      }
       setLoading(false);
     }
     loadSample();
   }, [sampleId]);
+
+  const handleEditChange = (field: string, value: string) => {
+    setEditData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    if (editData) {
+      setSample(editData as SampleDetail);
+      setIsEditing(false);
+      console.log('保存样本数据:', editData);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (sample) {
+      setEditData(sample);
+    }
+    setIsEditing(false);
+  };
 
   if (loading) {
     return (
@@ -83,13 +206,44 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
           <div className="space-y-4">
             <InfoCard title="个人信息">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <InfoItem label="姓名" value={sample.name} />
+                <InfoItem
+                  label="姓名"
+                  value={sample.name}
+                  isEditing={isEditing}
+                  editValue={editData.name}
+                  onEditChange={(v) => handleEditChange('name', v)}
+                />
                 <InfoItem label="性别" value={<span className={genderInfo.color}>{genderInfo.label}</span>} />
                 <InfoItem label="年龄" value={`${sample.age}岁`} />
-                <InfoItem label="出生日期" value={sample.birthDate} />
-                <InfoItem label="民族" value={sample.ethnicity} />
-                <InfoItem label="身份证号" value={sample.idCard} />
-                <InfoItem label="联系电话" value={sample.phone} />
+                <InfoItem
+                  label="出生日期"
+                  value={sample.birthDate}
+                  isEditing={isEditing}
+                  editValue={editData.birthDate}
+                  onEditChange={(v) => handleEditChange('birthDate', v)}
+                  type="date"
+                />
+                <InfoItem
+                  label="民族"
+                  value={sample.ethnicity}
+                  isEditing={isEditing}
+                  editValue={editData.ethnicity}
+                  onEditChange={(v) => handleEditChange('ethnicity', v)}
+                />
+                <InfoItem
+                  label="身份证号"
+                  value={sample.idCard}
+                  isEditing={isEditing}
+                  editValue={editData.idCard}
+                  onEditChange={(v) => handleEditChange('idCard', v)}
+                />
+                <InfoItem
+                  label="联系电话"
+                  value={sample.phone}
+                  isEditing={isEditing}
+                  editValue={editData.phone}
+                  onEditChange={(v) => handleEditChange('phone', v)}
+                />
               </div>
             </InfoCard>
             <InfoCard title="样本信息">
@@ -110,24 +264,100 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
           <div className="space-y-4">
             <InfoCard title="诊断信息">
               <div className="space-y-4">
-                <InfoItem label="主要诊断" value={sample.clinicalDiagnosis.mainDiagnosis} />
-                <InfoItem 
-                  label="临床症状" 
+                <InfoItem
+                  label="主要诊断"
+                  value={sample.clinicalDiagnosis.mainDiagnosis}
+                  isEditing={isEditing}
+                  editValue={(editData.clinicalDiagnosis as any)?.mainDiagnosis}
+                  onEditChange={(v) => setEditData(prev => ({
+                    ...prev,
+                    clinicalDiagnosis: { ...prev.clinicalDiagnosis, mainDiagnosis: v }
+                  } as any))}
+                />
+                <InfoItem
+                  label="临床症状"
                   value={
-                    sample.clinicalDiagnosis.symptoms.length > 0 
+                    sample.clinicalDiagnosis.symptoms.length > 0
                       ? sample.clinicalDiagnosis.symptoms.map((s, i) => (
                           <Tag key={i} variant="neutral" className="mr-1 mb-1">{s}</Tag>
                         ))
                       : '-'
-                  } 
+                  }
                 />
-                <InfoItem label="发病年龄" value={sample.clinicalDiagnosis.onsetAge} />
+                <InfoItem
+                  label="发病年龄"
+                  value={sample.clinicalDiagnosis.onsetAge}
+                  isEditing={isEditing}
+                  editValue={(editData.clinicalDiagnosis as any)?.onsetAge}
+                  onEditChange={(v) => setEditData(prev => ({
+                    ...prev,
+                    clinicalDiagnosis: { ...prev.clinicalDiagnosis, onsetAge: v }
+                  } as any))}
+                />
               </div>
             </InfoCard>
+
             <InfoCard title="病史描述">
               <p className="text-sm text-fg-default whitespace-pre-wrap">
                 {sample.clinicalDiagnosis.diseaseHistory || '暂无病史描述'}
               </p>
+            </InfoCard>
+
+            {/* HPO术语 */}
+            <InfoCard title="HPO表型术语">
+              <div className="space-y-3">
+                {sample.clinicalDiagnosis.hpoTerms && sample.clinicalDiagnosis.hpoTerms.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {sample.clinicalDiagnosis.hpoTerms.map((term) => (
+                      <div
+                        key={term.id}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm border border-blue-200"
+                      >
+                        <span className="font-mono text-xs text-blue-500">{term.id}</span>
+                        <span>{term.name}</span>
+                        {isEditing && (
+                          <button
+                            onClick={() => {
+                              const newTerms = sample.clinicalDiagnosis.hpoTerms?.filter(t => t.id !== term.id) || [];
+                              setEditData(prev => ({
+                                ...prev,
+                                clinicalDiagnosis: { ...prev.clinicalDiagnosis, hpoTerms: newTerms }
+                              } as any));
+                              setSample(prev => prev ? {
+                                ...prev,
+                                clinicalDiagnosis: { ...prev.clinicalDiagnosis, hpoTerms: newTerms }
+                              } : null);
+                            }}
+                            className="ml-1 text-blue-400 hover:text-red-500"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-fg-muted">暂无HPO术语</p>
+                )}
+                {isEditing && (
+                  <HpoTermInput
+                    onAdd={(term) => {
+                      const currentTerms = sample.clinicalDiagnosis.hpoTerms || [];
+                      if (!currentTerms.find(t => t.id === term.id)) {
+                        const newTerms = [...currentTerms, term];
+                        setEditData(prev => ({
+                          ...prev,
+                          clinicalDiagnosis: { ...prev.clinicalDiagnosis, hpoTerms: newTerms }
+                        } as any));
+                        setSample(prev => prev ? {
+                          ...prev,
+                          clinicalDiagnosis: { ...prev.clinicalDiagnosis, hpoTerms: newTerms }
+                        } : null);
+                      }
+                    }}
+                  />
+                )}
+              </div>
             </InfoCard>
           </div>
         );
@@ -191,14 +421,30 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
       case 'family':
         return (
           <div className="space-y-4">
+            {/* 家系关联信息 */}
+            {sample.pedigreeId && sample.pedigreeId !== '-' && (
+              <InfoCard title="关联家系">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <InfoItem label="家系编号" value={sample.pedigreeId} />
+                    <InfoItem label="家系名称" value={sample.pedigreeName} />
+                  </div>
+                  <Link href={`/samples/pedigree?id=${sample.pedigreeId}`}>
+                    <Button variant="secondary" size="small" leftIcon={<GitBranch className="w-4 h-4" />}>
+                      查看家系图
+                    </Button>
+                  </Link>
+                </div>
+              </InfoCard>
+            )}
             <InfoCard title="家族史概况">
-              <InfoItem 
-                label="是否有家族史" 
+              <InfoItem
+                label="是否有家族史"
                 value={
                   <Tag variant={sample.familyHistory.hasHistory ? 'warning' : 'neutral'}>
                     {sample.familyHistory.hasHistory ? '有' : '无'}
                   </Tag>
-                } 
+                }
               />
             </InfoCard>
             {sample.familyHistory.hasHistory && sample.familyHistory.affectedMembers && (
@@ -260,11 +506,37 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
     <div className="p-4">
       {/* 样本信息头部 */}
       <div className="mb-4 pb-3 border-b border-border-default">
-        <div className="flex items-center gap-3 mb-1">
-          <h3 className="text-base font-medium text-fg-default">{sample.name}</h3>
-          <span className={`text-sm ${genderInfo.color}`}>{genderInfo.label}</span>
-          <span className="text-sm text-fg-muted">{sample.age}岁</span>
-          <Tag variant={statusInfo.variant}>{statusInfo.label}</Tag>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-3">
+            <h3 className="text-base font-medium text-fg-default">{sample.name}</h3>
+            <span className={`text-sm ${genderInfo.color}`}>{genderInfo.label}</span>
+            <span className="text-sm text-fg-muted">{sample.age}岁</span>
+            <Tag variant={statusInfo.variant}>{statusInfo.label}</Tag>
+          </div>
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <>
+                <Button variant="secondary" size="small" onClick={handleCancelEdit}>
+                  取消
+                </Button>
+                <Button variant="primary" size="small" leftIcon={<Save className="w-4 h-4" />} onClick={handleSave}>
+                  保存
+                </Button>
+              </>
+            ) : (
+              <Button variant="secondary" size="small" leftIcon={<Pencil className="w-4 h-4" />} onClick={() => setIsEditing(true)}>
+                编辑
+              </Button>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-4 text-xs text-fg-muted">
           <span>样本编号: {sample.id}</span>

@@ -1,205 +1,280 @@
 'use client';
 
+import { PageContent } from '@/components/layout';
+import { Button, Input, DataTable, Tag, Tooltip } from '@schema/ui-kit';
+import type { Column } from '@schema/ui-kit';
+import { Search, Link2, Link2Off, RefreshCw, Upload } from 'lucide-react';
 import * as React from 'react';
-import { Button } from '@schema/ui-kit';
-import { Database, FolderInput, RefreshCw } from 'lucide-react';
-import {
-  StorageSourceSelector,
-  FileBrowser,
-  Breadcrumbs,
-  ImportDialog,
-} from './components';
-import {
-  storageSources,
-  fetchDirectoryContents,
-  parseBreadcrumbs,
-} from './mock-data';
-import type { StorageSource, RemoteFile } from './types';
 
-export default function DataPage() {
-  // 当前选中的存储源
-  const [selectedSource, setSelectedSource] = React.useState<StorageSource | null>(
-    storageSources[0] || null
-  );
-  // 当前路径
-  const [currentPath, setCurrentPath] = React.useState('/');
-  // 目录内容
-  const [files, setFiles] = React.useState<RemoteFile[]>([]);
-  // 加载状态
-  const [loading, setLoading] = React.useState(false);
-  // 选中的文件路径
-  const [selectedFiles, setSelectedFiles] = React.useState<Set<string>>(new Set());
-  // 导入弹窗
-  const [importDialogOpen, setImportDialogOpen] = React.useState(false);
+interface DataMatching {
+  id: string;
+  sampleId: string;
+  patientName: string;
+  sequencingId: string;
+  runId: string;
+  matchStatus: 'matched' | 'unmatched' | 'manual';
+  dataSize: string;
+  fileCount: number;
+  matchedAt?: string;
+}
 
-  // 加载目录内容
-  const loadDirectory = React.useCallback(
-    async (sourceId: string, path: string) => {
-      setLoading(true);
-      try {
-        const contents = await fetchDirectoryContents(sourceId, path);
-        setFiles(contents);
-      } catch (error) {
-        console.error('Failed to load directory:', error);
-        setFiles([]);
-      } finally {
-        setLoading(false);
-      }
+const mockMatchings: DataMatching[] = [
+  {
+    id: '1',
+    sampleId: 'S2024120001',
+    patientName: '张三',
+    sequencingId: 'SEQ-001-A01',
+    runId: 'RUN-2024120001',
+    matchStatus: 'matched',
+    dataSize: '15.2 GB',
+    fileCount: 4,
+    matchedAt: '2024-12-20 14:35',
+  },
+  {
+    id: '2',
+    sampleId: 'S2024120002',
+    patientName: '李四',
+    sequencingId: 'SEQ-001-A02',
+    runId: 'RUN-2024120001',
+    matchStatus: 'matched',
+    dataSize: '14.8 GB',
+    fileCount: 4,
+    matchedAt: '2024-12-20 14:35',
+  },
+  {
+    id: '3',
+    sampleId: 'S2024120003',
+    patientName: '王五',
+    sequencingId: 'SEQ-001-A03',
+    runId: 'RUN-2024120001',
+    matchStatus: 'manual',
+    dataSize: '16.1 GB',
+    fileCount: 4,
+    matchedAt: '2024-12-21 09:00',
+  },
+  {
+    id: '4',
+    sampleId: 'S2024120004',
+    patientName: '赵六',
+    sequencingId: '',
+    runId: '',
+    matchStatus: 'unmatched',
+    dataSize: '-',
+    fileCount: 0,
+  },
+  {
+    id: '5',
+    sampleId: 'S2024120005',
+    patientName: '孙七',
+    sequencingId: 'SEQ-002-B01',
+    runId: 'RUN-2024120002',
+    matchStatus: 'matched',
+    dataSize: '13.9 GB',
+    fileCount: 4,
+    matchedAt: '2024-12-25 09:20',
+  },
+];
+
+export default function DataMatchingPage() {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [filterStatus, setFilterStatus] = React.useState<'all' | 'matched' | 'unmatched'>('all');
+
+  const filteredData = React.useMemo(() => {
+    let data = mockMatchings;
+
+    if (filterStatus !== 'all') {
+      data = data.filter((d) =>
+        filterStatus === 'matched'
+          ? d.matchStatus === 'matched' || d.matchStatus === 'manual'
+          : d.matchStatus === 'unmatched'
+      );
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      data = data.filter(
+        (d) =>
+          d.sampleId.toLowerCase().includes(query) ||
+          d.patientName.includes(query) ||
+          d.sequencingId.toLowerCase().includes(query)
+      );
+    }
+
+    return data;
+  }, [searchQuery, filterStatus]);
+
+  const getStatusTag = (status: DataMatching['matchStatus']) => {
+    switch (status) {
+      case 'matched':
+        return <Tag variant="success">自动匹配</Tag>;
+      case 'manual':
+        return <Tag variant="info">手动匹配</Tag>;
+      case 'unmatched':
+        return <Tag variant="danger">未匹配</Tag>;
+    }
+  };
+
+  const columns: Column<DataMatching>[] = [
+    { id: 'sampleId', header: '样本编号', accessor: 'sampleId', width: 130 },
+    { id: 'patientName', header: '患者', accessor: 'patientName', width: 80 },
+    {
+      id: 'sequencingId',
+      header: '测序编号',
+      accessor: (row) => row.sequencingId || <span className="text-fg-muted">-</span>,
+      width: 130,
     },
-    []
-  );
-
-  // 切换存储源
-  const handleSelectSource = (source: StorageSource) => {
-    setSelectedSource(source);
-    setCurrentPath('/');
-    setSelectedFiles(new Set());
-    loadDirectory(source.id, '/');
-  };
-
-  // 导航到目录
-  const handleNavigate = (path: string) => {
-    if (!selectedSource) return;
-    setCurrentPath(path);
-    setSelectedFiles(new Set());
-    loadDirectory(selectedSource.id, path);
-  };
-
-  // 刷新当前目录
-  const handleRefresh = () => {
-    if (!selectedSource) return;
-    loadDirectory(selectedSource.id, currentPath);
-  };
-
-  // 选择/取消选择文件
-  const handleSelectFile = (path: string, selected: boolean) => {
-    setSelectedFiles((prev) => {
-      const next = new Set(prev);
-      if (selected) {
-        next.add(path);
-      } else {
-        next.delete(path);
-      }
-      return next;
-    });
-  };
-
-  // 全选/取消全选可导入文件
-  const handleSelectAll = (selected: boolean) => {
-    if (selected) {
-      const importablePaths = files
-        .filter((f) => f.type === 'file' && f.isImportable)
-        .map((f) => f.path);
-      setSelectedFiles(new Set(importablePaths));
-    } else {
-      setSelectedFiles(new Set());
-    }
-  };
-
-  // 获取选中的文件对象
-  const selectedFileObjects = React.useMemo(() => {
-    return files.filter((f) => selectedFiles.has(f.path));
-  }, [files, selectedFiles]);
-
-  // 确认导入
-  const handleConfirmImport = (targetFolder: string) => {
-    console.log('Import files to:', targetFolder, selectedFileObjects);
-    // TODO: 调用后端 API 执行导入
-    setSelectedFiles(new Set());
-  };
-
-  // 初始加载
-  React.useEffect(() => {
-    if (selectedSource) {
-      loadDirectory(selectedSource.id, '/');
-    }
-  }, []);
-
-  const breadcrumbs = parseBreadcrumbs(currentPath);
-
-  return (
-    <div className="flex h-full">
-      {/* 左侧存储源列表 */}
-      <div className="w-56 flex-shrink-0 border-r border-border-default bg-canvas-subtle">
-        <div className="px-4 py-3 border-b border-border-default">
-          <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm font-medium text-fg-default">存储源</span>
-          </div>
-        </div>
-        <div className="p-2">
-          <StorageSourceSelector
-            sources={storageSources}
-            selectedId={selectedSource?.id || null}
-            onSelect={handleSelectSource}
-          />
-        </div>
-      </div>
-
-      {/* 右侧文件浏览器 */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* 工具栏 */}
-        <div className="px-4 py-3 border-b border-border-default flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Breadcrumbs items={breadcrumbs} onNavigate={handleNavigate} />
-            <button
-              onClick={handleRefresh}
-              className="p-1.5 rounded hover:bg-canvas-subtle text-fg-muted hover:text-fg-default transition-colors"
-              title="刷新"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            {selectedFiles.size > 0 && (
-              <span className="text-sm text-fg-muted">
-                已选 {selectedFiles.size} 个文件
-              </span>
-            )}
-            <Button
-              variant="primary"
-              leftIcon={<FolderInput className="w-4 h-4" />}
-              onClick={() => setImportDialogOpen(true)}
-              disabled={selectedFiles.size === 0}
-            >
-              导入数据
+    {
+      id: 'runId',
+      header: '测序批次',
+      accessor: (row) => row.runId || <span className="text-fg-muted">-</span>,
+      width: 140,
+    },
+    {
+      id: 'matchStatus',
+      header: '匹配状态',
+      accessor: (row) => getStatusTag(row.matchStatus),
+      width: 100,
+    },
+    {
+      id: 'fileCount',
+      header: '文件数',
+      accessor: (row) => row.fileCount > 0 ? `${row.fileCount} 个` : '-',
+      width: 80,
+    },
+    { id: 'dataSize', header: '数据大小', accessor: 'dataSize', width: 100 },
+    {
+      id: 'matchedAt',
+      header: '匹配时间',
+      accessor: (row) => row.matchedAt || <span className="text-fg-muted">-</span>,
+      width: 140,
+    },
+    {
+      id: 'actions',
+      header: '操作',
+      accessor: (row) => (
+        <div className="flex items-center gap-1">
+          {row.matchStatus === 'unmatched' ? (
+            <Button variant="primary" size="small" leftIcon={<Link2 className="w-3 h-3" />}>
+              手动匹配
             </Button>
-          </div>
-        </div>
-
-        {/* 文件列表 */}
-        <div className="flex-1 overflow-auto p-4">
-          {selectedSource ? (
-            <FileBrowser
-              files={files}
-              loading={loading}
-              selectedFiles={selectedFiles}
-              onSelectFile={handleSelectFile}
-              onSelectAll={handleSelectAll}
-              onNavigate={handleNavigate}
-            />
           ) : (
-            <div className="flex items-center justify-center h-64 text-fg-muted">
-              请选择一个存储源
-            </div>
+            <button
+              className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              title="解除匹配"
+            >
+              <Link2Off className="w-4 h-4" />
+            </button>
           )}
         </div>
+      ),
+      width: 100,
+    },
+  ];
 
-        {/* 底部提示 */}
-        <div className="px-4 py-2 border-t border-border-default bg-canvas-subtle">
-          <p className="text-xs text-fg-muted">
-            支持导入的格式：FASTQ (.fastq, .fastq.gz, .fq, .fq.gz)、uBAM (.ubam, .bam)
-          </p>
+  const unmatchedCount = mockMatchings.filter((d) => d.matchStatus === 'unmatched').length;
+  const matchedCount = mockMatchings.filter((d) => d.matchStatus !== 'unmatched').length;
+
+  return (
+    <PageContent>
+      <h2 className="text-lg font-medium text-fg-default mb-4">数据匹配</h2>
+
+      {/* 说明卡片 */}
+      <div className="p-4 bg-canvas-subtle rounded-lg border border-border mb-4">
+        <p className="text-sm text-fg-muted">
+          系统会根据样本编号自动匹配测序数据。如果自动匹配失败，可以手动进行匹配。
+          遗传病分析通常需要 FASTQ 或 uBAM 格式的测序数据。
+        </p>
+      </div>
+
+      {/* 统计卡片 */}
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="p-4 bg-canvas-default rounded-lg border border-border">
+          <div className="text-2xl font-semibold text-fg-default">{mockMatchings.length}</div>
+          <div className="text-sm text-fg-muted">总样本数</div>
+        </div>
+        <div className="p-4 bg-success-subtle rounded-lg border border-success-emphasis">
+          <div className="text-2xl font-semibold text-success-fg">{matchedCount}</div>
+          <div className="text-sm text-success-fg">已匹配</div>
+        </div>
+        <div className="p-4 bg-danger-subtle rounded-lg border border-danger-emphasis">
+          <div className="text-2xl font-semibold text-danger-fg">{unmatchedCount}</div>
+          <div className="text-sm text-danger-fg">未匹配</div>
         </div>
       </div>
 
-      {/* 导入确认弹窗 */}
-      <ImportDialog
-        open={importDialogOpen}
-        onOpenChange={setImportDialogOpen}
-        selectedFiles={selectedFileObjects}
-        onConfirm={handleConfirmImport}
+      {/* 警告提示 */}
+      {unmatchedCount > 0 && (
+        <div className="p-3 bg-warning-subtle border border-warning-emphasis rounded-lg mb-4">
+          <p className="text-sm text-warning-fg">
+            有 {unmatchedCount} 个样本尚未匹配到测序数据，请手动匹配或上传数据
+          </p>
+        </div>
+      )}
+
+      {/* 工具栏 */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-64">
+            <Input
+              placeholder="搜索样本编号、患者..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftElement={<Search className="w-4 h-4" />}
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                filterStatus === 'all'
+                  ? 'bg-accent-subtle text-accent-fg'
+                  : 'text-fg-muted hover:bg-canvas-subtle'
+              }`}
+            >
+              全部
+            </button>
+            <button
+              onClick={() => setFilterStatus('matched')}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                filterStatus === 'matched'
+                  ? 'bg-accent-subtle text-accent-fg'
+                  : 'text-fg-muted hover:bg-canvas-subtle'
+              }`}
+            >
+              已匹配
+            </button>
+            <button
+              onClick={() => setFilterStatus('unmatched')}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                filterStatus === 'unmatched'
+                  ? 'bg-accent-subtle text-accent-fg'
+                  : 'text-fg-muted hover:bg-canvas-subtle'
+              }`}
+            >
+              未匹配
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" leftIcon={<Upload className="w-4 h-4" />}>
+            上传数据
+          </Button>
+          <Tooltip content="对未匹配的样本重新进行自动匹配" placement="bottom" variant="nav">
+            <Button variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />}>
+              重新匹配
+            </Button>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* 数据表格 */}
+      <DataTable
+        data={filteredData}
+        columns={columns}
+        rowKey="id"
+        density="default"
+        striped
       />
-    </div>
+    </PageContent>
   );
 }

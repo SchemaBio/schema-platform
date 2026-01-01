@@ -59,6 +59,8 @@ export interface PedigreeListItem {
   name: string;
   memberCount: number;
   sampledCount: number;     // 已采样成员数
+  sampleIds: string[];      // 家系内样本编号列表
+  probandSampleId?: string; // 先证者样本编号
   probandName: string;
   disease?: string;
   createdAt: string;
@@ -85,8 +87,8 @@ export const RELATION_CONFIG: Record<RelationType, { label: string; generation: 
 
 // 患病状态配置
 export const AFFECTED_STATUS_CONFIG: Record<AffectedStatus, { label: string; color: string }> = {
-  affected: { label: '患病', color: 'fill-danger-emphasis' },
-  unaffected: { label: '未患病', color: 'fill-canvas-default' },
-  unknown: { label: '未知', color: 'fill-neutral-muted' },
-  carrier: { label: '携带者', color: 'fill-attention-emphasis' },
+  affected: { label: '患病', color: 'fill-gray-800' },      // 实心（深色填充）
+  unaffected: { label: '未患病', color: 'fill-white' },     // 空心（白色填充）
+  unknown: { label: '未知', color: 'fill-gray-300' },       // 灰色填充
+  carrier: { label: '携带者', color: 'fill-amber-400' },    // 携带者（黄色）
 };

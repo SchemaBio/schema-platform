@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { PageContent } from '@/components/layout';
 import { Tag } from '@schema/ui-kit';
 import {
@@ -14,6 +15,17 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
+
+// 格式化时间为中文格式
+function formatDateTime(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+}
 
 // 统计卡片数据
 const statsCards = [
@@ -148,6 +160,20 @@ const weeklyStats = {
 };
 
 export default function DashboardPage() {
+  const [currentTime, setCurrentTime] = useState<string>('');
+
+  useEffect(() => {
+    // 初始化时间
+    setCurrentTime(formatDateTime(new Date()));
+
+    // 每秒更新时间
+    const timer = setInterval(() => {
+      setCurrentTime(formatDateTime(new Date()));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <PageContent>
       {/* 欢迎信息 */}
@@ -155,38 +181,38 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-xl font-semibold text-fg-default">欢迎回来，张医生</h2>
           <p className="text-sm text-fg-muted mt-1">
-            今天是 2024年12月28日，以下是系统概览
+            现在是 {currentTime || '加载中...'}
           </p>
         </div>
         {/* 快捷操作 */}
         <div className="flex items-center gap-3">
           <Link
-            href="/samples/new"
+            href="/samples"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
             <Users className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">新建样本</span>
-          </Link>
-          <Link
-            href="/analysis/new"
-            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
-          >
-            <FlaskConical className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">新建任务</span>
-          </Link>
-          <Link
-            href="/reports/new"
-            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">生成报告</span>
+            <span className="text-sm text-fg-default">样本管理</span>
           </Link>
           <Link
             href="/lab"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
-            <Calendar className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">导入数据</span>
+            <FlaskConical className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">实验中心</span>
+          </Link>
+          <Link
+            href="/pipeline"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <Clock className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">流程中心</span>
+          </Link>
+          <Link
+            href="/analysis"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">报告中心</span>
           </Link>
         </div>
       </div>
@@ -320,7 +346,6 @@ export default function DashboardPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-canvas-subtle text-left text-sm text-fg-muted">
-                <th className="px-4 py-3 font-medium">任务ID</th>
                 <th className="px-4 py-3 font-medium">样本编号</th>
                 <th className="px-4 py-3 font-medium">患者</th>
                 <th className="px-4 py-3 font-medium">完成时间</th>
@@ -331,9 +356,6 @@ export default function DashboardPage() {
             <tbody className="divide-y divide-border">
               {recentCompletedTasks.map((task) => (
                 <tr key={task.id} className="hover:bg-canvas-subtle transition-colors">
-                  <td className="px-4 py-3 font-mono text-sm text-fg-default">
-                    {task.taskId.slice(0, 12)}...
-                  </td>
                   <td className="px-4 py-3 text-sm text-fg-default">{task.sampleId}</td>
                   <td className="px-4 py-3 text-sm text-fg-default">{task.patientName}</td>
                   <td className="px-4 py-3 text-sm text-fg-muted">{task.completedAt}</td>
