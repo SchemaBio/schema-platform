@@ -24,6 +24,11 @@ interface Fusion {
   breakRegion3: string;
   affectedExon5: string; // 预计受影响外显子
   affectedExon3: string;
+  // 融合预测信息
+  predictedFrame: 'In-frame' | 'Out-of-frame' | 'Unknown'; // 预测阅读框
+  domainStatus: 'Retained' | 'Lost' | 'Partial' | 'Unknown'; // 结构域状态
+  reciprocalFlag: boolean; // 互惠融合标志
+  reciprocalPartner?: string; // 互惠融合伴侣 (如存在)
   // 测序质量
   vaf: number;
   depth: number;
@@ -46,80 +51,96 @@ interface FusionTabProps {
 
 // Mock数据
 const mockFusions: Fusion[] = [
-  { 
-    id: '1', 
-    gene5: 'EML4', gene3: 'ALK', 
+  {
+    id: '1',
+    gene5: 'EML4', gene3: 'ALK',
     transcript5: 'NM_019063.4', transcript3: 'NM_004304.5',
     fusionType: 'Inversion',
-    breakpoint5: 'chr2:42472827', breakpoint3: 'chr2:29446394', 
+    breakpoint5: 'chr2:42472827', breakpoint3: 'chr2:29446394',
     breakRegion5: 'Intron 13', breakRegion3: 'Intron 19',
     affectedExon5: 'Exon 13', affectedExon3: 'Exon 20',
+    predictedFrame: 'In-frame',
+    domainStatus: 'Retained',
+    reciprocalFlag: false,
     vaf: 0.15, depth: 850, altReads: 128,
-    splitReads: 89, spanningReads: 39, 
+    splitReads: 89, spanningReads: 39,
     clinicalSignificance: 'Tier I',
     relatedCancers: ['非小细胞肺癌'],
     targetedDrugs: ['克唑替尼', '阿来替尼', '布格替尼'],
-    reviewed: true, reported: true 
+    reviewed: true, reported: true
   },
-  { 
-    id: '2', 
-    gene5: 'TMPRSS2', gene3: 'ERG', 
+  {
+    id: '2',
+    gene5: 'TMPRSS2', gene3: 'ERG',
     transcript5: 'NM_005656.4', transcript3: 'NM_004449.5',
     fusionType: 'Translocation',
-    breakpoint5: 'chr21:41498119', breakpoint3: 'chr21:38445621', 
+    breakpoint5: 'chr21:41498119', breakpoint3: 'chr21:38445621',
     breakRegion5: 'Intron 1', breakRegion3: 'Intron 3',
     affectedExon5: 'Exon 1', affectedExon3: 'Exon 4',
+    predictedFrame: 'In-frame',
+    domainStatus: 'Retained',
+    reciprocalFlag: false,
     vaf: 0.22, depth: 920, altReads: 202,
-    splitReads: 145, spanningReads: 57, 
+    splitReads: 145, spanningReads: 57,
     clinicalSignificance: 'Tier I',
     relatedCancers: ['前列腺癌'],
     targetedDrugs: [],
-    reviewed: true, reported: false 
+    reviewed: true, reported: false
   },
-  { 
-    id: '3', 
-    gene5: 'BCR', gene3: 'ABL1', 
+  {
+    id: '3',
+    gene5: 'BCR', gene3: 'ABL1',
     transcript5: 'NM_004327.4', transcript3: 'NM_007313.3',
     fusionType: 'Translocation',
-    breakpoint5: 'chr22:23632600', breakpoint3: 'chr9:130854064', 
+    breakpoint5: 'chr22:23632600', breakpoint3: 'chr9:130854064',
     breakRegion5: 'Intron 13', breakRegion3: 'Intron 1',
     affectedExon5: 'Exon 13', affectedExon3: 'Exon 2',
+    predictedFrame: 'In-frame',
+    domainStatus: 'Retained',
+    reciprocalFlag: true,
+    reciprocalPartner: 'ABL1::BCR',
     vaf: 0.35, depth: 780, altReads: 273,
-    splitReads: 198, spanningReads: 75, 
+    splitReads: 198, spanningReads: 75,
     clinicalSignificance: 'Tier I',
     relatedCancers: ['慢性粒细胞白血病', '急性淋巴细胞白血病'],
     targetedDrugs: ['伊马替尼', '达沙替尼', '尼洛替尼'],
-    reviewed: false, reported: false 
+    reviewed: false, reported: false
   },
-  { 
-    id: '4', 
-    gene5: 'KIF5B', gene3: 'RET', 
+  {
+    id: '4',
+    gene5: 'KIF5B', gene3: 'RET',
     transcript5: 'NM_004521.3', transcript3: 'NM_020975.6',
     fusionType: 'Inversion',
-    breakpoint5: 'chr10:32306071', breakpoint3: 'chr10:43612032', 
+    breakpoint5: 'chr10:32306071', breakpoint3: 'chr10:43612032',
     breakRegion5: 'Intron 15', breakRegion3: 'Intron 11',
     affectedExon5: 'Exon 15', affectedExon3: 'Exon 12',
+    predictedFrame: 'In-frame',
+    domainStatus: 'Partial',
+    reciprocalFlag: false,
     vaf: 0.08, depth: 650, altReads: 52,
-    splitReads: 45, spanningReads: 7, 
+    splitReads: 45, spanningReads: 7,
     clinicalSignificance: 'Tier II',
     relatedCancers: ['非小细胞肺癌', '甲状腺癌'],
     targetedDrugs: ['塞尔帕替尼', '普拉替尼'],
-    reviewed: false, reported: false 
+    reviewed: false, reported: false
   },
-  { 
-    id: '5', 
-    gene5: 'CD74', gene3: 'ROS1', 
+  {
+    id: '5',
+    gene5: 'CD74', gene3: 'ROS1',
     transcript5: 'NM_004355.3', transcript3: 'NM_002944.2',
     fusionType: 'Translocation',
-    breakpoint5: 'chr5:149784243', breakpoint3: 'chr6:117645578', 
+    breakpoint5: 'chr5:149784243', breakpoint3: 'chr6:117645578',
     breakRegion5: 'Intron 6', breakRegion3: 'Intron 33',
     affectedExon5: 'Exon 6', affectedExon3: 'Exon 34',
+    predictedFrame: 'Out-of-frame',
+    domainStatus: 'Lost',
+    reciprocalFlag: false,
     vaf: 0.12, depth: 720, altReads: 86,
-    splitReads: 56, spanningReads: 30, 
+    splitReads: 56, spanningReads: 30,
     clinicalSignificance: 'Tier I',
     relatedCancers: ['非小细胞肺癌'],
     targetedDrugs: ['克唑替尼', '恩曲替尼'],
-    reviewed: false, reported: false 
+    reviewed: false, reported: false
   },
 ];
 
@@ -349,6 +370,38 @@ export function FusionTab({
       width: 110,
     },
     {
+      id: 'predictedFrame',
+      header: '阅读框',
+      accessor: (row) => (
+        <Tag variant={row.predictedFrame === 'In-frame' ? 'success' : row.predictedFrame === 'Out-of-frame' ? 'danger' : 'info'}>
+          {row.predictedFrame}
+        </Tag>
+      ),
+      width: 95,
+    },
+    {
+      id: 'domainStatus',
+      header: '结构域',
+      accessor: (row) => (
+        <Tag variant={row.domainStatus === 'Retained' ? 'success' : row.domainStatus === 'Lost' ? 'danger' : row.domainStatus === 'Partial' ? 'warning' : 'info'}>
+          {row.domainStatus}
+        </Tag>
+      ),
+      width: 85,
+    },
+    {
+      id: 'reciprocalFlag',
+      header: '互惠',
+      accessor: (row) => (
+        row.reciprocalFlag ? (
+          <Tag variant="warning" title={row.reciprocalPartner}>Yes</Tag>
+        ) : (
+          <span className="text-xs text-fg-muted">No</span>
+        )
+      ),
+      width: 60,
+    },
+    {
       id: 'vaf',
       header: 'VAF%',
       accessor: (row) => `${(row.vaf * 100).toFixed(2)}`,
@@ -524,6 +577,31 @@ function FusionDetailPanel({ fusion, isOpen, onClose }: FusionDetailPanelProps) 
               <Tag variant={fusion.fusionType === 'Inversion' ? 'info' : 'warning'}>
                 {fusion.fusionType}
               </Tag>
+            } />
+          </div>
+
+          {/* 融合预测 */}
+          <SectionTitle icon={Activity} title="融合预测" />
+          <div className="bg-canvas-subtle rounded-md p-2.5">
+            <InfoItem label="预测阅读框" value={
+              <Tag variant={fusion.predictedFrame === 'In-frame' ? 'success' : fusion.predictedFrame === 'Out-of-frame' ? 'danger' : 'info'}>
+                {fusion.predictedFrame}
+              </Tag>
+            } />
+            <InfoItem label="结构域状态" value={
+              <Tag variant={fusion.domainStatus === 'Retained' ? 'success' : fusion.domainStatus === 'Lost' ? 'danger' : fusion.domainStatus === 'Partial' ? 'warning' : 'info'}>
+                {fusion.domainStatus}
+              </Tag>
+            } />
+            <InfoItem label="互惠融合" value={
+              fusion.reciprocalFlag ? (
+                <span className="flex items-center gap-1">
+                  <Tag variant="warning">Yes</Tag>
+                  {fusion.reciprocalPartner && <span className="text-xs text-fg-muted">({fusion.reciprocalPartner})</span>}
+                </span>
+              ) : (
+                <span className="text-xs text-fg-muted">No</span>
+              )
             } />
           </div>
 
