@@ -31,6 +31,8 @@ export interface TagProps {
   onClose?: () => void;
   /** Additional CSS classes */
   className?: string;
+  /** Native HTML title attribute for tooltip */
+  title?: string;
 }
 
 /** Close icon component */
@@ -110,6 +112,7 @@ export const Tag: React.FC<TagProps> = ({
   closable = false,
   onClose,
   className,
+  title,
 }) => {
   const handleClose = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
