@@ -129,6 +129,7 @@ export const Tag: React.FC<TagProps> = ({
 
   return (
     <span
+      title={title}
       className={cn(
         // Base styles - 20px height with 8px horizontal padding
         'inline-flex items-center gap-1',
