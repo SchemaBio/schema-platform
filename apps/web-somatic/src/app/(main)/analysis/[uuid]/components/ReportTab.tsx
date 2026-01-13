@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import { Button, Select, Tag, FormItem, Modal, ModalHeader, ModalBody, ModalFooter } from '@schema/ui-kit';
-import { 
-  FileText, Play, Clock, CheckCircle, Loader2, Download, 
-  FileSpreadsheet, Database, FileCode, Upload, FileArchive, Trash2, AlertCircle,
+import {
+  FileText, Play, Clock, CheckCircle, Loader2, Download,
+  FileSpreadsheet, Database, Upload, FileArchive, Trash2, AlertCircle,
   X, Eye, FileType
 } from 'lucide-react';
 
@@ -248,7 +248,7 @@ export function ReportTab({ taskId }: ReportTabProps) {
 
   const handleDownloadExcel = () => window.open(`/api/analysis/${taskId}/export/excel`, '_blank');
   const handleDownloadParquet = () => window.open(`/api/analysis/${taskId}/export/parquet`, '_blank');
-  const handleDownloadVCF = () => window.open(`/api/analysis/${taskId}/export/vcf`, '_blank');
+  const handleDownloadFusionTable = () => window.open(`/api/analysis/${taskId}/export/fusion`, '_blank');
   const handleDownloadBAM = () => window.open(`/api/analysis/${taskId}/export/bam`, '_blank');
 
   if (loading) {
@@ -274,11 +274,11 @@ export function ReportTab({ taskId }: ReportTabProps) {
             <Button variant="secondary" size="small" leftIcon={<FileSpreadsheet className="w-4 h-4" />} onClick={handleDownloadExcel}>
               Excel 结果表
             </Button>
+            <Button variant="secondary" size="small" leftIcon={<FileSpreadsheet className="w-4 h-4" />} onClick={handleDownloadFusionTable}>
+              融合结果表
+            </Button>
             <Button variant="secondary" size="small" leftIcon={<Database className="w-4 h-4" />} onClick={handleDownloadParquet}>
               Parquet 文件
-            </Button>
-            <Button variant="secondary" size="small" leftIcon={<FileCode className="w-4 h-4" />} onClick={handleDownloadVCF}>
-              SNV/InDel VCF
             </Button>
             <Button variant="secondary" size="small" leftIcon={<FileArchive className="w-4 h-4" />} onClick={handleDownloadBAM}>
               BAM 比对文件

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Button, Input, Select, TextArea, Tag } from '@schema/ui-kit';
-import { User, Stethoscope, FileText, FolderKanban, Activity, Image as ImageIcon, X, Pill, Save, Calendar, Upload, Trash2 } from 'lucide-react';
+import { User, Stethoscope, FileText, FolderKanban, Activity, Image as ImageIcon, X, Pill, Save, Calendar, Upload, Trash2, Link2 } from 'lucide-react';
 import { getSampleDetail } from '../mock-data';
 import type { SampleDetail } from '../types';
 import { 
@@ -22,7 +22,7 @@ interface SampleDetailPanelProps {
   sampleId: string;
 }
 
-type TabType = 'basic' | 'tumor' | 'treatment' | 'submission' | 'project' | 'heImages' | 'analysis';
+type TabType = 'basic' | 'tumor' | 'treatment' | 'submission' | 'project' | 'heImages' | 'analysis' | 'related';
 
 const TAB_CONFIGS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'basic', label: '基本信息', icon: <User className="w-4 h-4" /> },
@@ -32,6 +32,7 @@ const TAB_CONFIGS: { id: TabType; label: string; icon: React.ReactNode }[] = [
   { id: 'project', label: '项目信息', icon: <FolderKanban className="w-4 h-4" /> },
   { id: 'heImages', label: 'HE 染色', icon: <ImageIcon className="w-4 h-4" /> },
   { id: 'analysis', label: '分析任务', icon: <Activity className="w-4 h-4" /> },
+  { id: 'related', label: '关联样本', icon: <Link2 className="w-4 h-4" /> },
 ];
 
 const genderOptions = [
@@ -289,14 +290,20 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
                   onChange={(v) => updateField('birthDate', v)}
                   type="date"
                 />
-                <EditableItem 
-                  label="身份证号" 
+                <EditableItem
+                  label="身份证号"
                   value={editedSample.idCard}
                   onChange={(v) => updateField('idCard', v)}
                   placeholder="选填"
                 />
-                <EditableItem 
-                  label="联系电话" 
+                <EditableItem
+                  label="患者编号"
+                  value={editedSample.patientCode}
+                  onChange={(v) => updateField('patientCode', v)}
+                  placeholder="身份证号或自定义编号"
+                />
+                <EditableItem
+                  label="联系电话"
                   value={editedSample.phone}
                   onChange={(v) => updateField('phone', v)}
                   placeholder="选填"
@@ -685,6 +692,52 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
               <p className="text-sm text-fg-muted">暂无关联的分析任务</p>
             )}
           </InfoCard>
+        );
+
+      case 'related':
+        return (
+          <div className="space-y-4">
+            <InfoCard title="患者标识">
+              <div className="grid grid-cols-2 gap-4">
+                <InfoItem
+                  label="身份证号"
+                  value={sample.idCard || <span className="text-fg-muted">未填写</span>}
+                />
+                <InfoItem
+                  label="患者编号"
+                  value={sample.patientCode}
+                />
+              </div>
+            </InfoCard>
+            <InfoCard title="该患者的其他样本">
+              {sample.relatedSamples && sample.relatedSamples.length > 0 ? (
+                <div className="space-y-2">
+                  {sample.relatedSamples.map((relatedSample) => {
+                    const statusInfo = STATUS_CONFIG[relatedSample.status];
+                    return (
+                      <div
+                        key={relatedSample.id}
+                        className="flex items-center justify-between p-3 bg-canvas-default rounded hover:bg-canvas-inset transition-colors cursor-pointer"
+                      >
+                        <div>
+                          <span className="text-sm font-medium text-fg-default">{relatedSample.internalId}</span>
+                          <span className="text-xs text-fg-muted ml-2">{relatedSample.tumorType}</span>
+                          <span className="text-xs text-fg-muted ml-2">{relatedSample.createdAt}</span>
+                        </div>
+                        <Tag variant={statusInfo.variant}>{statusInfo.label}</Tag>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Link2 className="w-8 h-8 text-fg-muted mx-auto mb-2" />
+                  <p className="text-sm text-fg-muted">该患者暂无其他样本</p>
+                  <p className="text-xs text-fg-muted mt-1">同一患者的新样本将通过患者编号自动关联</p>
+                </div>
+              )}
+            </InfoCard>
+          </div>
         );
 
       default:

@@ -1,21 +1,24 @@
 'use client';
 
 import * as React from 'react';
-import type { TabType } from '../types';
-import { TAB_CONFIGS } from '../types';
+import type { TabType, TabConfig } from '../types';
 
 interface ResultTabsProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   children: React.ReactNode;
+  tabConfigs?: TabConfig[]; // 可选，传入则使用自定义配置
 }
 
-export function ResultTabs({ activeTab, onTabChange, children }: ResultTabsProps) {
+export function ResultTabs({ activeTab, onTabChange, children, tabConfigs }: ResultTabsProps) {
   const tabRefs = React.useRef<Map<TabType, HTMLButtonElement>>(new Map());
+
+  // 使用传入的配置或默认配置
+  const configs = tabConfigs || [];
 
   // 键盘导航处理
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent, currentIndex: number) => {
-    const tabCount = TAB_CONFIGS.length;
+    const tabCount = configs.length;
     let newIndex: number | null = null;
 
     switch (e.key) {
@@ -38,23 +41,28 @@ export function ResultTabs({ activeTab, onTabChange, children }: ResultTabsProps
     }
 
     if (newIndex !== null) {
-      const newTab = TAB_CONFIGS[newIndex];
+      const newTab = configs[newIndex];
       onTabChange(newTab.id);
       // 聚焦到新标签
       tabRefs.current.get(newTab.id)?.focus();
     }
-  }, [onTabChange]);
+  }, [configs, onTabChange]);
+
+  // 如果没有配置，渲染空内容
+  if (configs.length === 0) {
+    return <div>{children}</div>;
+  }
 
   return (
     <div>
       {/* 标签页导航 */}
       <div className="border-b border-border-default mb-4">
-        <nav 
-          className="flex gap-1" 
+        <nav
+          className="flex gap-1"
           role="tablist"
           aria-label="分析结果标签页"
         >
-          {TAB_CONFIGS.map((tab, index) => {
+          {configs.map((tab, index) => {
             const isActive = activeTab === tab.id;
             return (
               <button

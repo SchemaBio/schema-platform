@@ -225,6 +225,7 @@ export interface TabConfig {
   label: string;
 }
 
+// 完整标签页配置（用于 DNA/常规分析任务）
 export const TAB_CONFIGS: TabConfig[] = [
   { id: 'sample-info', label: '样本信息' },
   { id: 'qc', label: '质控结果' },
@@ -240,6 +241,31 @@ export const TAB_CONFIGS: TabConfig[] = [
   { id: 'biomarkers', label: '其他检出' },
   { id: 'report', label: '报告生成' },
 ];
+
+// RNA 融合分析专用标签页配置（简化版）
+export const FUSION_TAB_CONFIGS: TabConfig[] = [
+  { id: 'sample-info', label: '样本信息' },
+  { id: 'qc', label: '质控结果' },
+  { id: 'fusion', label: '融合表' },
+  { id: 'report', label: '报告生成' },
+];
+
+// Pipeline 类型定义
+export type PipelineType = 'rna-fusion' | 'dna-analysis';
+
+// 根据 pipeline 名称获取类型
+export function getPipelineType(pipelineName: string): PipelineType {
+  if (pipelineName.includes('融合') || pipelineName.includes('fusion') || pipelineName.includes('RNA')) {
+    return 'rna-fusion';
+  }
+  return 'dna-analysis';
+}
+
+// 根据任务类型获取对应的标签页配置
+export function getTabConfigsByPipeline(pipelineName: string): TabConfig[] {
+  const type = getPipelineType(pipelineName);
+  return type === 'rna-fusion' ? FUSION_TAB_CONFIGS : TAB_CONFIGS;
+}
 
 // ============ 表格筛选状态 ============
 export interface TableFilterState {

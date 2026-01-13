@@ -216,10 +216,16 @@ export interface PatientQueryParams {
 export interface CreatePatientRequest {
   /** Patient name */
   name: string;
+  /** Patient ID card number (optional, used as unique identifier) */
+  idCard?: string;
+  /** Custom patient code (auto-generated if no ID card) */
+  patientCode?: string;
   /** Patient gender */
   gender: Gender;
   /** Birth date in ISO 8601 format (YYYY-MM-DD) */
   birthDate: string;
+  /** Patient phone number */
+  phone?: string;
   /** HPO term IDs */
   phenotypes?: string[];
 }
@@ -230,10 +236,16 @@ export interface CreatePatientRequest {
 export interface UpdatePatientRequest {
   /** New patient name */
   name?: string;
+  /** Patient ID card number */
+  idCard?: string;
+  /** Custom patient code */
+  patientCode?: string;
   /** New gender */
   gender?: Gender;
   /** New birth date */
   birthDate?: string;
+  /** Patient phone number */
+  phone?: string;
 }
 
 // ============================================================================

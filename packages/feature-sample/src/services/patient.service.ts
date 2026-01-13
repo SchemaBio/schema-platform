@@ -27,6 +27,10 @@ export interface PatientService {
   getPatients(params?: PatientQueryParams): Promise<PaginatedResponse<Patient>>;
   /** Get a single patient by ID */
   getPatient(id: string): Promise<Patient>;
+  /** Get a patient by ID card number */
+  getPatientByIdCard(idCard: string): Promise<Patient | null>;
+  /** Get a patient by custom patient code */
+  getPatientByCode(patientCode: string): Promise<Patient | null>;
   /** Create a new patient */
   createPatient(data: CreatePatientRequest): Promise<Patient>;
   /** Update an existing patient */
@@ -117,6 +121,38 @@ export function createPatientService(config: PatientServiceConfig): PatientServi
   async function getPatient(id: string): Promise<Patient> {
     const response = await fetch(`${baseUrl}/patients/${id}`);
     return handleResponse<Patient>(response);
+  }
+
+  /**
+   * Get a patient by ID card number
+   */
+  async function getPatientByIdCard(idCard: string): Promise<Patient | null> {
+    if (!idCard) return null;
+    try {
+      const response = await fetch(`${baseUrl}/patients/by-id-card/${encodeURIComponent(idCard)}`);
+      if (response.status === 404) {
+        return null;
+      }
+      return handleResponse<Patient>(response);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get a patient by custom patient code
+   */
+  async function getPatientByCode(patientCode: string): Promise<Patient | null> {
+    if (!patientCode) return null;
+    try {
+      const response = await fetch(`${baseUrl}/patients/by-code/${encodeURIComponent(patientCode)}`);
+      if (response.status === 404) {
+        return null;
+      }
+      return handleResponse<Patient>(response);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -215,6 +251,8 @@ export function createPatientService(config: PatientServiceConfig): PatientServi
   return {
     getPatients,
     getPatient,
+    getPatientByIdCard,
+    getPatientByCode,
     createPatient,
     updatePatient,
     deletePatient,

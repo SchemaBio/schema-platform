@@ -58,6 +58,7 @@ export interface Sample {
 export interface SampleDetail extends Sample {
   // 基本信息
   idCard?: string;
+  patientCode?: string;  // 患者唯一编号（身份证或自定义编号）
   phone?: string;
   
   // 肿瘤信息
@@ -135,6 +136,21 @@ export interface SampleDetail extends Sample {
   
   // HE 染色图片
   heImages?: HEImageInfo[];
+
+  // 关联样本列表（同一患者的其他样本）
+  relatedSamples?: RelatedSample[];
+}
+
+/**
+ * 关联样本信息（同一患者的其他样本）
+ */
+export interface RelatedSample {
+  id: string;
+  internalId: string;
+  sampleType: SampleType;
+  tumorType: string;
+  createdAt: string;
+  status: SampleStatus;
 }
 
 export interface OpenTab {

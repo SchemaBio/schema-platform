@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { PageContent } from '@/components/layout';
 import { getTaskDetail, getQCResult, getSampleInfo } from './mock-data';
 import { useTabState } from './hooks/useTabState';
-import type { AnalysisTaskDetail, QCResult, SampleInfo } from './types';
+import type { AnalysisTaskDetail, QCResult, SampleInfo, TabType, TabConfig } from './types';
 import {
   TaskHeader,
   ResultTabs,
@@ -23,6 +23,7 @@ import {
   BiomarkersTab,
   ReportTab,
 } from './components';
+import { getTabConfigsByPipeline } from './types';
 
 export default function AnalysisDetailPage() {
   const params = useParams();
@@ -37,6 +38,18 @@ export default function AnalysisDetailPage() {
 
   // 使用标签页状态管理hook
   const { activeTab, setActiveTab, getFilterState, setFilterState } = useTabState(uuid);
+
+  // 根据任务类型获取对应的标签页配置
+  const tabConfigs = React.useMemo(() => {
+    return task ? getTabConfigsByPipeline(task.pipeline) : [];
+  }, [task?.pipeline]);
+
+  // 如果当前激活的标签页不在新的配置中，自动切换到第一个
+  React.useEffect(() => {
+    if (tabConfigs.length > 0 && !tabConfigs.some(t => t.id === activeTab)) {
+      setActiveTab(tabConfigs[0].id);
+    }
+  }, [tabConfigs, activeTab, setActiveTab]);
 
   // 加载任务数据
   React.useEffect(() => {
@@ -192,7 +205,7 @@ export default function AnalysisDetailPage() {
       <TaskHeader task={task} onBack={handleBack} />
 
       {/* 标签面板和内容 */}
-      <ResultTabs activeTab={activeTab} onTabChange={setActiveTab}>
+      <ResultTabs activeTab={activeTab} onTabChange={setActiveTab} tabConfigs={tabConfigs}>
         {renderTabContent()}
       </ResultTabs>
     </PageContent>

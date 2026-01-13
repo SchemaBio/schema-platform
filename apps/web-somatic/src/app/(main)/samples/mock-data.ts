@@ -95,7 +95,8 @@ export const mockSamples: Sample[] = [
 const mockSampleDetails: Record<string, SampleDetail> = {
   'S2024120001': {
     ...mockSamples[0],
-    idCard: '110***********1234',
+    idCard: '110101198605151234',
+    patientCode: '110101198605151234',  // 使用身份证号作为患者编号
     phone: '138****5678',
     tumorInfo: {
       tumorType: '肺癌',
@@ -159,6 +160,25 @@ const mockSampleDetails: Record<string, SampleDetail> = {
         thumbnail: 'https://placehold.co/200x150/d5e8e8/333?text=HE+40x',
         description: '肺腺癌 HE 染色 40x',
         uploadedAt: '2024-12-20',
+      },
+    ],
+    // 该患者的其他样本（用于演示关联样本功能）
+    relatedSamples: [
+      {
+        id: 'S2024110008',
+        internalId: 'XH-2023-156',
+        sampleType: '全血',
+        tumorType: '肺癌',
+        createdAt: '2023-11-15',
+        status: 'completed',
+      },
+      {
+        id: 'S2024090012',
+        internalId: 'XH-2023-089',
+        sampleType: 'FFPE',
+        tumorType: '肺癌',
+        createdAt: '2023-09-20',
+        status: 'completed',
       },
     ],
   },

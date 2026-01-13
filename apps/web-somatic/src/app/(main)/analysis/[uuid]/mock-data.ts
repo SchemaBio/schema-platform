@@ -75,20 +75,26 @@ const mockQCResults: Record<string, QCResult> = {
     contaminationRate: 0.005,
   },
   'b2c3d4e5-f6a7-8901-bcde-f12345678901': {
-    totalReads: 130000000,
-    mappedReads: 126100000,
-    mappingRate: 0.97,
-    averageDepth: 145.2,
-    targetCoverage: 0.988,
-    duplicateRate: 0.15,
-    q30Rate: 0.89,
-    insertSize: 175,
-    gcRatio: 0.52,
-    uniformity: 0.92,
-    dedupDepth: 123.4,
-    captureEfficiency: 0.68,
+    // RNA 融合分析质控数据
+    totalReads: 85000000,
+    mappedReads: 82300000,
+    mappingRate: 0.968,
+    averageDepth: 125.5,
+    targetCoverage: 0.982,
+    duplicateRate: 0.08,
+    q30Rate: 0.94,
+    insertSize: 220,
+    gcRatio: 0.55,
+    uniformity: 0.91,
+    dedupDepth: 115.4,
+    captureEfficiency: 0.65,
     predictedGender: 'Male',
-    contaminationRate: 0.008,
+    contaminationRate: 0.003,
+    // RNA 特有质控指标
+    rrnaRatio: 0.02,           // rRNA 污染率
+    frationRatio: 0.45,        // 正向/反向reads比例
+    junctionReads: 1250000,    // 跨剪接Reads数
+    properPairedReads: 0.92,   // 正确配对reads比例
   },
 };
 
@@ -553,10 +559,11 @@ const mockSampleInfo: Record<string, SampleInfo> = {
     clinicalDiagnosis: '肺腺癌',
     phenotypes: ['咳嗽', '胸痛'],
     familyHistory: '无',
-    sampleType: 'FFPE',
+    sampleType: 'Total RNA',  // RNA 样本类型
     collectionDate: '2024-12-18',
     receivedDate: '2024-12-19',
-    project: '肺癌靶向用药检测',
+    reportDate: '2024-12-28',
+    project: '肺癌RNA融合检测',
     institution: '北京协和医院',
     cancerType: '非小细胞肺癌',
   },

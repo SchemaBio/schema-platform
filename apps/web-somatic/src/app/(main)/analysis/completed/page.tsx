@@ -5,6 +5,7 @@ import { PageContent } from '@/components/layout';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, Eye, FileText, RotateCcw } from 'lucide-react';
+import Link from 'next/link';
 
 interface CompletedTask {
   id: string;
@@ -29,22 +30,22 @@ const mockCompletedTasks: CompletedTask[] = [
     hasReport: true,
   },
   {
-    id: 'g7h8i9j0-k1l2-3456-mnop-qr7890123456',
-    sampleId: 'S2024120006',
-    sampleName: '周**',
+    id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+    sampleId: 'S2024120001',
+    sampleName: '张**',
     pipeline: 'RNA融合分析',
-    variantCount: 14890,
-    completedAt: '2024-12-22 11:30',
+    variantCount: 12,  // 融合基因数量
+    completedAt: '2024-12-28 11:30',
     duration: '4小时10分',
     hasReport: true,
   },
   {
-    id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    id: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
+    sampleId: 'S2024120002',
+    sampleName: '李**',
     pipeline: '配对样本分析',
     variantCount: 15680,
-    completedAt: '2024-12-25 13:15',
+    completedAt: '2024-12-27 13:15',
     duration: '4小时15分',
     hasReport: false,
   },
@@ -110,9 +111,11 @@ export default function CompletedAnalysisPage() {
       header: '操作',
       accessor: (row) => (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="small" iconOnly aria-label="查看结果">
-            <Eye className="w-4 h-4" />
-          </Button>
+          <Link href={`/analysis/${row.id}`}>
+            <Button variant="ghost" size="small" iconOnly aria-label="查看结果">
+              <Eye className="w-4 h-4" />
+            </Button>
+          </Link>
           {!row.hasReport && (
             <Button variant="ghost" size="small" iconOnly aria-label="生成报告">
               <FileText className="w-4 h-4" />
