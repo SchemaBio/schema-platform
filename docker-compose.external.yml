@@ -1,30 +1,12 @@
-# Schema Platform - Docker Compose 配置
+# Schema Platform - Docker Compose 配置 (外部数据库版本)
 #
 # 使用方法:
-#   ./start.sh               # 启动所有服务 (推荐)
-#   ./start.sh germline      # 只启动 Germline
-#   ./start.sh somatic       # 只启动 Somatic
-#   ./start.sh --external-db # 使用外部数据库
+#   USE_EXTERNAL_DB=true docker compose -f docker-compose.external.yml up -d
 #
-# 或直接使用:
-#   docker compose up -d
+# 或使用启动脚本:
+#   ./start.sh --external-db
 
 services:
-  # ============================================
-  # PostgreSQL 数据库 (内置)
-  # ============================================
-  postgres:
-    image: postgres:18-alpine
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-schema_platform}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    # 不暴露端口，仅内部网络使用
-
   # ============================================
   # Germline 前端
   # ============================================
@@ -36,9 +18,6 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend-germline:8080
-    depends_on:
-      backend-germline:
-        condition: service_healthy
 
   # ============================================
   # Somatic 前端
@@ -51,9 +30,6 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend-somatic:8080
-    depends_on:
-      backend-somatic:
-        condition: service_healthy
 
   # ============================================
   # 后端 (Germline 模式)
@@ -72,9 +48,6 @@ services:
       - SCHEMA_SERVER_HOST=0.0.0.0
       - SCHEMA_SERVER_PORT=8080
       - SCHEMA_ANALYSIS_TYPE=germline
-    depends_on:
-      postgres:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
       interval: 30s
@@ -98,14 +71,8 @@ services:
       - SCHEMA_SERVER_HOST=0.0.0.0
       - SCHEMA_SERVER_PORT=8080
       - SCHEMA_ANALYSIS_TYPE=somatic
-    depends_on:
-      postgres:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3
-
-volumes:
-  postgres_data:
