@@ -149,3 +149,8 @@ func AsAppError(err error) (*AppError, bool) {
 func WrapDatabaseError(err error) *AppError {
 	return NewDatabaseError().WithError(err)
 }
+
+// WrapInternalError wraps an internal error with a custom message
+func WrapInternalError(message string, err error) *AppError {
+	return NewInternalError(message).WithError(err)
+}

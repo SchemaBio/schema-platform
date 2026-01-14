@@ -82,7 +82,6 @@ func (s *BackupService) Backup(ctx context.Context, req *dto.BackupRequest) (*dt
 	cmd.Env = env
 
 	// Create output file
-	var output io.Writer
 	if req.Compress {
 		file, err := os.Create(backupPath)
 		if err != nil {

@@ -115,7 +115,7 @@ func (h *BackupHandler) DownloadBackup(c *gin.Context) {
 	backupDir := "./backups"
 	filePath := backupDir + "/" + filename
 
-	reader, err := h.backupService.GetBackupFile(c.Request.Context(), filePath)
+	_, err := h.backupService.GetBackupFile(c.Request.Context(), filePath)
 	if err != nil {
 		c.JSON(http.StatusNotFound, dto.ErrorResponse("FILE_NOT_FOUND", err.Error(), nil))
 		return

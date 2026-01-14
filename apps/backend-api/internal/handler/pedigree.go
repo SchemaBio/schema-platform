@@ -71,23 +71,16 @@ func (h *PedigreeHandler) GetPedigree(c *gin.Context) {
 
 // ListPedigrees handles GET /api/v1/pedigrees
 func (h *PedigreeHandler) ListPedigrees(c *gin.Context) {
-	page := c.DefaultQuery("page", "1")
-	pageSize := c.DefaultQuery("pageSize", "20")
-
-	var pageInt, pageSizeInt int
-	if _, err := dto.PaginatedRequest{}.GetPage(); true {
-		// Use default values
-		pageInt = 1
-		pageSizeInt = 20
+	var req dto.PaginatedRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse("INVALID_REQUEST", err.Error(), nil))
+		return
 	}
 
-	// Parse page
-	if _, err := c.GetQuery("page"); err {
-		c.ShouldBindQuery(&dto.PaginatedRequest{})
-	}
-	c.ShouldBindQuery(&dto.PaginatedRequest{})
+	page := req.GetPage()
+	pageSize := req.GetPageSize()
 
-	response, err := h.pedigreeService.ListPedigrees(c.Request.Context(), pageInt, pageSizeInt)
+	response, err := h.pedigreeService.ListPedigrees(c.Request.Context(), page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse("LIST_FAILED", err.Error(), nil))
 		return

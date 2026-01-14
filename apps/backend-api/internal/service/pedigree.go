@@ -52,12 +52,12 @@ func (s *PedigreeService) CreatePedigree(ctx context.Context, req *dto.PedigreeC
 
 // GetPedigree retrieves a pedigree by ID
 func (s *PedigreeService) GetPedigree(ctx context.Context, id string) (*dto.PedigreeDetailResponse, error) {
-	uuid, err := uuid.Parse(id)
+	pedigreeID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, errors.NewValidationError("Invalid pedigree ID")
 	}
 
-	pedigree, err := s.pedigreeRepo.GetByID(ctx, uuid)
+	pedigree, err := s.pedigreeRepo.GetByID(ctx, pedigreeID)
 	if err != nil {
 		return nil, errors.WrapDatabaseError(err)
 	}
@@ -83,12 +83,12 @@ func (s *PedigreeService) ListPedigrees(ctx context.Context, page, pageSize int)
 
 // UpdatePedigree updates a pedigree
 func (s *PedigreeService) UpdatePedigree(ctx context.Context, id string, req *dto.PedigreeUpdateRequest) (*dto.PedigreeResponse, error) {
-	uuid, err := uuid.Parse(id)
+	pedigreeID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, errors.NewValidationError("Invalid pedigree ID")
 	}
 
-	pedigree, err := s.pedigreeRepo.GetByID(ctx, uuid)
+	pedigree, err := s.pedigreeRepo.GetByID(ctx, pedigreeID)
 	if err != nil {
 		return nil, errors.WrapDatabaseError(err)
 	}
@@ -120,22 +120,22 @@ func (s *PedigreeService) UpdatePedigree(ctx context.Context, id string, req *dt
 
 // DeletePedigree deletes a pedigree
 func (s *PedigreeService) DeletePedigree(ctx context.Context, id string) error {
-	uuid, err := uuid.Parse(id)
+	pedigreeID, err := uuid.Parse(id)
 	if err != nil {
 		return errors.NewValidationError("Invalid pedigree ID")
 	}
 
-	return s.pedigreeRepo.Delete(ctx, uuid)
+	return s.pedigreeRepo.Delete(ctx, pedigreeID)
 }
 
 // AddMember adds a member to a pedigree
 func (s *PedigreeService) AddMember(ctx context.Context, pedigreeID string, req *dto.PedigreeMemberCreateRequest) (*dto.PedigreeMemberResponse, error) {
-	uuid, err := uuid.Parse(pedigreeID)
+	parsedID, err := uuid.Parse(pedigreeID)
 	if err != nil {
 		return nil, errors.NewValidationError("Invalid pedigree ID")
 	}
 
-	pedigree, err := s.pedigreeRepo.GetByID(ctx, uuid)
+	pedigree, err := s.pedigreeRepo.GetByID(ctx, parsedID)
 	if err != nil {
 		return nil, errors.WrapDatabaseError(err)
 	}
@@ -181,12 +181,12 @@ func (s *PedigreeService) AddMember(ctx context.Context, pedigreeID string, req 
 
 // GetMembers retrieves all members of a pedigree
 func (s *PedigreeService) GetMembers(ctx context.Context, pedigreeID string) ([]dto.PedigreeMemberResponse, error) {
-	uuid, err := uuid.Parse(pedigreeID)
+	parsedID, err := uuid.Parse(pedigreeID)
 	if err != nil {
 		return nil, errors.NewValidationError("Invalid pedigree ID")
 	}
 
-	members, err := s.memberRepo.GetByPedigreeID(ctx, uuid)
+	members, err := s.memberRepo.GetByPedigreeID(ctx, parsedID)
 	if err != nil {
 		return nil, errors.WrapDatabaseError(err)
 	}
@@ -201,12 +201,12 @@ func (s *PedigreeService) GetMembers(ctx context.Context, pedigreeID string) ([]
 
 // UpdateMember updates a pedigree member
 func (s *PedigreeService) UpdateMember(ctx context.Context, memberID string, req *dto.PedigreeMemberUpdateRequest) (*dto.PedigreeMemberResponse, error) {
-	uuid, err := uuid.Parse(memberID)
+	memberIDParsed, err := uuid.Parse(memberID)
 	if err != nil {
 		return nil, errors.NewValidationError("Invalid member ID")
 	}
 
-	member, err := s.memberRepo.GetByID(ctx, uuid)
+	member, err := s.memberRepo.GetByID(ctx, memberIDParsed)
 	if err != nil {
 		return nil, errors.WrapDatabaseError(err)
 	}
@@ -261,12 +261,12 @@ func (s *PedigreeService) UpdateMember(ctx context.Context, memberID string, req
 
 // DeleteMember deletes a pedigree member
 func (s *PedigreeService) DeleteMember(ctx context.Context, memberID string) error {
-	uuid, err := uuid.Parse(memberID)
+	memberIDParsed, err := uuid.Parse(memberID)
 	if err != nil {
 		return errors.NewValidationError("Invalid member ID")
 	}
 
-	return s.memberRepo.Delete(ctx, uuid)
+	return s.memberRepo.Delete(ctx, memberIDParsed)
 }
 
 // toPedigreeResponse converts a model to DTO
