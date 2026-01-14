@@ -14,6 +14,7 @@ services:
   # ============================================
   web-germline:
     image: ghcr.io/schemabio/schema-germline:latest
+    profiles: ["germline", "all"]
     ports:
       - "${GERMLINE_WEB_PORT:-3001}:3000"
     environment:
@@ -25,6 +26,7 @@ services:
   # ============================================
   web-somatic:
     image: ghcr.io/schemabio/schema-somatic:latest
+    profiles: ["somatic", "all"]
     ports:
       - "${SOMATIC_WEB_PORT:-3002}:3000"
     environment:
@@ -36,6 +38,7 @@ services:
   # ============================================
   backend-germline:
     image: ghcr.io/schemabio/schema-backend:latest
+    profiles: ["germline", "all"]
     environment:
       - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
       - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
@@ -56,6 +59,7 @@ services:
   # ============================================
   backend-somatic:
     image: ghcr.io/schemabio/schema-backend:latest
+    profiles: ["somatic", "all"]
     environment:
       - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
       - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
