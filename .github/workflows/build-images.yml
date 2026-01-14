@@ -223,7 +223,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ============================================
-  # 4. 构建 Backend
+  # 4. 构建 Backend (通用镜像，通过环境变量区分模式)
   # ============================================
   build-backend:
     name: Build Backend
@@ -247,47 +247,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Germline 版本
-      - name: Extract metadata for Backend (Germline)
-        id: meta-germline
+      - name: Extract metadata for Backend
+        id: meta-backend
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/schema-backend
           tags: |
-            type=raw,value=germline-${{ needs.detect-targets.outputs.version }},enable=${{ !needs.detect-targets.outputs.is_prerelease }}
-            type=raw,value=germline,enable=${{ !needs.detect-targets.outputs.is_prerelease }}
+            type=raw,value=${{ needs.detect-targets.outputs.version }}
             type=sha
+            type=raw,value=latest,enable=${{ !needs.detect-targets.outputs.is_prerelease }}
 
-      - name: Build and push Backend (Germline)
+      - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./apps/backend-api
           push: ${{ github.event_name != 'pull_request' }}
-          build-args: ANALYSIS_TYPE=germline
-          tags: ${{ steps.meta-germline.outputs.tags }}
-          labels: ${{ steps.meta-germline.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Somatic 版本
-      - name: Extract metadata for Backend (Somatic)
-        id: meta-somatic
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/schema-backend
-          tags: |
-            type=raw,value=somatic-${{ needs.detect-targets.outputs.version }},enable=${{ !needs.detect-targets.outputs.is_prerelease }}
-            type=raw,value=somatic,enable=${{ !needs.detect-targets.outputs.is_prerelease }}
-            type=sha
-
-      - name: Build and push Backend (Somatic)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/backend-api
-          push: ${{ github.event_name != 'pull_request' }}
-          build-args: ANALYSIS_TYPE=somatic
-          tags: ${{ steps.meta-somatic.outputs.tags }}
-          labels: ${{ steps.meta-somatic.outputs.labels }}
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -315,8 +291,7 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| schema-germline | ${{ needs.build-germline.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| schema-somatic | ${{ needs.build-somatic.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| schema-backend (germline) | ${{ needs.build-backend.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| schema-backend (somatic) | ${{ needs.build-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| schema-backend | ${{ needs.build-backend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published Images" >> $GITHUB_STEP_SUMMARY
           echo "- ghcr.io/${{ env.ORGANIZATION }}/schema-germline:${{ needs.detect-targets.outputs.version }}" >> $GITHUB_STEP_SUMMARY
