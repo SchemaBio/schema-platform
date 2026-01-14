@@ -56,6 +56,27 @@ pnpm dev:somatic
 
 ## Docker 部署
 
+### 0. 环境配置
+
+部署前请先配置环境变量：
+
+```bash
+# 复制环境变量模板
+cp .env.example .env
+
+# 编辑配置文件
+nano .env
+```
+
+主要配置项说明：
+
+| 配置项 | 说明 | 默认值 |
+|-------|------|--------|
+| `TEAMS` | 启动团队: germline/somatic/all | germline |
+| `POSTGRES_PASSWORD` | 数据库密码 | postgres |
+| `GERMLINE_WEB_PORT` | Germline 前端端口 | 3001 |
+| `SOMATIC_WEB_PORT` | Somatic 前端端口 | 3002 |
+
 ### 方式一：整体部署（本地演示）
 
 同时部署 Germline + Somatic + 两个后端 + 数据库：
@@ -68,7 +89,7 @@ docker-compose up -d
 - Germline: http://localhost:3001
 - Somatic: http://localhost:3002
 
-> 注：后端和数据库端口仅内部网络使用，不对外暴露。
+> 注：所有后端和数据库端口仅内部网络使用，不对外暴露。
 
 ### 方式二：独立部署（生产环境，推荐）
 
@@ -127,7 +148,7 @@ GitHub Actions 配置文件：`.github/workflows/build-images.yml`
 
 ## 端口说明
 
-### 独立部署（生产环境）
+所有服务（后端、数据库）均仅通过内部网络通信，不对外暴露端口。
 
 | 服务 | 端口 | 访问范围 |
 |------|------|----------|
@@ -136,18 +157,6 @@ GitHub Actions 配置文件：`.github/workflows/build-images.yml`
 | backend-germline | - | 内部网络 |
 | backend-somatic | - | 内部网络 |
 | postgres | - | 内部网络 |
-
-> 独立部署模式下，只暴露前端端口（3001/3002），后端和数据库仅内部网络通信。
-
-### 整体部署（本地演示）
-
-| 服务 | 端口 | 访问范围 |
-|------|------|----------|
-| web-germline | 3001 | 外部可访问 |
-| web-somatic | 3002 | 外部可访问 |
-| backend-germline | 8081 | 内部网络 |
-| backend-somatic | 8082 | 内部网络 |
-| postgres | 5432 | 内部网络 |
 
 ## 文档
 

@@ -3,14 +3,15 @@
 # 适用于两个团队独立部署的场景
 # 每个团队运行自己的前端 + 对应版本的后端
 #
-# 使用方式:
-#   Germline 团队: docker-compose -f docker-compose.independent.yml --profile germline up -d
-#   Somatic 团队:  docker-compose -f docker-compose.independent.yml --profile somatic up -d
-#   两个团队同时:  docker-compose -f docker-compose.independent.yml --profile all up -d
+# 使用方法:
+# 1. 复制 .env.example 为 .env 并修改配置
+# 2. Germline 团队: docker-compose -f docker-compose.independent.yml --profile germline up -d
+# 3. Somatic 团队:  docker-compose -f docker-compose.independent.yml --profile somatic up -d
+# 4. 两个团队同时:  docker-compose -f docker-compose.independent.yml --profile all up -d
 #
 # 端口说明:
-#   - 3001: Germline 前端 (外部可访问)
-#   - 3002: Somatic 前端 (外部可访问)
+#   - GERMLINE_WEB_PORT: Germline 前端 (外部可访问)
+#   - SOMATIC_WEB_PORT: Somatic 前端 (外部可访问)
 #   - 后端和数据库端口仅内部网络使用
 
 services:
@@ -19,10 +20,12 @@ services:
   # ============================================
   postgres:
     image: postgres:18-alpine
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: schema_platform
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_DB=${POSTGRES_DB:-schema_platform}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # 不暴露端口，仅内部网络访问
@@ -38,7 +41,7 @@ services:
     build:
       context: ./apps/web-germline
     ports:
-      - "3001:3000"  # 只暴露前端端口
+      - "${GERMLINE_WEB_PORT:-3001}:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend-germline:8080
@@ -56,17 +59,18 @@ services:
         ANALYSIS_TYPE: germline
     # 不暴露端口，仅内部网络访问
     environment:
-      - SCHEMA_DATABASE_HOST=postgres
-      - SCHEMA_DATABASE_PORT=5432
-      - SCHEMA_DATABASE_USER=postgres
-      - SCHEMA_DATABASE_PASSWORD=postgres
-      - SCHEMA_DATABASE_DBNAME=schema_platform
+      - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
+      - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
+      - SCHEMA_DATABASE_USER=${POSTGRES_USER:-postgres}
+      - SCHEMA_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - SCHEMA_DATABASE_DBNAME=${POSTGRES_DB:-schema_platform}
       - SCHEMA_SERVER_HOST=0.0.0.0
       - SCHEMA_SERVER_PORT=8080
       - SCHEMA_ANALYSIS_TYPE=germline
     depends_on:
       postgres:
         condition: service_healthy
+        restart: true
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
       interval: 30s
@@ -83,7 +87,7 @@ services:
     build:
       context: ./apps/web-somatic
     ports:
-      - "3002:3000"  # 只暴露前端端口
+      - "${SOMATIC_WEB_PORT:-3002}:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend-somatic:8080
@@ -101,17 +105,18 @@ services:
         ANALYSIS_TYPE=somatic
     # 不暴露端口，仅内部网络访问
     environment:
-      - SCHEMA_DATABASE_HOST=postgres
-      - SCHEMA_DATABASE_PORT=5432
-      - SCHEMA_DATABASE_USER=postgres
-      - SCHEMA_DATABASE_PASSWORD=postgres
-      - SCHEMA_DATABASE_DBNAME=schema_platform
+      - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
+      - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
+      - SCHEMA_DATABASE_USER=${POSTGRES_USER:-postgres}
+      - SCHEMA_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - SCHEMA_DATABASE_DBNAME=${POSTGRES_DB:-schema_platform}
       - SCHEMA_SERVER_HOST=0.0.0.0
       - SCHEMA_SERVER_PORT=8080
       - SCHEMA_ANALYSIS_TYPE=somatic
     depends_on:
       postgres:
         condition: service_healthy
+        restart: true
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
       interval: 30s

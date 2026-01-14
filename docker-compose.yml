@@ -1,8 +1,13 @@
 # Schema Platform - Docker Compose 配置
 #
-# 使用方式:
-#   整体部署:  docker-compose up -d
-#   独立部署:  docker-compose -f docker-compose.independent.yml --profile germline up -d
+# 使用方法:
+# 1. 复制 .env.example 为 .env 并修改配置
+# 2. 使用 ./start.sh 启动 (推荐)
+#    或直接: docker-compose up -d
+#
+# 注意事项:
+# - 默认启动内置 PostgreSQL
+# - 设置 SKIP_POSTGRES=true 可跳过 PostgreSQL 容器
 
 services:
   # ============================================
@@ -10,19 +15,15 @@ services:
   # ============================================
   postgres:
     image: postgres:18-alpine
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: schema_platform
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_DB=${POSTGRES_DB:-schema_platform}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # 不暴露端口，仅内部网络使用
 
   # ============================================
   # Germline 前端
@@ -31,13 +32,16 @@ services:
     build:
       context: ./apps/web-germline
     ports:
-      - "3001:3000"
+      - "${GERMLINE_WEB_PORT:-3001}:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend-germline:8080
     depends_on:
       backend-germline:
         condition: service_healthy
+    profiles:
+      - germline
+      - all
 
   # ============================================
   # Somatic 前端
@@ -46,13 +50,16 @@ services:
     build:
       context: ./apps/web-somatic
     ports:
-      - "3002:3000"
+      - "${SOMATIC_WEB_PORT:-3002}:3000"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend-somatic:8080
     depends_on:
       backend-somatic:
         condition: service_healthy
+    profiles:
+      - somatic
+      - all
 
   # ============================================
   # 后端 (Germline 模式)
@@ -62,20 +69,21 @@ services:
       context: ./apps/backend-api
       args:
         ANALYSIS_TYPE: germline
-    ports:
-      - "8081:8080"
     environment:
-      - SCHEMA_DATABASE_HOST=postgres
-      - SCHEMA_DATABASE_PORT=5432
-      - SCHEMA_DATABASE_USER=postgres
-      - SCHEMA_DATABASE_PASSWORD=postgres
-      - SCHEMA_DATABASE_DBNAME=schema_platform
+      - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
+      - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
+      - SCHEMA_DATABASE_USER=${POSTGRES_USER:-postgres}
+      - SCHEMA_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - SCHEMA_DATABASE_DBNAME=${POSTGRES_DB:-schema_platform}
       - SCHEMA_SERVER_HOST=0.0.0.0
       - SCHEMA_SERVER_PORT=8080
       - SCHEMA_ANALYSIS_TYPE=germline
     depends_on:
       postgres:
         condition: service_healthy
+    profiles:
+      - germline
+      - all
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
       interval: 30s
@@ -90,20 +98,21 @@ services:
       context: ./apps/backend-api
       args:
         ANALYSIS_TYPE: somatic
-    ports:
-      - "8082:8080"
     environment:
-      - SCHEMA_DATABASE_HOST=postgres
-      - SCHEMA_DATABASE_PORT=5432
-      - SCHEMA_DATABASE_USER=postgres
-      - SCHEMA_DATABASE_PASSWORD=postgres
-      - SCHEMA_DATABASE_DBNAME=schema_platform
+      - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
+      - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
+      - SCHEMA_DATABASE_USER=${POSTGRES_USER:-postgres}
+      - SCHEMA_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - SCHEMA_DATABASE_DBNAME=${POSTGRES_DB:-schema_platform}
       - SCHEMA_SERVER_HOST=0.0.0.0
       - SCHEMA_SERVER_PORT=8080
       - SCHEMA_ANALYSIS_TYPE=somatic
     depends_on:
       postgres:
         condition: service_healthy
+    profiles:
+      - somatic
+      - all
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
       interval: 30s
