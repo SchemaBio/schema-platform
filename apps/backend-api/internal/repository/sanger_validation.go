@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/schema-platform/backend-api/internal/model"
@@ -135,6 +136,3 @@ func (r *SangerValidationRepository) CountByStatus(ctx context.Context) (map[mod
 
 	return result, nil
 }
-
-// Import time for CompletedAt update
-import "time"
