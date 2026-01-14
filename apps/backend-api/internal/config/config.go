@@ -9,14 +9,23 @@ import (
 	"github.com/spf13/viper"
 )
 
+// AnalysisType represents the type of analysis platform
+type AnalysisType string
+
+const (
+	AnalysisTypeSomatic  AnalysisType = "somatic"
+	AnalysisTypeGermline AnalysisType = "germline"
+)
+
 // Config holds all configuration for the application
 type Config struct {
-	Server    ServerConfig
-	Database  DatabaseConfig
-	JWT       JWTConfig
-	RateLimit RateLimitConfig
-	Features  FeatureConfig
-	Admin     AdminConfig
+	Server      ServerConfig
+	Database    DatabaseConfig
+	JWT         JWTConfig
+	RateLimit   RateLimitConfig
+	Features    FeatureConfig
+	Admin       AdminConfig
+	Analysis    AnalysisConfig
 }
 
 // AdminConfig holds default admin user configuration
@@ -66,6 +75,11 @@ type JWTConfig struct {
 type RateLimitConfig struct {
 	RequestsPerSecond float64
 	Burst             int
+}
+
+// AnalysisConfig holds analysis platform configuration
+type AnalysisConfig struct {
+	Type AnalysisType // somatic or germline
 }
 
 // DSN returns the PostgreSQL connection string
@@ -204,6 +218,15 @@ func Load() (*Config, error) {
 	config.Admin.Name = viper.GetString("admin.name")
 	config.Admin.Password = viper.GetString("admin.password")
 	config.Admin.Enabled = viper.GetBool("admin.enabled")
+
+	// Analysis config
+	analysisType := viper.GetString("analysis.type")
+	switch analysisType {
+	case "germline":
+		config.Analysis.Type = AnalysisTypeGermline
+	default:
+		config.Analysis.Type = AnalysisTypeSomatic
+	}
 
 	return config, nil
 }

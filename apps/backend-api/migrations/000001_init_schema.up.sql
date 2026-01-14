@@ -218,3 +218,104 @@ SELECT 'VIEWER', id FROM permissions WHERE code IN (
     'sample:list', 'sample:read',
     'batch:list', 'batch:read'
 );
+
+-- ============================================
+-- GERMLINE TABLES (家系分析相关表)
+-- ============================================
+
+-- Gene lists table
+CREATE TABLE gene_lists (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    genes JSONB NOT NULL DEFAULT '[]',
+    category VARCHAR(50) NOT NULL DEFAULT 'optional',
+    disease_category VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_gene_lists_name ON gene_lists(name);
+CREATE INDEX idx_gene_lists_category ON gene_lists(category);
+CREATE INDEX idx_gene_lists_deleted_at ON gene_lists(deleted_at);
+
+-- Pedigrees table (家系表)
+CREATE TABLE pedigrees (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    disease VARCHAR(255),
+    proband_member_id UUID,
+    note TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_pedigrees_name ON pedigrees(name);
+CREATE INDEX idx_pedigrees_proband_member_id ON pedigrees(proband_member_id);
+CREATE INDEX idx_pedigrees_deleted_at ON pedigrees(deleted_at);
+
+-- Pedigree members table (家系成员表)
+CREATE TABLE pedigree_members (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    pedigree_id UUID NOT NULL REFERENCES pedigrees(id) ON DELETE CASCADE,
+    sample_id UUID,
+    name VARCHAR(100) NOT NULL,
+    gender VARCHAR(20) NOT NULL,
+    birth_year INTEGER,
+    is_deceased BOOLEAN NOT NULL DEFAULT false,
+    deceased_year INTEGER,
+    relation VARCHAR(50) NOT NULL,
+    affected_status VARCHAR(20) NOT NULL,
+    phenotypes JSONB DEFAULT '[]',
+    father_id UUID REFERENCES pedigree_members(id),
+    mother_id UUID REFERENCES pedigree_members(id),
+    generation INTEGER NOT NULL DEFAULT 0,
+    position INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_pedigree_members_pedigree_id ON pedigree_members(pedigree_id);
+CREATE INDEX idx_pedigree_members_sample_id ON pedigree_members(sample_id);
+CREATE INDEX idx_pedigree_members_relation ON pedigree_members(relation);
+CREATE INDEX idx_pedigree_members_affected_status ON pedigree_members(affected_status);
+CREATE INDEX idx_pedigree_members_father_id ON pedigree_members(father_id);
+CREATE INDEX idx_pedigree_members_mother_id ON pedigree_members(mother_id);
+CREATE INDEX idx_pedigree_members_deleted_at ON pedigree_members(deleted_at);
+
+-- Sanger validations table
+CREATE TABLE sanger_validations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    task_id UUID NOT NULL,
+    variant_id VARCHAR(255),
+    variant_type VARCHAR(20),
+    gene VARCHAR(50),
+    chromosome VARCHAR(10),
+    position BIGINT,
+    hgvsc VARCHAR(50),
+    hgvsp VARCHAR(50),
+    zygosity VARCHAR(20),
+    status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+    result VARCHAR(50),
+    primer_forward VARCHAR(100),
+    primer_reverse VARCHAR(100),
+    product_size INTEGER,
+    requested_by UUID NOT NULL REFERENCES users(id),
+    requested_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    completed_by UUID REFERENCES users(id),
+    completed_at TIMESTAMP WITH TIME ZONE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX idx_sanger_validations_task_id ON sanger_validations(task_id);
+CREATE INDEX idx_sanger_validations_variant_id ON sanger_validations(variant_id);
+CREATE INDEX idx_sanger_validations_gene ON sanger_validations(gene);
+CREATE INDEX idx_sanger_validations_status ON sanger_validations(status);
+CREATE INDEX idx_sanger_validations_requested_by ON sanger_validations(requested_by);
+CREATE INDEX idx_sanger_validations_deleted_at ON sanger_validations(deleted_at);

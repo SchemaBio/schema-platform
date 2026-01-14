@@ -1,4 +1,12 @@
 -- Drop tables in reverse order of creation
+
+-- Drop Germline tables first (they may have foreign keys)
+DROP TABLE IF EXISTS sanger_validations;
+DROP TABLE IF EXISTS pedigree_members;
+DROP TABLE IF EXISTS pedigrees;
+DROP TABLE IF EXISTS gene_lists;
+
+-- Drop other tables
 DROP TABLE IF EXISTS role_permissions;
 DROP TABLE IF EXISTS permissions;
 DROP TABLE IF EXISTS system_config;

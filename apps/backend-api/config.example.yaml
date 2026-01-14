@@ -42,3 +42,8 @@ admin:
   name: "System Administrator"
   password: "Admin123!"  # TODO: Change this password in production
   enabled: true
+
+# Analysis platform type
+analysis:
+  type: "somatic"  # Options: somatic, germline
+

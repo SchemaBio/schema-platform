@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Initialize dependencies
-	deps := internal.NewDependencies(db, cfg.JWT.Secret, int(cfg.JWT.AccessExpiresIn.Hours()))
+	deps := internal.NewDependencies(db, cfg, cfg.JWT.Secret, int(cfg.JWT.AccessExpiresIn.Hours()))
 
 	// Setup router
 	router := internal.SetupRouter(deps, deps.JWTManager)

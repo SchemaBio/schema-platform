@@ -1,0 +1,236 @@
+name: Build Images
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/web-germline/**'
+      - 'apps/web-somatic/**'
+      - 'apps/backend-api/**'
+      - 'packages/**'
+      - 'pnpm-*.yaml'
+      - '.github/workflows/**'
+  workflow_dispatch:
+    inputs:
+      germline:
+        description: 'Build Germline images'
+        type: boolean
+        default: true
+      somatic:
+        description: 'Build Somatic images'
+        type: boolean
+        default: true
+      backend:
+        description: 'Build Backend image'
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================
+  # 1. 构建 Germline 前端
+  # ============================================
+  build-germline-web:
+    name: Build Germline Web
+    if: github.event_name == 'workflow_dispatch' && inputs.germline || github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Germline Web
+        id: meta-germline-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web-germline
+          tags: |
+            type=ref,event=branch
+            type=sha
+
+      - name: Build and push Germline Web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web-germline
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-germline-web.outputs.tags }}
+          labels: ${{ steps.meta-germline-web.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # 2. 构建 Somatic 前端
+  # ============================================
+  build-somatic-web:
+    name: Build Somatic Web
+    if: github.event_name == 'workflow_dispatch' && inputs.somatic || github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Somatic Web
+        id: meta-somatic-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web-somatic
+          tags: |
+            type=ref,event=branch
+            type=sha
+
+      - name: Build and push Somatic Web
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web-somatic
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-somatic-web.outputs.tags }}
+          labels: ${{ steps.meta-somatic-web.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # 3. 构建后端 (Germline 模式)
+  # ============================================
+  build-backend-germline:
+    name: Build Backend (Germline)
+    needs: [build-germline-web, build-somatic-web]
+    if: github.event_name == 'workflow_dispatch' && inputs.backend || github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Backend (Germline)
+        id: meta-backend-germline
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=germline,enable=${{ !github.event.pull_request }}
+
+      - name: Build and push Backend (Germline)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend-api
+          push: ${{ github.event_name != 'pull_request' }}
+          build-args: ANALYSIS_TYPE=germline
+          tags: ${{ steps.meta-backend-germline.outputs.tags }}
+          labels: ${{ steps.meta-backend-germline.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # 4. 构建后端 (Somatic 模式)
+  # ============================================
+  build-backend-somatic:
+    name: Build Backend (Somatic)
+    needs: [build-germline-web, build-somatic-web]
+    if: github.event_name == 'workflow_dispatch' && inputs.backend || github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Backend (Somatic)
+        id: meta-backend-somatic
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=somatic,enable=${{ !github.event.pull_request }}
+
+      - name: Build and push Backend (Somatic)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend-api
+          push: ${{ github.event_name != 'pull_request' }}
+          build-args: ANALYSIS_TYPE=somatic
+          tags: ${{ steps.meta-backend-somatic.outputs.tags }}
+          labels: ${{ steps.meta-backend-somatic.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # 5. 汇总镜像标签
+  # ============================================
+  summary:
+    name: Summary
+    needs: [build-germline-web, build-somatic-web, build-backend-germline, build-backend-somatic]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Built Images:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Germline Web | ${{ needs.build-germline-web.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Somatic Web | ${{ needs.build-somatic-web.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend (Germline) | ${{ needs.build-backend-germline.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend (Somatic) | ${{ needs.build-backend-somatic.result }} |" >> $GITHUB_STEP_SUMMARY

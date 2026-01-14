@@ -1,12 +1,21 @@
-# Schema Platform - Docker Compose 配置
+# Schema Platform - 独立部署 Docker Compose
+#
+# 适用于两个团队独立部署的场景
+# 每个团队运行自己的前端 + 对应版本的后端
 #
 # 使用方式:
-#   整体部署:  docker-compose up -d
-#   独立部署:  docker-compose -f docker-compose.independent.yml --profile germline up -d
+#   Germline 团队: docker-compose -f docker-compose.independent.yml --profile germline up -d
+#   Somatic 团队:  docker-compose -f docker-compose.independent.yml --profile somatic up -d
+#   两个团队同时:  docker-compose -f docker-compose.independent.yml --profile all up -d
+#
+# 端口说明:
+#   - 3001: Germline 前端 (外部可访问)
+#   - 3002: Somatic 前端 (外部可访问)
+#   - 后端和数据库端口仅内部网络使用
 
 services:
   # ============================================
-  # PostgreSQL 数据库
+  # PostgreSQL 数据库（内部服务）
   # ============================================
   postgres:
     image: postgres:18-alpine
@@ -16,54 +25,36 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # 不暴露端口，仅内部网络访问
+    profiles:
+      - germline
+      - somatic
+      - all
 
   # ============================================
-  # Germline 前端
+  # Germline 团队部署
   # ============================================
   web-germline:
     build:
       context: ./apps/web-germline
     ports:
-      - "3001:3000"
+      - "3001:3000"  # 只暴露前端端口
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend-germline:8080
     depends_on:
       backend-germline:
         condition: service_healthy
+    profiles:
+      - germline
+      - all
 
-  # ============================================
-  # Somatic 前端
-  # ============================================
-  web-somatic:
-    build:
-      context: ./apps/web-somatic
-    ports:
-      - "3002:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend-somatic:8080
-    depends_on:
-      backend-somatic:
-        condition: service_healthy
-
-  # ============================================
-  # 后端 (Germline 模式)
-  # ============================================
   backend-germline:
     build:
       context: ./apps/backend-api
       args:
         ANALYSIS_TYPE: germline
-    ports:
-      - "8081:8080"
+    # 不暴露端口，仅内部网络访问
     environment:
       - SCHEMA_DATABASE_HOST=postgres
       - SCHEMA_DATABASE_PORT=5432
@@ -81,17 +72,34 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+    profiles:
+      - germline
+      - all
 
   # ============================================
-  # 后端 (Somatic 模式)
+  # Somatic 团队部署
   # ============================================
+  web-somatic:
+    build:
+      context: ./apps/web-somatic
+    ports:
+      - "3002:3000"  # 只暴露前端端口
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend-somatic:8080
+    depends_on:
+      backend-somatic:
+        condition: service_healthy
+    profiles:
+      - somatic
+      - all
+
   backend-somatic:
     build:
       context: ./apps/backend-api
       args:
-        ANALYSIS_TYPE: somatic
-    ports:
-      - "8082:8080"
+        ANALYSIS_TYPE=somatic
+    # 不暴露端口，仅内部网络访问
     environment:
       - SCHEMA_DATABASE_HOST=postgres
       - SCHEMA_DATABASE_PORT=5432
@@ -109,6 +117,10 @@ services:
       interval: 30s
       timeout: 3s
       retries: 3
+    profiles:
+      - somatic
+      - all
 
+# 数据卷
 volumes:
   postgres_data:

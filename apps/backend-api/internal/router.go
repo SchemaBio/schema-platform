@@ -2,6 +2,7 @@ package internal
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/schema-platform/backend-api/internal/config"
 	"github.com/schema-platform/backend-api/internal/middleware"
 	"github.com/schema-platform/backend-api/internal/pkg/jwt"
 )
@@ -49,15 +50,34 @@ func SetupRouter(deps *Dependencies, jwtManager *jwt.Manager) *gin.Engine {
 		settings := protected.Group("/settings")
 		deps.SettingsHandler.RegisterRoutes(settings)
 
-		// === Somatic System Routes ===
+		// === Analysis-specific Routes ===
+		if deps.Config.Analysis.Type == config.AnalysisTypeGermline {
+			// Germline-specific routes
+			germline := protected.Group("/germline")
+			{
+				// Pedigree routes
+				pedigrees := germline.Group("/pedigrees")
+				deps.PedigreeHandler.RegisterRoutes(pedigrees)
 
-		// Sample routes
-		samples := protected.Group("/samples")
-		deps.SampleHandler.RegisterRoutes(samples)
+				// Gene list routes
+				geneLists := germline.Group("/gene-lists")
+				deps.GeneListHandler.RegisterRoutes(geneLists)
+			}
+		} else {
+			// Somatic-specific routes
+			somatic := protected.Group("/somatic")
+			{
+				// Sample routes
+				samples := somatic.Group("/samples")
+				deps.SampleHandler.RegisterRoutes(samples)
 
-		// Analysis task routes
-		analysisTasks := protected.Group("/analysis-tasks")
-		deps.AnalysisTaskHandler.RegisterRoutes(analysisTasks)
+				// Analysis task routes
+				analysisTasks := somatic.Group("/analysis-tasks")
+				deps.AnalysisTaskHandler.RegisterRoutes(analysisTasks)
+			}
+		}
+
+		// === Shared Analysis Routes ===
 
 		// Pipeline routes
 		pipelines := protected.Group("/pipelines")
@@ -80,6 +100,17 @@ func SetupRouter(deps *Dependencies, jwtManager *jwt.Manager) *gin.Engine {
 		// Sample sheet routes
 		sampleSheets := protected.Group("/sample-sheets")
 		deps.SampleSheetHandler.RegisterRoutes(sampleSheets)
+
+		// === Backup Routes ===
+
+		backups := protected.Group("/backups")
+		{
+			backups.GET("", deps.BackupHandler.ListBackups)
+			backups.POST("", deps.BackupHandler.CreateBackup)
+			backups.GET("/:filename", deps.BackupHandler.DownloadBackup)
+			backups.DELETE("/:filename", deps.BackupHandler.DeleteBackup)
+			backups.POST("/restore", deps.BackupHandler.RestoreDatabase)
+		}
 
 		// === Legacy Routes (to be removed) ===
 

@@ -3,6 +3,7 @@ package internal
 import (
 	"time"
 
+	"github.com/schema-platform/backend-api/internal/config"
 	"github.com/schema-platform/backend-api/internal/handler"
 	"github.com/schema-platform/backend-api/internal/pkg/jwt"
 	"github.com/schema-platform/backend-api/internal/repository"
@@ -12,6 +13,9 @@ import (
 
 // Dependencies holds all application dependencies
 type Dependencies struct {
+	// Config
+	Config *config.Config
+
 	// System Shared Repositories
 	UserRepo           *repository.UserRepository
 	TeamRepo           *repository.TeamRepository
@@ -34,27 +38,38 @@ type Dependencies struct {
 	PatientRepo *repository.PatientRepository
 	BatchRepo   *repository.BatchRepository
 
+	// Germline Business Repositories
+	PedigreeRepo          *repository.PedigreeRepository
+	PedigreeMemberRepo    *repository.PedigreeMemberRepository
+	GeneListRepo          *repository.GeneListRepository
+	SangerValidationRepo  *repository.SangerValidationRepository
+
 	// JWT Manager
 	JWTManager *jwt.Manager
 
 	// System Shared Services
-	AuthService       *service.AuthService
-	UserService       *service.UserService
-	TeamService       *service.TeamService
-	SettingsService   *service.SettingsService
-	SequencerService  *service.SequencerService
+	AuthService        *service.AuthService
+	UserService        *service.UserService
+	TeamService        *service.TeamService
+	SettingsService    *service.SettingsService
+	SequencerService   *service.SequencerService
 	SampleSheetService *service.SampleSheetService
+	BackupService      *service.BackupService
 
 	// Somatic Business Services
-	SampleService       *service.SampleService
-	AnalysisTaskService *service.AnalysisTaskService
-	PipelineService     *service.PipelineService
-	ResultFileService   *service.ResultFileService
+	SampleService        *service.SampleService
+	AnalysisTaskService  *service.AnalysisTaskService
+	PipelineService      *service.PipelineService
+	ResultFileService    *service.ResultFileService
 	StorageSourceService *service.StorageSourceService
 
 	// Legacy Services (to be removed)
 	PatientService *service.PatientService
 	BatchService   *service.BatchService
+
+	// Germline Business Services
+	PedigreeService    *service.PedigreeService
+	GeneListService    *service.GeneListService
 
 	// Handlers
 	HealthHandler        *handler.HealthHandler
@@ -69,14 +84,19 @@ type Dependencies struct {
 	PipelineHandler      *handler.PipelineHandler
 	ResultFileHandler    *handler.ResultFileHandler
 	StorageSourceHandler *handler.StorageSourceHandler
+	BackupHandler        *handler.BackupHandler
 
 	// Legacy Handlers (to be removed)
 	PatientHandler *handler.PatientHandler
 	BatchHandler   *handler.BatchHandler
+
+	// Germline Handlers
+	PedigreeHandler  *handler.PedigreeHandler
+	GeneListHandler  *handler.GeneListHandler
 }
 
 // NewDependencies initializes all dependencies
-func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Dependencies {
+func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpiryHours int) *Dependencies {
 	// Initialize system shared repositories
 	userRepo := repository.NewUserRepository(db)
 	teamRepo := repository.NewTeamRepository(db)
@@ -99,6 +119,12 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 	patientRepo := repository.NewPatientRepository(db)
 	batchRepo := repository.NewBatchRepository(db)
 
+	// Initialize Germline business repositories
+	pedigreeRepo := repository.NewPedigreeRepository(db)
+	pedigreeMemberRepo := repository.NewPedigreeMemberRepository(db)
+	geneListRepo := repository.NewGeneListRepository(db)
+	sangerValidationRepo := repository.NewSangerValidationRepository(db)
+
 	// Initialize JWT Manager
 	accessExpiry := time.Duration(jwtExpiryHours) * time.Hour
 	if accessExpiry == 0 {
@@ -120,6 +146,7 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 	settingsService := service.NewSettingsService(db)
 	sequencerService := service.NewSequencerService(sequencerRepo)
 	sampleSheetService := service.NewSampleSheetService(sampleSheetRepo, sampleIndexRepo)
+	backupService := service.NewBackupService(cfg)
 
 	// Initialize Somatic business services
 	sampleService := service.NewSampleService(sampleRepo, dataFileRepo)
@@ -131,6 +158,10 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 	// Initialize legacy services (to be removed)
 	patientService := service.NewPatientService(patientRepo, sampleRepo)
 	batchService := service.NewBatchService(batchRepo, sampleRepo)
+
+	// Initialize Germline business services
+	pedigreeService := service.NewPedigreeService(pedigreeRepo, pedigreeMemberRepo, sampleRepo)
+	geneListService := service.NewGeneListService(geneListRepo)
 
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler(db)
@@ -145,12 +176,20 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 	pipelineHandler := handler.NewPipelineHandler(pipelineService)
 	resultFileHandler := handler.NewResultFileHandler(resultFileService)
 	storageSourceHandler := handler.NewStorageSourceHandler(storageSourceService)
+	backupHandler := handler.NewBackupHandler(cfg)
 
 	// Initialize legacy handlers (to be removed)
 	patientHandler := handler.NewPatientHandler(patientService)
 	batchHandler := handler.NewBatchHandler(batchService)
 
+	// Initialize Germline handlers
+	pedigreeHandler := handler.NewPedigreeHandler(pedigreeRepo, pedigreeMemberRepo, sampleRepo)
+	geneListHandler := handler.NewGeneListHandler(geneListRepo)
+
 	return &Dependencies{
+		// Config
+		Config: cfg,
+
 		// System Shared Repositories
 		UserRepo:          userRepo,
 		TeamRepo:          teamRepo,
@@ -173,16 +212,23 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 		PatientRepo: patientRepo,
 		BatchRepo:   batchRepo,
 
+		// Germline Business Repositories
+		PedigreeRepo:         pedigreeRepo,
+		PedigreeMemberRepo:   pedigreeMemberRepo,
+		GeneListRepo:         geneListRepo,
+		SangerValidationRepo: sangerValidationRepo,
+
 		// JWT Manager
 		JWTManager: jwtManager,
 
 		// System Shared Services
-		AuthService:       authService,
-		UserService:       userService,
-		TeamService:       teamService,
-		SettingsService:   settingsService,
-		SequencerService:  sequencerService,
+		AuthService:        authService,
+		UserService:        userService,
+		TeamService:        teamService,
+		SettingsService:    settingsService,
+		SequencerService:   sequencerService,
 		SampleSheetService: sampleSheetService,
+		BackupService:      backupService,
 
 		// Somatic Business Services
 		SampleService:        sampleService,
@@ -194,6 +240,10 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 		// Legacy Services
 		PatientService: patientService,
 		BatchService:   batchService,
+
+		// Germline Business Services
+		PedigreeService: pedigreeService,
+		GeneListService: geneListService,
 
 		// Handlers
 		HealthHandler:        healthHandler,
@@ -208,9 +258,14 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 		PipelineHandler:      pipelineHandler,
 		ResultFileHandler:    resultFileHandler,
 		StorageSourceHandler: storageSourceHandler,
+		BackupHandler:        backupHandler,
 
 		// Legacy Handlers
 		PatientHandler: patientHandler,
 		BatchHandler:   batchHandler,
+
+		// Germline Handlers
+		PedigreeHandler: pedigreeHandler,
+		GeneListHandler: geneListHandler,
 	}
 }
