@@ -6,7 +6,7 @@ GOBUILD=$(GOCMD) build
 GOTEST=$(GOCMD) test
 GOMOD=$(GOCMD) mod
 GOFMT=gofmt
-BINARY_NAME=server
+BINARY_NAME=schema-platform-backend
 MAIN_PATH=./cmd/server
 
 # Docker parameters

@@ -8,7 +8,6 @@ import (
 	"github.com/schema-platform/backend-api/internal/model"
 	"github.com/schema-platform/backend-api/internal/repository"
 	"github.com/schema-platform/backend-api/pkg/errors"
-	"gorm.io/gorm"
 )
 
 // ResultFileService handles result file operations

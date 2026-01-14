@@ -6,6 +6,7 @@ server:
   mode: "debug"  # debug, release, test
 
 database:
+  # Connection settings (host/port/user/password/dbname/sslmode)
   host: "localhost"
   port: 5432
   user: "postgres"
@@ -16,8 +17,11 @@ database:
   max_open_conns: 100
   max_lifetime: "1h"
 
+  # Alternative: Use DSN directly
+  # dsn: "postgresql://postgres:[password]@localhost:5432/schema_platform?sslmode=disable"
+
 jwt:
-  secret: "change-me-in-production"
+  secret: "change-me-in-production"  # TODO: Replace with a secure secret key (at least 32 characters)
   access_expires_in: "15m"
   refresh_expires_in: "168h"  # 7 days
   issuer: "schema-platform"
@@ -25,3 +29,16 @@ jwt:
 ratelimit:
   requests_per_second: 100
   burst: 200
+
+# Feature flags
+features:
+  allow_public_registration: true  # Allow users to register without invitation
+  require_email_verification: false  # Require email verification before login
+  password_expiry_days: 90  # 0 means no expiry
+
+# Default admin user configuration (optional - set enabled: false after initial setup)
+admin:
+  email: "admin@schema.local"
+  name: "System Administrator"
+  password: "Admin123!"  # TODO: Change this password in production
+  enabled: true

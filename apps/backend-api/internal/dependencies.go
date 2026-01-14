@@ -13,20 +13,15 @@ import (
 // Dependencies holds all application dependencies
 type Dependencies struct {
 	// System Shared Repositories
-	UserRepo          *repository.UserRepository
-	TeamRepo          *repository.TeamRepository
-	TeamMemberRepo    *repository.TeamMemberRepository
-	PermissionRepo    *repository.PermissionRepository
-	RolePermissionRepo *repository.RolePermissionRepository
-	SystemConfigRepo  *repository.SystemConfigRepository
-	UserSettingsRepo  *repository.UserSettingsRepository
-	SequencerRepo     *repository.SequencerRepository
-	SequencingRunRepo *repository.SequencingRunRepository
-	SampleSheetRepo   *repository.SampleSheetRepository
-	SampleIndexRepo   *repository.SampleIndexRepository
-	DataFileRepo      *repository.DataFileRepository
-	BEDFileRepo       *repository.BEDFileRepository
-	BaselineFileRepo  *repository.BaselineFileRepository
+	UserRepo           *repository.UserRepository
+	TeamRepo           *repository.TeamRepository
+	SequencerRepo      *repository.SequencerRepository
+	SequencingRunRepo  *repository.SequencingRunRepository
+	SampleSheetRepo    *repository.SampleSheetRepository
+	SampleIndexRepo    *repository.SampleIndexRepository
+	DataFileRepo       *repository.DataFileRepository
+	BEDFileRepo        *repository.BEDFileRepository
+	BaselineFileRepo   *repository.BaselineFileRepository
 
 	// Somatic Business Repositories
 	SampleRepo        *repository.SampleRepository
@@ -85,11 +80,6 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 	// Initialize system shared repositories
 	userRepo := repository.NewUserRepository(db)
 	teamRepo := repository.NewTeamRepository(db)
-	teamMemberRepo := repository.NewTeamMemberRepository(db)
-	permissionRepo := repository.NewPermissionRepository(db)
-	rolePermissionRepo := repository.NewRolePermissionRepository(db)
-	systemConfigRepo := repository.NewSystemConfigRepository(db)
-	userSettingsRepo := repository.NewUserSettingsRepository(db)
 	sequencerRepo := repository.NewSequencerRepository(db)
 	sequencingRunRepo := repository.NewSequencingRunRepository(db)
 	sampleSheetRepo := repository.NewSampleSheetRepository(db)
@@ -126,7 +116,7 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 	// Initialize system shared services
 	authService := service.NewAuthService(userRepo, jwtManager)
 	userService := service.NewUserService(userRepo)
-	teamService := service.NewTeamService(teamRepo, userRepo, teamMemberRepo)
+	teamService := service.NewTeamService(teamRepo, userRepo)
 	settingsService := service.NewSettingsService(db)
 	sequencerService := service.NewSequencerService(sequencerRepo)
 	sampleSheetService := service.NewSampleSheetService(sampleSheetRepo, sampleIndexRepo)
@@ -162,20 +152,15 @@ func NewDependencies(db *gorm.DB, jwtSecret string, jwtExpiryHours int) *Depende
 
 	return &Dependencies{
 		// System Shared Repositories
-		UserRepo:           userRepo,
-		TeamRepo:           teamRepo,
-		TeamMemberRepo:     teamMemberRepo,
-		PermissionRepo:     permissionRepo,
-		RolePermissionRepo: rolePermissionRepo,
-		SystemConfigRepo:   systemConfigRepo,
-		UserSettingsRepo:   userSettingsRepo,
-		SequencerRepo:      sequencerRepo,
-		SequencingRunRepo:  sequencingRunRepo,
-		SampleSheetRepo:    sampleSheetRepo,
-		SampleIndexRepo:    sampleIndexRepo,
-		DataFileRepo:       dataFileRepo,
-		BEDFileRepo:        bedFileRepo,
-		BaselineFileRepo:   baselineFileRepo,
+		UserRepo:          userRepo,
+		TeamRepo:          teamRepo,
+		SequencerRepo:     sequencerRepo,
+		SequencingRunRepo: sequencingRunRepo,
+		SampleSheetRepo:   sampleSheetRepo,
+		SampleIndexRepo:   sampleIndexRepo,
+		DataFileRepo:      dataFileRepo,
+		BEDFileRepo:       bedFileRepo,
+		BaselineFileRepo:  baselineFileRepo,
 
 		// Somatic Business Repositories
 		SampleRepo:        sampleRepo,
