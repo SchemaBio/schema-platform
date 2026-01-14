@@ -49,16 +49,32 @@ func Connect(cfg *config.DatabaseConfig) (*gorm.DB, error) {
 // AutoMigrate runs database migrations for all models
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
+		// System shared tables
 		&model.User{},
 		&model.Team{},
 		&model.TeamMember{},
-		&model.Patient{},
-		&model.Sample{},
-		&model.Batch{},
-		&model.UserSettings{},
-		&model.SystemConfig{},
 		&model.Permission{},
 		&model.RolePermission{},
+		&model.SystemConfig{},
+		&model.UserSettings{},
+		&model.Sequencer{},
+		&model.SequencingRun{},
+		&model.SampleSheet{},
+		&model.SampleIndex{},
+		&model.DataFile{},
+		&model.BEDFile{},
+		&model.BaselineFile{},
+
+		// Somatic business tables
+		&model.Sample{},
+		&model.AnalysisTask{},
+		&model.Pipeline{},
+		&model.ResultFile{},
+		&model.StorageSource{},
+
+		// Legacy tables (to be removed)
+		&model.Patient{},
+		&model.Batch{},
 	)
 }
 

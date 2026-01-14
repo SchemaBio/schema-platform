@@ -45,21 +45,51 @@ func SetupRouter(deps *Dependencies, jwtManager *jwt.Manager) *gin.Engine {
 		teams := protected.Group("/teams")
 		deps.TeamHandler.RegisterRoutes(teams)
 
-		// Patient routes
-		patients := protected.Group("/patients")
-		deps.PatientHandler.RegisterRoutes(patients)
+		// Settings routes
+		settings := protected.Group("/settings")
+		deps.SettingsHandler.RegisterRoutes(settings)
+
+		// === Somatic System Routes ===
 
 		// Sample routes
 		samples := protected.Group("/samples")
 		deps.SampleHandler.RegisterRoutes(samples)
 
+		// Analysis task routes
+		analysisTasks := protected.Group("/analysis-tasks")
+		deps.AnalysisTaskHandler.RegisterRoutes(analysisTasks)
+
+		// Pipeline routes
+		pipelines := protected.Group("/pipelines")
+		deps.PipelineHandler.RegisterRoutes(pipelines)
+
+		// Result file routes
+		resultFiles := protected.Group("/results")
+		deps.ResultFileHandler.RegisterRoutes(resultFiles)
+
+		// Storage source routes
+		storageSources := protected.Group("/storage-sources")
+		deps.StorageSourceHandler.RegisterRoutes(storageSources)
+
+		// === Sequencing Platform Routes ===
+
+		// Sequencer routes
+		sequencers := protected.Group("/sequencers")
+		deps.SequencerHandler.RegisterRoutes(sequencers)
+
+		// Sample sheet routes
+		sampleSheets := protected.Group("/sample-sheets")
+		deps.SampleSheetHandler.RegisterRoutes(sampleSheets)
+
+		// === Legacy Routes (to be removed) ===
+
+		// Patient routes
+		patients := protected.Group("/patients")
+		deps.PatientHandler.RegisterRoutes(patients)
+
 		// Batch routes
 		batches := protected.Group("/batches")
 		deps.BatchHandler.RegisterRoutes(batches)
-
-		// Settings routes
-		settings := protected.Group("/settings")
-		deps.SettingsHandler.RegisterRoutes(settings)
 	}
 
 	return r

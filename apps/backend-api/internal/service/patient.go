@@ -12,17 +12,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// PatientService handles patient operations
+// PatientService handles patient operations (legacy)
 type PatientService struct {
 	patientRepo *repository.PatientRepository
-	sampleRepo  *repository.SampleRepository
 }
 
 // NewPatientService creates a new patient service
 func NewPatientService(patientRepo *repository.PatientRepository, sampleRepo *repository.SampleRepository) *PatientService {
 	return &PatientService{
 		patientRepo: patientRepo,
-		sampleRepo:  sampleRepo,
 	}
 }
 
@@ -77,7 +75,6 @@ func (s *PatientService) GetPatient(ctx context.Context, patientID string) (*dto
 
 	return s.toPatientResponse(patient), nil
 }
-
 
 // GetPatients retrieves all patients with pagination
 func (s *PatientService) GetPatients(ctx context.Context, params *dto.PatientQueryParams) (*dto.PatientListResponse, error) {
@@ -162,47 +159,6 @@ func (s *PatientService) DeletePatient(ctx context.Context, patientID string) er
 	}
 
 	return s.patientRepo.SoftDelete(ctx, id)
-}
-
-// GetPatientWithSamples retrieves a patient with their samples
-func (s *PatientService) GetPatientWithSamples(ctx context.Context, patientID string) (*dto.PatientWithSamplesResponse, error) {
-	id, err := uuid.Parse(patientID)
-	if err != nil {
-		return nil, errors.NewValidationError("Invalid patient ID")
-	}
-
-	patient, err := s.patientRepo.GetWithSamples(ctx, id)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFoundError("Patient")
-		}
-		return nil, errors.WrapDatabaseError(err)
-	}
-
-	samples := make([]dto.SampleResponse, len(patient.Samples))
-	for i, sample := range patient.Samples {
-		var batchID *string
-		if sample.BatchID != nil {
-			s := sample.BatchID.String()
-			batchID = &s
-		}
-		samples[i] = dto.SampleResponse{
-			ID:         sample.ID.String(),
-			Name:       sample.Name,
-			PatientID:  sample.PatientID.String(),
-			SampleType: string(sample.SampleType),
-			Status:     string(sample.Status),
-			BatchID:    batchID,
-			CreatedBy:  sample.CreatedBy.String(),
-			CreatedAt:  sample.CreatedAt,
-			UpdatedAt:  sample.UpdatedAt,
-		}
-	}
-
-	return &dto.PatientWithSamplesResponse{
-		PatientResponse: *s.toPatientResponse(patient),
-		Samples:         samples,
-	}, nil
 }
 
 func (s *PatientService) toPatientResponse(patient *model.Patient) *dto.PatientResponse {

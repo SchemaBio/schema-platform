@@ -78,11 +78,11 @@ func (r *BatchRepository) RemoveSamples(ctx context.Context, batchID uuid.UUID, 
 }
 
 // UpdateStatus updates a batch's status
-func (r *BatchRepository) UpdateStatus(ctx context.Context, batchID uuid.UUID, status model.SampleStatus) error {
+func (r *BatchRepository) UpdateStatus(ctx context.Context, batchID uuid.UUID, status model.BatchStatus) error {
 	updates := map[string]interface{}{
 		"status": status,
 	}
-	if status == model.SampleStatusCompleted {
+	if status == model.BatchStatusCompleted {
 		updates["completed_at"] = time.Now()
 	}
 	return r.DB().WithContext(ctx).Model(&model.Batch{}).Where("id = ?", batchID).Updates(updates).Error

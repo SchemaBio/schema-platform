@@ -37,7 +37,7 @@ func (h *SampleHandler) GetSamples(c *gin.Context) {
 
 // CreateSample handles creating a sample
 func (h *SampleHandler) CreateSample(c *gin.Context) {
-	var req dto.SampleCreateRequest
+	var req dto.CreateSampleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ValidationError(c, map[string]interface{}{"error": err.Error()})
 		return
@@ -70,7 +70,7 @@ func (h *SampleHandler) GetSample(c *gin.Context) {
 func (h *SampleHandler) UpdateSample(c *gin.Context) {
 	sampleID := c.Param("id")
 
-	var req dto.SampleUpdateRequest
+	var req dto.UpdateSampleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ValidationError(c, map[string]interface{}{"error": err.Error()})
 		return

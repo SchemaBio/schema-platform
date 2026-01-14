@@ -34,7 +34,7 @@ func (s *BatchService) CreateBatch(ctx context.Context, req *dto.BatchCreateRequ
 
 	batch := &model.Batch{
 		Name:      req.Name,
-		Status:    model.SampleStatusPending,
+		Status:    model.BatchStatusPending,
 		CreatedBy: creatorID,
 	}
 
@@ -126,7 +126,7 @@ func (s *BatchService) UpdateBatch(ctx context.Context, batchID string, req *dto
 		batch.Name = *req.Name
 	}
 	if req.Status != nil {
-		batch.Status = model.SampleStatus(*req.Status)
+		batch.Status = model.BatchStatus(*req.Status)
 	}
 
 	if err := s.batchRepo.Update(ctx, batch); err != nil {
@@ -179,47 +179,6 @@ func (s *BatchService) AddSamples(ctx context.Context, batchID string, req *dto.
 	}
 
 	return s.batchRepo.AddSamples(ctx, id, sampleIDs)
-}
-
-// GetBatchWithSamples retrieves a batch with its samples
-func (s *BatchService) GetBatchWithSamples(ctx context.Context, batchID string) (*dto.BatchWithSamplesResponse, error) {
-	id, err := uuid.Parse(batchID)
-	if err != nil {
-		return nil, errors.NewValidationError("Invalid batch ID")
-	}
-
-	batch, err := s.batchRepo.GetWithSamples(ctx, id)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, errors.NewNotFoundError("Batch")
-		}
-		return nil, errors.WrapDatabaseError(err)
-	}
-
-	samples := make([]dto.SampleResponse, len(batch.Samples))
-	for i, sample := range batch.Samples {
-		var batchIDStr *string
-		if sample.BatchID != nil {
-			s := sample.BatchID.String()
-			batchIDStr = &s
-		}
-		samples[i] = dto.SampleResponse{
-			ID:         sample.ID.String(),
-			Name:       sample.Name,
-			PatientID:  sample.PatientID.String(),
-			SampleType: string(sample.SampleType),
-			Status:     string(sample.Status),
-			BatchID:    batchIDStr,
-			CreatedBy:  sample.CreatedBy.String(),
-			CreatedAt:  sample.CreatedAt,
-			UpdatedAt:  sample.UpdatedAt,
-		}
-	}
-
-	return &dto.BatchWithSamplesResponse{
-		BatchResponse: *s.toBatchResponse(batch),
-		Samples:       samples,
-	}, nil
 }
 
 func (s *BatchService) toBatchResponse(batch *model.Batch) *dto.BatchResponse {

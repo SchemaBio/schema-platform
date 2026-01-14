@@ -115,19 +115,6 @@ func (h *BatchHandler) AddSamples(c *gin.Context) {
 	response.Success(c, map[string]string{"message": "Samples added successfully"})
 }
 
-// GetBatchSamples handles getting samples in a batch
-func (h *BatchHandler) GetBatchSamples(c *gin.Context) {
-	batchID := c.Param("id")
-
-	result, err := h.batchService.GetBatchWithSamples(c.Request.Context(), batchID)
-	if err != nil {
-		response.Error(c, err)
-		return
-	}
-
-	response.Success(c, result.Samples)
-}
-
 // RegisterRoutes registers batch routes
 func (h *BatchHandler) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("", h.GetBatches)
@@ -135,6 +122,5 @@ func (h *BatchHandler) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/:id", h.GetBatch)
 	r.PUT("/:id", h.UpdateBatch)
 	r.DELETE("/:id", h.DeleteBatch)
-	r.GET("/:id/samples", h.GetBatchSamples)
 	r.POST("/:id/samples", h.AddSamples)
 }

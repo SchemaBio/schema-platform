@@ -97,19 +97,6 @@ func (h *PatientHandler) DeletePatient(c *gin.Context) {
 	response.NoContent(c)
 }
 
-// GetPatientSamples handles getting samples for a patient
-func (h *PatientHandler) GetPatientSamples(c *gin.Context) {
-	patientID := c.Param("id")
-
-	result, err := h.patientService.GetPatientWithSamples(c.Request.Context(), patientID)
-	if err != nil {
-		response.Error(c, err)
-		return
-	}
-
-	response.Success(c, result.Samples)
-}
-
 // RegisterRoutes registers patient routes
 func (h *PatientHandler) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("", h.GetPatients)
@@ -117,5 +104,4 @@ func (h *PatientHandler) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/:id", h.GetPatient)
 	r.PUT("/:id", h.UpdatePatient)
 	r.DELETE("/:id", h.DeletePatient)
-	r.GET("/:id/samples", h.GetPatientSamples)
 }
