@@ -1,13 +1,10 @@
 # Schema Platform - Docker Compose 配置
 #
 # 使用方法:
-#   ./start.sh               # 启动所有服务 (推荐)
+#   ./start.sh               # 启动所有服务
 #   ./start.sh germline      # 只启动 Germline
 #   ./start.sh somatic       # 只启动 Somatic
 #   ./start.sh --external-db # 使用外部数据库
-#
-# 或直接使用:
-#   docker compose up -d
 
 services:
   # ============================================
@@ -29,8 +26,7 @@ services:
   # Germline 前端
   # ============================================
   web-germline:
-    build:
-      context: ./apps/web-germline
+    image: ghcr.io/schemabio/schema-germline:latest
     ports:
       - "${GERMLINE_WEB_PORT:-3001}:3000"
     environment:
@@ -44,8 +40,7 @@ services:
   # Somatic 前端
   # ============================================
   web-somatic:
-    build:
-      context: ./apps/web-somatic
+    image: ghcr.io/schemabio/schema-somatic:latest
     ports:
       - "${SOMATIC_WEB_PORT:-3002}:3000"
     environment:
@@ -59,10 +54,7 @@ services:
   # 后端 (Germline 模式)
   # ============================================
   backend-germline:
-    build:
-      context: ./apps/backend-api
-      args:
-        ANALYSIS_TYPE: germline
+    image: ghcr.io/schemabio/schema-backend:latest
     environment:
       - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
       - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
@@ -85,10 +77,7 @@ services:
   # 后端 (Somatic 模式)
   # ============================================
   backend-somatic:
-    build:
-      context: ./apps/backend-api
-      args:
-        ANALYSIS_TYPE: somatic
+    image: ghcr.io/schemabio/schema-backend:latest
     environment:
       - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
       - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
