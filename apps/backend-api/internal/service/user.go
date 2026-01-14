@@ -175,6 +175,117 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*dto.Us
 	return s.toUserResponse(user), nil
 }
 
+// ActivateUser activates a user account
+func (s *UserService) ActivateUser(ctx context.Context, userID string) error {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return errors.NewValidationError("Invalid user ID")
+	}
+
+	// Check if user exists
+	exists, err := s.userRepo.Exists(ctx, id)
+	if err != nil {
+		return errors.WrapDatabaseError(err)
+	}
+	if !exists {
+		return errors.NewNotFoundError("User")
+	}
+
+	if err := s.userRepo.SetActive(ctx, id, true); err != nil {
+		return errors.WrapDatabaseError(err)
+	}
+
+	return nil
+}
+
+// DeactivateUser deactivates a user account
+func (s *UserService) DeactivateUser(ctx context.Context, userID string) error {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return errors.NewValidationError("Invalid user ID")
+	}
+
+	// Check if user exists
+	exists, err := s.userRepo.Exists(ctx, id)
+	if err != nil {
+		return errors.WrapDatabaseError(err)
+	}
+	if !exists {
+		return errors.NewNotFoundError("User")
+	}
+
+	if err := s.userRepo.SetActive(ctx, id, false); err != nil {
+		return errors.WrapDatabaseError(err)
+	}
+
+	return nil
+}
+
+// ChangePassword changes a user's password
+func (s *UserService) ChangePassword(ctx context.Context, userID string, req *dto.ChangePasswordRequest) error {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return errors.NewValidationError("Invalid user ID")
+	}
+
+	// Get user
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return errors.NewNotFoundError("User")
+		}
+		return errors.WrapDatabaseError(err)
+	}
+
+	// Verify current password
+	if !hash.VerifyPassword(req.CurrentPassword, user.PasswordHash) {
+		return errors.NewUnauthorizedError("Current password is incorrect")
+	}
+
+	// Hash new password
+	newPasswordHash, err := hash.HashPassword(req.NewPassword)
+	if err != nil {
+		return errors.NewInternalError("Failed to hash password")
+	}
+
+	// Update password
+	if err := s.userRepo.UpdatePassword(ctx, id, newPasswordHash); err != nil {
+		return errors.WrapDatabaseError(err)
+	}
+
+	return nil
+}
+
+// ResetPassword resets a user's password (admin only)
+func (s *UserService) ResetPassword(ctx context.Context, userID string, req *dto.ResetPasswordRequest) error {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return errors.NewValidationError("Invalid user ID")
+	}
+
+	// Check if user exists
+	exists, err := s.userRepo.Exists(ctx, id)
+	if err != nil {
+		return errors.WrapDatabaseError(err)
+	}
+	if !exists {
+		return errors.NewNotFoundError("User")
+	}
+
+	// Hash new password
+	newPasswordHash, err := hash.HashPassword(req.NewPassword)
+	if err != nil {
+		return errors.NewInternalError("Failed to hash password")
+	}
+
+	// Update password
+	if err := s.userRepo.UpdatePassword(ctx, id, newPasswordHash); err != nil {
+		return errors.WrapDatabaseError(err)
+	}
+
+	return nil
+}
+
 // toUserResponse converts a user model to a response DTO
 func (s *UserService) toUserResponse(user *model.User) *dto.UserResponse {
 	return &dto.UserResponse{

@@ -143,3 +143,72 @@ func IsAdmin(c *gin.Context) bool {
 func IsSelfOrAdmin(c *gin.Context, targetUserID string) bool {
 	return GetUserID(c) == targetUserID || IsAdmin(c)
 }
+
+// RequirePermission creates a middleware that requires specific permissions
+func RequirePermission(permissionCodes ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userRole := GetUserRole(c)
+		if userRole == "" {
+			response.Unauthorized(c, "User role not found")
+			c.Abort()
+			return
+		}
+
+		// Admin has all permissions
+		if userRole == model.UserRoleAdmin {
+			c.Next()
+			return
+		}
+
+		// Check if user has any of the required permissions
+		for _, code := range permissionCodes {
+			if userRole.HasPermission(code) {
+				c.Next()
+				return
+			}
+		}
+
+		response.Forbidden(c, "Insufficient permissions")
+		c.Abort()
+	}
+}
+
+// RequireAnyPermission requires at least one of the specified permissions
+func RequireAnyPermission(permissions ...string) gin.HandlerFunc {
+	return RequirePermission(permissions...)
+}
+
+// RequireAllPermissions requires all of the specified permissions
+func RequireAllPermissions(permissionCodes ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userRole := GetUserRole(c)
+		if userRole == "" {
+			response.Unauthorized(c, "User role not found")
+			c.Abort()
+			return
+		}
+
+		// Admin has all permissions
+		if userRole == model.UserRoleAdmin {
+			c.Next()
+			return
+		}
+
+		// Check if user has all required permissions
+		hasAll := true
+		for _, code := range permissionCodes {
+			if !userRole.HasPermission(code) {
+				hasAll = false
+				break
+			}
+		}
+
+		if hasAll {
+			c.Next()
+			return
+		}
+
+		response.Forbidden(c, "Insufficient permissions")
+		c.Abort()
+	}
+}

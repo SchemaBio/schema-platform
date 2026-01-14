@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/schema-platform/backend-api/internal/dto"
+	"github.com/schema-platform/backend-api/internal/model"
 	"github.com/schema-platform/backend-api/internal/pkg/hash"
 	"github.com/schema-platform/backend-api/internal/pkg/jwt"
 	"github.com/schema-platform/backend-api/internal/repository"
@@ -22,6 +23,63 @@ func NewAuthService(userRepo *repository.UserRepository, jwtManager *jwt.Manager
 		userRepo:   userRepo,
 		jwtManager: jwtManager,
 	}
+}
+
+// Register registers a new user and returns tokens
+func (s *AuthService) Register(ctx context.Context, req *dto.RegisterRequest) (*dto.LoginResponse, error) {
+	// Check if email already exists
+	exists, err := s.userRepo.ExistsByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, errors.WrapDatabaseError(err)
+	}
+	if exists {
+		return nil, errors.NewConflictError("Email already exists")
+	}
+
+	// Hash password
+	passwordHash, err := hash.HashPassword(req.Password)
+	if err != nil {
+		return nil, errors.NewInternalError("Failed to hash password")
+	}
+
+	// Create user with default role
+	user := &model.User{
+		Email:        req.Email,
+		Name:         req.Name,
+		PasswordHash: passwordHash,
+		Role:         model.UserRoleViewer, // Default role for self-registration
+		IsActive:     true,
+	}
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return nil, errors.WrapDatabaseError(err)
+	}
+
+	// Generate tokens
+	accessToken, expiresAt, err := s.jwtManager.GenerateAccessToken(user.ID.String(), user.Email, string(user.Role))
+	if err != nil {
+		return nil, errors.NewInternalError("Failed to generate access token")
+	}
+
+	refreshToken, _, err := s.jwtManager.GenerateRefreshToken(user.ID.String(), user.Email, string(user.Role))
+	if err != nil {
+		return nil, errors.NewInternalError("Failed to generate refresh token")
+	}
+
+	return &dto.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    expiresAt,
+		User: dto.UserResponse{
+			ID:        user.ID.String(),
+			Email:     user.Email,
+			Name:      user.Name,
+			Role:      string(user.Role),
+			IsActive:  user.IsActive,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+	}, nil
 }
 
 // Login authenticates a user and returns tokens

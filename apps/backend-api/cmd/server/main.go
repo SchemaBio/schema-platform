@@ -23,7 +23,7 @@ func main() {
 	}
 
 	// Initialize database
-	db, err := database.Connect(cfg.Database)
+	db, err := database.Connect(&cfg.Database)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -31,6 +31,11 @@ func main() {
 	// Run migrations
 	if err := database.AutoMigrate(db); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Seed database with initial data (permissions, roles, admin user)
+	if err := database.SeedAll(db, &cfg.Admin); err != nil {
+		log.Fatalf("Failed to seed database: %v", err)
 	}
 
 	// Initialize dependencies

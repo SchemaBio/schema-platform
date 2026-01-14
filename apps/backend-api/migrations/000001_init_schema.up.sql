@@ -114,3 +114,107 @@ CREATE TABLE system_config (
 );
 
 CREATE INDEX idx_system_config_key ON system_config(key);
+
+-- Permissions table
+CREATE TABLE permissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    resource VARCHAR(100) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_permissions_code ON permissions(code);
+CREATE INDEX idx_permissions_resource ON permissions(resource);
+
+-- Role permissions table (many-to-many)
+CREATE TABLE role_permissions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    role VARCHAR(20) NOT NULL,
+    permission_id UUID NOT NULL REFERENCES permissions(id),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE(role, permission_id)
+);
+
+CREATE INDEX idx_role_permissions_role ON role_permissions(role);
+CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
+
+-- Insert all permissions
+INSERT INTO permissions (code, name, description, resource, action) VALUES
+    -- User permissions
+    ('user:list', 'List Users', 'View list of users', 'users', 'list'),
+    ('user:create', 'Create User', 'Create new users', 'users', 'create'),
+    ('user:read', 'Read User', 'View user details', 'users', 'read'),
+    ('user:update', 'Update User', 'Update user details', 'users', 'update'),
+    ('user:delete', 'Delete User', 'Delete users', 'users', 'delete'),
+    ('user:activate', 'Activate User', 'Activate user accounts', 'users', 'activate'),
+    ('user:deactivate', 'Deactivate User', 'Deactivate user accounts', 'users', 'deactivate'),
+
+    -- Team permissions
+    ('team:list', 'List Teams', 'View list of teams', 'teams', 'list'),
+    ('team:create', 'Create Team', 'Create new teams', 'teams', 'create'),
+    ('team:read', 'Read Team', 'View team details', 'teams', 'read'),
+    ('team:update', 'Update Team', 'Update team details', 'teams', 'update'),
+    ('team:delete', 'Delete Team', 'Delete teams', 'teams', 'delete'),
+
+    -- Patient permissions
+    ('patient:list', 'List Patients', 'View list of patients', 'patients', 'list'),
+    ('patient:create', 'Create Patient', 'Create new patients', 'patients', 'create'),
+    ('patient:read', 'Read Patient', 'View patient details', 'patients', 'read'),
+    ('patient:update', 'Update Patient', 'Update patient details', 'patients', 'update'),
+    ('patient:delete', 'Delete Patient', 'Delete patients', 'patients', 'delete'),
+
+    -- Sample permissions
+    ('sample:list', 'List Samples', 'View list of samples', 'samples', 'list'),
+    ('sample:create', 'Create Sample', 'Create new samples', 'samples', 'create'),
+    ('sample:read', 'Read Sample', 'View sample details', 'samples', 'read'),
+    ('sample:update', 'Update Sample', 'Update sample details', 'samples', 'update'),
+    ('sample:delete', 'Delete Sample', 'Delete samples', 'samples', 'delete'),
+
+    -- Batch permissions
+    ('batch:list', 'List Batches', 'View list of batches', 'batches', 'list'),
+    ('batch:create', 'Create Batch', 'Create new batches', 'batches', 'create'),
+    ('batch:read', 'Read Batch', 'View batch details', 'batches', 'read'),
+    ('batch:update', 'Update Batch', 'Update batch details', 'batches', 'update'),
+    ('batch:delete', 'Delete Batch', 'Delete batches', 'batches', 'delete'),
+
+    -- Settings permissions
+    ('settings:manage', 'Manage Settings', 'Manage system settings', 'settings', 'manage');
+
+-- Insert role permissions
+-- Admin gets all permissions
+INSERT INTO role_permissions (role, permission_id)
+SELECT 'ADMIN', id FROM permissions;
+
+-- Doctor permissions
+INSERT INTO role_permissions (role, permission_id)
+SELECT 'DOCTOR', id FROM permissions WHERE code IN (
+    'user:read',
+    'team:list', 'team:read',
+    'patient:list', 'patient:create', 'patient:read', 'patient:update',
+    'sample:list', 'sample:create', 'sample:read', 'sample:update',
+    'batch:list', 'batch:read'
+);
+
+-- Analyst permissions
+INSERT INTO role_permissions (role, permission_id)
+SELECT 'ANALYST', id FROM permissions WHERE code IN (
+    'user:read',
+    'team:list', 'team:read',
+    'patient:list', 'patient:read',
+    'sample:list', 'sample:read', 'sample:update',
+    'batch:list', 'batch:create', 'batch:read', 'batch:update'
+);
+
+-- Viewer permissions
+INSERT INTO role_permissions (role, permission_id)
+SELECT 'VIEWER', id FROM permissions WHERE code IN (
+    'user:read',
+    'team:list', 'team:read',
+    'patient:list', 'patient:read',
+    'sample:list', 'sample:read',
+    'batch:list', 'batch:read'
+);

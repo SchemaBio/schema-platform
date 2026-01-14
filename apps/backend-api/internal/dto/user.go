@@ -16,6 +16,28 @@ type UserUpdateRequest struct {
 	Role *string `json:"role" binding:"omitempty,oneof=ADMIN DOCTOR ANALYST VIEWER"`
 }
 
+// ChangePasswordRequest represents the request to change password
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"currentPassword" binding:"required"`
+	NewPassword     string `json:"newPassword" binding:"required,min=8"`
+}
+
+// ResetPasswordRequest represents the request to reset password (admin only)
+type ResetPasswordRequest struct {
+	NewPassword string `json:"newPassword" binding:"required,min=8"`
+}
+
+// ForgotPasswordRequest represents the request to initiate password reset
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// ResetPasswordTokenRequest represents the request to reset password with token
+type ResetPasswordTokenRequest struct {
+	Token       string `json:"token" binding:"required"`
+	NewPassword string `json:"newPassword" binding:"required,min=8"`
+}
+
 // UserResponse represents the user response
 type UserResponse struct {
 	ID        string    `json:"id"`

@@ -34,3 +34,16 @@ type TokenPayload struct {
 	Email  string `json:"email"`
 	Role   string `json:"role"`
 }
+
+// RegisterRequest represents the registration request payload
+type RegisterRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Name     string `json:"name" binding:"required,min=2,max=100"`
+	Password string `json:"password" binding:"required,min=8"`
+}
+
+// RegisterResponse represents the registration response
+type RegisterResponse struct {
+	Message string       `json:"message"`
+	User    UserResponse `json:"user"`
+}

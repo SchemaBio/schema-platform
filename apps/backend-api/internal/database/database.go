@@ -57,6 +57,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&model.Batch{},
 		&model.UserSettings{},
 		&model.SystemConfig{},
+		&model.Permission{},
+		&model.RolePermission{},
 	)
 }
 

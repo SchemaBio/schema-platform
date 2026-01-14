@@ -78,6 +78,35 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	response.Success(c, result)
 }
 
+// Register handles user registration
+// @Summary User registration
+// @Description Registers a new user and returns JWT tokens
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RegisterRequest true "Registration data"
+// @Success 201 {object} dto.LoginResponse
+// @Failure 400 {object} map[string]interface{}
+// @Failure 409 {object} map[string]interface{}
+// @Router /api/v1/auth/register [post]
+func (h *AuthHandler) Register(c *gin.Context) {
+	var req dto.RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ValidationError(c, map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	result, err := h.authService.Register(c.Request.Context(), &req)
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Created(c, result)
+}
+
 // Logout handles user logout
 // @Summary User logout
 // @Description Logs out the current user
@@ -103,6 +132,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 // RegisterRoutes registers auth routes
 func (h *AuthHandler) RegisterRoutes(r *gin.RouterGroup) {
+	// Public routes (no auth required)
+	r.POST("/register", h.Register)
 	r.POST("/login", h.Login)
 	r.POST("/refresh", h.RefreshToken)
 }

@@ -209,6 +209,126 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	response.NoContent(c)
 }
 
+// ActivateUser handles activating a user
+// @Summary Activate user
+// @Description Activates a user account
+// @Tags users
+// @Security BearerAuth
+// @Param id path string true "User ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /api/v1/users/{id}/activate [post]
+func (h *UserHandler) ActivateUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	if err := h.userService.ActivateUser(c.Request.Context(), userID); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Success(c, map[string]interface{}{
+		"message": "User activated successfully",
+	})
+}
+
+// DeactivateUser handles deactivating a user
+// @Summary Deactivate user
+// @Description Deactivates a user account
+// @Tags users
+// @Security BearerAuth
+// @Param id path string true "User ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /api/v1/users/{id}/deactivate [post]
+func (h *UserHandler) DeactivateUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	if err := h.userService.DeactivateUser(c.Request.Context(), userID); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Success(c, map[string]interface{}{
+		"message": "User deactivated successfully",
+	})
+}
+
+// ChangePassword handles changing password
+// @Summary Change password
+// @Description Changes the current user's password
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body dto.ChangePasswordRequest true "Password change data"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Router /api/v1/users/me/password [put]
+func (h *UserHandler) ChangePassword(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	if userID == "" {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+
+	var req dto.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ValidationError(c, map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := h.userService.ChangePassword(c.Request.Context(), userID, &req); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Success(c, map[string]interface{}{
+		"message": "Password changed successfully",
+	})
+}
+
+// ResetPassword handles resetting a user's password (admin only)
+// @Summary Reset user password
+// @Description Resets a user's password (admin only)
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param request body dto.ResetPasswordRequest true "New password"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Router /api/v1/users/{id}/password [put]
+func (h *UserHandler) ResetPassword(c *gin.Context) {
+	userID := c.Param("id")
+
+	var req dto.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ValidationError(c, map[string]interface{}{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := h.userService.ResetPassword(c.Request.Context(), userID, &req); err != nil {
+		response.Error(c, err)
+		return
+	}
+
+	response.Success(c, map[string]interface{}{
+		"message": "Password reset successfully",
+	})
+}
+
 // RegisterRoutes registers user routes
 func (h *UserHandler) RegisterRoutes(r *gin.RouterGroup) {
 	// Admin only routes
@@ -218,12 +338,16 @@ func (h *UserHandler) RegisterRoutes(r *gin.RouterGroup) {
 		adminRoutes.GET("", h.GetUsers)
 		adminRoutes.POST("", h.CreateUser)
 		adminRoutes.DELETE("/:id", h.DeleteUser)
+		adminRoutes.POST("/:id/activate", h.ActivateUser)
+		adminRoutes.POST("/:id/deactivate", h.DeactivateUser)
+		adminRoutes.PUT("/:id/password", h.ResetPassword)
 	}
 
 	// Authenticated user routes
 	r.GET("/me", h.GetMe)
 	r.GET("/:id", h.GetUser)
 	r.PUT("/:id", h.UpdateUser)
+	r.PUT("/me/password", h.ChangePassword)
 }
 
 // RegisterAdminRoutes registers admin-only user routes
@@ -232,4 +356,6 @@ func (h *UserHandler) RegisterAdminRoutes(r *gin.RouterGroup) {
 	r.GET("", h.GetUsers)
 	r.POST("", h.CreateUser)
 	r.DELETE("/:id", h.DeleteUser)
+	r.POST("/:id/activate", h.ActivateUser)
+	r.POST("/:id/deactivate", h.DeactivateUser)
 }
