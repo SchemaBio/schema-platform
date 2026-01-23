@@ -121,6 +121,11 @@ func SetupRouter(deps *Dependencies, jwtManager *jwt.Manager) *gin.Engine {
 		// Batch routes
 		batches := protected.Group("/batches")
 		deps.BatchHandler.RegisterRoutes(batches)
+
+		// === Audit Routes (Admin only) ===
+		audits := protected.Group("/audits")
+		audits.Use(middleware.RequireAdmin())
+		deps.AuditHandler.RegisterRoutes(audits)
 	}
 
 	return r

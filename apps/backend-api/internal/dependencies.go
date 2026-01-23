@@ -44,6 +44,9 @@ type Dependencies struct {
 	GeneListRepo          *repository.GeneListRepository
 	SangerValidationRepo  *repository.SangerValidationRepository
 
+	// Audit Repository
+	AuditLogRepo *repository.AuditLogRepository
+
 	// JWT Manager
 	JWTManager *jwt.Manager
 
@@ -71,6 +74,9 @@ type Dependencies struct {
 	PedigreeService    *service.PedigreeService
 	GeneListService    *service.GeneListService
 
+	// Audit Service
+	AuditService *service.AuditService
+
 	// Handlers
 	HealthHandler        *handler.HealthHandler
 	AuthHandler          *handler.AuthHandler
@@ -93,6 +99,9 @@ type Dependencies struct {
 	// Germline Handlers
 	PedigreeHandler  *handler.PedigreeHandler
 	GeneListHandler  *handler.GeneListHandler
+
+	// Audit Handler
+	AuditHandler *handler.AuditHandler
 }
 
 // NewDependencies initializes all dependencies
@@ -124,6 +133,9 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 	pedigreeMemberRepo := repository.NewPedigreeMemberRepository(db)
 	geneListRepo := repository.NewGeneListRepository(db)
 	sangerValidationRepo := repository.NewSangerValidationRepository(db)
+
+	// Initialize audit repository
+	auditLogRepo := repository.NewAuditLogRepository(db)
 
 	// Initialize JWT Manager
 	accessExpiry := time.Duration(jwtExpiryHours) * time.Hour
@@ -163,6 +175,9 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 	pedigreeService := service.NewPedigreeService(pedigreeRepo, pedigreeMemberRepo, sampleRepo)
 	geneListService := service.NewGeneListService(geneListRepo)
 
+	// Initialize audit service
+	auditService := service.NewAuditService(auditLogRepo)
+
 	// Initialize handlers
 	healthHandler := handler.NewHealthHandler(db)
 	authHandler := handler.NewAuthHandler(authService)
@@ -185,6 +200,9 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 	// Initialize Germline handlers
 	pedigreeHandler := handler.NewPedigreeHandler(pedigreeRepo, pedigreeMemberRepo, sampleRepo)
 	geneListHandler := handler.NewGeneListHandler(geneListRepo)
+
+	// Initialize audit handler
+	auditHandler := handler.NewAuditHandler(auditService)
 
 	return &Dependencies{
 		// Config
@@ -218,6 +236,9 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 		GeneListRepo:         geneListRepo,
 		SangerValidationRepo: sangerValidationRepo,
 
+		// Audit Repository
+		AuditLogRepo: auditLogRepo,
+
 		// JWT Manager
 		JWTManager: jwtManager,
 
@@ -245,6 +266,9 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 		PedigreeService: pedigreeService,
 		GeneListService: geneListService,
 
+		// Audit Service
+		AuditService: auditService,
+
 		// Handlers
 		HealthHandler:        healthHandler,
 		AuthHandler:          authHandler,
@@ -267,5 +291,8 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 		// Germline Handlers
 		PedigreeHandler: pedigreeHandler,
 		GeneListHandler: geneListHandler,
+
+		// Audit Handler
+		AuditHandler: auditHandler,
 	}
 }

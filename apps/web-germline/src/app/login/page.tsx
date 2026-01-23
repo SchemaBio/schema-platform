@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button, Input } from '@schema/ui-kit';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { authApi } from '@/lib/auth';
+import { ApiError } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = React.useState('');
+  const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -17,31 +19,24 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    if (!username || !password) {
-      setError('请输入用户名和密码');
+
+    if (!email || !password) {
+      setError('请输入邮箱和密码');
       return;
     }
 
     setLoading(true);
-    
-    // Demo 模式：模拟登录验证
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Demo 账号验证
-    if (username === 'demo' && password === 'demo123') {
-      // 存储登录状态
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('user', JSON.stringify({
-        id: 'user-001',
-        username: 'demo',
-        name: '演示用户',
-        role: 'analyst',
-        avatar: null,
-      }));
+
+    try {
+      await authApi.login({ email, password });
       router.push('/dashboard');
-    } else {
-      setError('用户名或密码错误');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const data = err.data as { message?: string } | null;
+        setError(data?.message || '登录失败，请检查邮箱和密码');
+      } else {
+        setError('网络错误，请稍后重试');
+      }
       setLoading(false);
     }
   };
@@ -108,12 +103,12 @@ export default function LoginPage() {
             {/* 用户名 */}
             <div>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="用户名"
-                autoComplete="username"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="邮箱"
+                autoComplete="email"
                 autoFocus
                 className="h-12 text-base"
               />
@@ -173,12 +168,12 @@ export default function LoginPage() {
             <p className="text-xs text-fg-muted text-center mb-3">Demo 演示账号</p>
             <div className="bg-canvas-subtle rounded-md p-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-fg-muted">用户名：</span>
-                <code className="text-fg-default font-mono">demo</code>
+                <span className="text-fg-muted">邮箱：</span>
+                <code className="text-fg-default font-mono">admin@schema.bio</code>
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-fg-muted">密码：</span>
-                <code className="text-fg-default font-mono">demo123</code>
+                <code className="text-fg-default font-mono">admin123</code>
               </div>
             </div>
           </div>
