@@ -85,6 +85,19 @@ const statsCards = [
     changeColor: 'text-green-500',
     href: '/tasks/completed',
   },
+  {
+    title: '平均周转',
+    value: '3.2天',
+    change: '-0.5',
+    changeLabel: '优化',
+    icon: TrendingUp,
+    bgColor: 'bg-teal-50',
+    iconColor: 'text-teal-500',
+    valueColor: 'text-teal-700',
+    titleColor: 'text-teal-600',
+    changeColor: 'text-teal-500',
+    href: '/tasks',
+  },
 ];
 
 // 待分析样本列表
@@ -180,14 +193,6 @@ const globalNotes = [
   },
 ];
 
-// 本周统计
-const weeklyStats = {
-  samplesReceived: 45,
-  tasksCompleted: 38,
-  reportsReleased: 32,
-  avgTurnaroundDays: 3.2,
-};
-
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [newNote, setNewNote] = useState('');
@@ -231,13 +236,6 @@ export default function DashboardPage() {
     setNewNote('');
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleAddNote();
-    }
-  };
-
   const handleDeleteNote = (id: string) => {
     setNotes(notes.filter((n) => n.id !== id));
     setDeleteConfirm(null);
@@ -248,9 +246,10 @@ export default function DashboardPage() {
   };
 
   return (
-    <PageContent>
+    <PageContent padded={false} className="h-full flex flex-col">
+      <div className="p-6 flex flex-col h-full min-h-0">
       {/* 欢迎信息 */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between shrink-0">
         <div>
           <h2 className="text-xl font-semibold text-fg-default">欢迎回来，张医生</h2>
           <p className="text-sm text-fg-muted mt-1">
@@ -291,7 +290,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 shrink-0">
         {statsCards.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -315,111 +314,90 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* 全局备注 */}
-      <div className="mb-6 bg-canvas-default rounded-lg border border-border">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="font-medium text-fg-default flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-accent-fg" />
-            全局备注
-          </h3>
-          <span className="text-xs text-fg-muted">组织内所有人可见</span>
-        </div>
+      {/* 全局备注 + 待分析任务 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
+        {/* 全局备注 */}
+        <div className="bg-canvas-default rounded-lg border border-border flex flex-col min-h-0">
+          <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+            <h3 className="font-medium text-fg-default flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-accent-fg" />
+              全局备注
+            </h3>
+            <span className="text-xs text-fg-muted">组织内可见</span>
+          </div>
 
-        {/* 发备注输入框 */}
-        <div className="p-4 border-b border-border bg-canvas-subtle">
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-sm font-medium text-accent-fg shrink-0">
-              张
-            </div>
-            <div className="flex-1">
-              <textarea
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="发布一条备注..."
-                className="w-full px-3 py-2 text-sm border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-accent-muted focus:border-accent-muted"
-                rows={2}
-              />
-              <div className="flex justify-end mt-2">
-                <button
-                  onClick={handleAddNote}
-                  disabled={!newNote.trim()}
-                  className="px-3 py-1.5 text-sm bg-accent-emphasis text-white rounded-md hover:bg-accent-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  发布
-                </button>
+          {/* 发备注输入框 */}
+          <div className="p-3 border-b border-border bg-canvas-subtle shrink-0">
+            <div className="flex gap-3">
+              <div className="w-7 h-7 rounded-full bg-accent-subtle flex items-center justify-center text-xs font-medium text-accent-fg shrink-0">
+                张
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <div className="flex-1 relative flex items-center bg-canvas-default rounded-lg border border-border focus-within:border-accent-muted focus-within:ring-1 focus-within:ring-accent-muted transition-all">
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAddNote();
+                      }
+                    }}
+                    placeholder="发布备注..."
+                    className="flex-1 w-full px-3 py-2 text-sm bg-transparent focus:outline-none"
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    disabled={!newNote.trim()}
+                    className="shrink-0 w-7 h-7 mr-1 flex items-center justify-center rounded-md bg-accent-emphasis text-white hover:bg-accent-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="发布"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* 备注列表 */}
-        <div className="divide-y divide-border max-h-80 overflow-y-auto">
-          {notes.map((note) => (
-            <div key={note.id} className="p-4 hover:bg-canvas-subtle transition-colors group">
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-canvas-inset flex items-center justify-center text-sm font-medium text-fg-muted shrink-0">
-                  {note.avatar}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-fg-default">{note.author}</span>
-                    <span className="text-xs text-fg-muted">{note.createdAt}</span>
-                    {canDeleteNote(note) && (
-                      <button
-                        onClick={() => setDeleteConfirm({ id: note.id, author: note.author })}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-subtle text-fg-muted hover:text-danger-fg transition-all"
-                        title="删除"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+          {/* 备注列表 */}
+          <div className="divide-y divide-border overflow-y-auto flex-1">
+            {notes.map((note) => (
+              <div key={note.id} className="p-3 hover:bg-canvas-subtle transition-colors group">
+                <div className="flex gap-3">
+                  <div className="w-7 h-7 rounded-full bg-canvas-inset flex items-center justify-center text-xs font-medium text-fg-muted shrink-0">
+                    {note.avatar}
                   </div>
-                  <p className="text-sm text-fg-default whitespace-pre-wrap">{note.content}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-sm font-medium text-fg-default">{note.author}</span>
+                      <span className="text-xs text-fg-muted">{note.createdAt}</span>
+                      {canDeleteNote(note) && (
+                        <button
+                          onClick={() => setDeleteConfirm({ id: note.id, author: note.author })}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-subtle text-fg-muted hover:text-danger-fg transition-all"
+                          title="删除"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm text-fg-default">{note.content}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {notes.length === 0 && (
-            <div className="p-8 text-center text-fg-muted text-sm">
-              暂无备注，发布第一条备注吧
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 删除确认弹窗 */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} />
-          <div className="relative bg-canvas-default rounded-lg shadow-lg border border-border p-4 w-full max-w-sm mx-4">
-            <h4 className="text-base font-medium text-fg-default mb-2">确认删除</h4>
-            <p className="text-sm text-fg-muted mb-4">
-              确定要删除 {deleteConfirm.author} 的这条备注吗？此操作不可撤销。
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-3 py-1.5 text-sm text-fg-default border border-border rounded-md hover:bg-canvas-subtle transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={() => handleDeleteNote(deleteConfirm.id)}
-                className="px-3 py-1.5 text-sm bg-danger-emphasis text-white rounded-md hover:bg-danger-muted transition-colors"
-              >
-                删除
-              </button>
-            </div>
+            ))}
+            {notes.length === 0 && (
+              <div className="p-6 text-center text-fg-muted text-sm">
+                暂无备注
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 待分析任务 */}
-        <div className="lg:col-span-2 bg-canvas-default rounded-lg border border-border">
-          <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="bg-canvas-default rounded-lg border border-border flex flex-col min-h-0">
+          <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
             <h3 className="font-medium text-fg-default flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-orange-500" />
               待分析任务
@@ -431,7 +409,7 @@ export default function DashboardPage() {
               查看全部 <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border overflow-y-auto flex-1">
             {pendingSamples.map((sample) => (
               <div
                 key={sample.id}
@@ -463,42 +441,34 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
+      </div>
 
-        {/* 本周统计 */}
-        <div className="bg-canvas-default rounded-lg border border-border">
-          <div className="p-4 border-b border-border">
-            <h3 className="font-medium text-fg-default flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-green-500" />
-              本周统计
-            </h3>
-          </div>
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-fg-muted">收样数量</span>
-              <span className="font-medium text-fg-default">
-                {weeklyStats.samplesReceived}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-fg-muted">完成任务</span>
-              <span className="font-medium text-fg-default">
-                {weeklyStats.tasksCompleted}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-fg-muted">发放报告</span>
-              <span className="font-medium text-fg-default">
-                {weeklyStats.reportsReleased}
-              </span>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <span className="text-sm text-fg-muted">平均周转时间</span>
-              <span className="font-medium text-accent-fg">
-                {weeklyStats.avgTurnaroundDays} 天
-              </span>
+      {/* 删除确认弹窗 */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} />
+          <div className="relative bg-canvas-default rounded-lg shadow-lg border border-border p-4 w-full max-w-sm mx-4">
+            <h4 className="text-base font-medium text-fg-default mb-2">确认删除</h4>
+            <p className="text-sm text-fg-muted mb-4">
+              确定要删除 {deleteConfirm.author} 的这条备注吗？此操作不可撤销。
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-3 py-1.5 text-sm text-fg-default border border-border rounded-md hover:bg-canvas-subtle transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => handleDeleteNote(deleteConfirm.id)}
+                className="px-3 py-1.5 text-sm bg-danger-emphasis text-white rounded-md hover:bg-danger-muted transition-colors"
+              >
+                删除
+              </button>
             </div>
           </div>
         </div>
+      )}
       </div>
     </PageContent>
   );
