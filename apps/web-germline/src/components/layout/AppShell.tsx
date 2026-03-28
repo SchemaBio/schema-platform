@@ -3,10 +3,9 @@
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, Info } from 'lucide-react';
+import { Settings, Info, Shield } from 'lucide-react';
 import { Breadcrumb, type BreadcrumbItem } from '@schema/ui-kit';
 import { SidebarNav } from './SidebarNav';
-import { SearchInput } from './SearchInput';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobileNav } from './MobileNav';
@@ -31,6 +30,7 @@ const pathLabelMap: Record<string, string> = {
   knowledge: '知识中心',
   settings: '系统设置',
   about: '关于',
+  privacy: '隐私协议',
   // 样本管理子页面
   new: '新建',
   import: '批量导入',
@@ -200,9 +200,8 @@ export function AppShell({ children }: AppShellProps) {
             {breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
           </div>
 
-          {/* Right: Search + Settings + About */}
+          {/* Right: Settings + About */}
           <div className="flex items-center gap-2 shrink-0">
-            <SearchInput />
             <Link
               href="/settings"
               className="p-2 rounded-md text-fg-muted hover:text-fg-default hover:bg-canvas-inset transition-colors"
@@ -216,6 +215,13 @@ export function AppShell({ children }: AppShellProps) {
               aria-label="关于"
             >
               <Info className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/privacy"
+              className="p-2 rounded-md text-fg-muted hover:text-fg-default hover:bg-canvas-inset transition-colors"
+              aria-label="隐私协议"
+            >
+              <Shield className="w-5 h-5" />
             </Link>
           </div>
         </header>
