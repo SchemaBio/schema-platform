@@ -25,6 +25,8 @@ export interface Column<T> {
   pinned?: 'left' | 'right';
   /** Column visibility */
   visible?: boolean;
+  /** Column alignment */
+  align?: 'left' | 'center' | 'right';
 }
 
 export interface DataTableProps<T> {
@@ -409,21 +411,27 @@ export function DataTable<T>({
     const width = getColumnWidth(column);
     const isSortable = column.sortable && onSortChange;
     const isSorted = sortColumn === column.id;
+    const align = column.align || 'left';
+
+    const justifyClass = align === 'center' ? 'justify-center' : align === 'right' ? 'justify-end' : 'justify-start';
 
     return (
       <th
         key={column.id}
         className={cn(
-          'relative px-3 py-2 text-left text-sm font-semibold text-fg-default',
+          'relative px-3 py-2 text-sm font-semibold text-fg-default',
           'border-b border-border-default bg-canvas-subtle',
           isPinned && 'sticky z-10',
-          isSortable && 'cursor-pointer select-none hover:bg-canvas-inset'
+          isSortable && 'cursor-pointer select-none hover:bg-canvas-inset',
+          align === 'center' && 'text-center',
+          align === 'right' && 'text-right',
+          align === 'left' && 'text-left'
         )}
         style={{ width, minWidth: column.minWidth, maxWidth: column.maxWidth }}
         onClick={isSortable ? () => handleSort(column.id) : undefined}
         aria-sort={isSorted ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
       >
-        <div className="flex items-center">
+        <div className={cn('flex items-center', justifyClass)}>
           {typeof column.header === 'string' ? column.header : column.header}
           {isSortable && <SortIcon direction={isSorted ? (sortDirection ?? null) : null} />}
         </div>
@@ -435,6 +443,7 @@ export function DataTable<T>({
   // Render data cell
   const renderDataCell = (row: T, column: Column<T>, isPinned: boolean = false) => {
     const width = getColumnWidth(column);
+    const align = column.align || 'left';
 
     return (
       <td
@@ -442,7 +451,10 @@ export function DataTable<T>({
         className={cn(
           'px-3 py-2 text-sm text-fg-default',
           'border-b border-border-muted',
-          isPinned && 'sticky bg-canvas-default z-10'
+          isPinned && 'sticky bg-canvas-default z-10',
+          align === 'center' && 'text-center',
+          align === 'right' && 'text-right',
+          align === 'left' && 'text-left'
         )}
         style={{ width, minWidth: column.minWidth, maxWidth: column.maxWidth }}
       >

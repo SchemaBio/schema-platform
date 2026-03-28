@@ -6,8 +6,7 @@ import { X, Search } from 'lucide-react';
 
 interface Sample {
   id: string;
-  name: string;
-  patientName: string;
+  internalId: string;
 }
 
 interface Pipeline {
@@ -18,11 +17,11 @@ interface Pipeline {
 
 // Mock 样本数据
 const mockSamples: Sample[] = [
-  { id: 'S2024120001', name: 'S2024120001', patientName: '张**' },
-  { id: 'S2024120002', name: 'S2024120002', patientName: '李**' },
-  { id: 'S2024120003', name: 'S2024120003', patientName: '王**' },
-  { id: 'S2024120004', name: 'S2024120004', patientName: '赵**' },
-  { id: 'S2024120005', name: 'S2024120005', patientName: '孙**' },
+  { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', internalId: 'INT-001' },
+  { id: 'b2c3d4e5-f678-90ab-cdef-123456789012', internalId: 'INT-002' },
+  { id: 'c3d4e5f6-7890-abcd-ef12-345678901234', internalId: 'INT-003' },
+  { id: 'd4e5f678-90ab-cdef-1234-567890123456', internalId: 'INT-004' },
+  { id: 'e5f67890-abcd-ef12-3456-789012345678', internalId: 'INT-005' },
 ];
 
 // Mock 流程数据
@@ -35,8 +34,7 @@ const mockPipelines: Pipeline[] = [
 
 export interface NewTaskFormData {
   sampleId: string;
-  sampleName: string;
-  patientName: string;
+  internalId: string;
   pipelineId: string;
   pipelineName: string;
   pipelineVersion: string;
@@ -60,7 +58,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
     if (!sampleSearch) return mockSamples;
     const query = sampleSearch.toLowerCase();
     return mockSamples.filter(
-      s => s.id.toLowerCase().includes(query) || s.patientName.includes(query)
+      s => s.id.toLowerCase().includes(query) || s.internalId.toLowerCase().includes(query)
     );
   }, [sampleSearch]);
 
@@ -69,7 +67,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
     if (selectedSample && selectedPipeline) {
       const pipeline = mockPipelines.find(p => p.id === selectedPipeline);
       if (pipeline) {
-        setTaskName(`${selectedSample.id} ${pipeline.name}分析`);
+        setTaskName(`${selectedSample.internalId} ${pipeline.name}分析`);
       }
     }
   }, [selectedSample, selectedPipeline]);
@@ -82,8 +80,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
 
     onSubmit({
       sampleId: selectedSample.id,
-      sampleName: selectedSample.name,
-      patientName: selectedSample.patientName,
+      internalId: selectedSample.internalId,
       pipelineId: pipeline.id,
       pipelineName: pipeline.name,
       pipelineVersion: pipeline.version,
@@ -123,7 +120,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
             <label className="block text-sm font-medium text-gray-700 mb-2">选择样本 *</label>
             <div className="relative mb-2">
               <Input
-                placeholder="搜索样本编号或患者..."
+                placeholder="搜索样本编号或内部编号..."
                 value={sampleSearch}
                 onChange={(e) => setSampleSearch(e.target.value)}
                 leftElement={<Search className="w-4 h-4" />}
@@ -140,8 +137,8 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
                       : 'hover:bg-gray-50'
                   }`}
                 >
-                  <div className="text-sm font-medium">{sample.id}</div>
-                  <div className="text-xs text-gray-500">{sample.patientName}</div>
+                  <div className="text-sm font-mono">{sample.id.substring(0, 8)}...</div>
+                  <div className="text-xs text-gray-500">{sample.internalId}</div>
                 </div>
               ))}
               {filteredSamples.length === 0 && (
@@ -152,7 +149,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
             </div>
             {selectedSample && (
               <div className="mt-2 text-sm text-accent-fg">
-                已选择: {selectedSample.id} ({selectedSample.patientName})
+                已选择: {selectedSample.internalId}
               </div>
             )}
           </div>

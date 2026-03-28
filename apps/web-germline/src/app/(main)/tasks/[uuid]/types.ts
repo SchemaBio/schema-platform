@@ -9,8 +9,8 @@ export type AnalysisStatus = 'queued' | 'running' | 'completed' | 'failed' | 'pe
 export interface AnalysisTaskDetail {
   id: string;                    // UUID
   name: string;                  // 任务名称
-  sampleId: string;              // 样本ID
-  sampleName: string;            // 样本名称（患者姓名脱敏）
+  sampleId: string;              // 样本ID (UUID)
+  internalId: string;            // 内部编号
   pipeline: string;              // 分析流程名称
   pipelineVersion: string;       // 流程版本
   status: AnalysisStatus;        // 任务状态
@@ -109,17 +109,17 @@ export interface SNVIndel extends VariantReviewStatus {
 
 // ============ 样本信息 ============
 export interface SampleInfo {
-  sampleId: string;
-  sampleName: string;
+  sampleId: string;              // 样本UUID
+  internalId: string;            // 内部编号
   gender: 'Male' | 'Female' | 'Unknown';
   age?: number;
-  clinicalDiagnosis?: string;
-  phenotypes?: string[];
-  familyHistory?: string;
   sampleType: string;
   collectionDate: string;
   receivedDate: string;
   reportDate?: string;
+  clinicalDiagnosis?: string;
+  phenotypes?: string[];
+  familyHistory?: string;
 }
 
 // ============ CNV变异(片段级别) ============
@@ -227,7 +227,7 @@ export interface SangerValidation {
 }
 
 // ============ 标签页类型 ============
-export type TabType = 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'sanger' | 'report';
+export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'sanger' | 'report';
 
 export interface TabConfig {
   id: TabType;
@@ -235,6 +235,7 @@ export interface TabConfig {
 }
 
 export const TAB_CONFIGS: TabConfig[] = [
+  { id: 'sample-info', label: '样本信息' },
   { id: 'qc', label: '质控结果' },
   { id: 'snv-indel', label: 'SNV/InDel' },
   { id: 'cnv-segment', label: 'CNV(Region)' },

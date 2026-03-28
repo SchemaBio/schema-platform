@@ -9,7 +9,7 @@ import { Search, FlaskConical } from 'lucide-react';
 interface PendingTask {
   id: string;
   sampleId: string;
-  sampleName: string;
+  internalId: string;
   pipeline: string;
   variantCount: number;
   completedAt: string;
@@ -19,8 +19,8 @@ interface PendingTask {
 const mockPendingTasks: PendingTask[] = [
   {
     id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     pipeline: 'WES-Germline-v1',
     variantCount: 15680,
     completedAt: '2024-12-25 13:15',
@@ -28,8 +28,8 @@ const mockPendingTasks: PendingTask[] = [
   },
   {
     id: 'f6a7b8c9-d0e1-2345-abcd-567890123456',
-    sampleId: 'S2024120005',
-    sampleName: '陈**',
+    sampleId: 'e5f67890-abcd-ef12-3456-789012345678',
+    internalId: 'INT-005',
     pipeline: 'WES-Germline-v1',
     variantCount: 14520,
     completedAt: '2024-12-26 16:30',
@@ -37,8 +37,8 @@ const mockPendingTasks: PendingTask[] = [
   },
   {
     id: 'a7b8c9d0-e1f2-3456-bcde-678901234567',
-    sampleId: 'S2024120007',
-    sampleName: '吴**',
+    sampleId: 'f8a9b0c1-d2e3-4567-cdef-890123456789',
+    internalId: 'INT-007',
     pipeline: 'Panel-Cardio',
     variantCount: 856,
     completedAt: '2024-12-27 10:00',
@@ -56,7 +56,7 @@ export default function PendingAnalysisPage() {
       (t) =>
         t.id.toLowerCase().includes(query) ||
         t.sampleId.toLowerCase().includes(query) ||
-        t.sampleName.includes(query)
+        t.internalId.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
@@ -76,8 +76,8 @@ export default function PendingAnalysisPage() {
       header: '样本',
       accessor: (row) => (
         <div>
-          <div className="text-fg-default">{row.sampleId}</div>
-          <div className="text-xs text-fg-muted">{row.sampleName}</div>
+          <div className="font-mono text-xs">{row.sampleId.substring(0, 8)}...</div>
+          <div className="text-xs text-fg-muted">{row.internalId}</div>
         </div>
       ),
       width: 140,

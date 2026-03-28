@@ -32,39 +32,37 @@ export function SampleInfoTab({ sample }: SampleInfoTabProps) {
 
   return (
     <div className="space-y-4">
-      <InfoCard title="个人信息">
+      <InfoCard title="基本信息">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <InfoItem label="姓名" value={sample.name} />
-          <InfoItem label="性别" value={<span className={genderInfo.color}>{genderInfo.label}</span>} />
-          <InfoItem label="年龄" value={`${sample.age}岁`} />
-          <InfoItem label="出生日期" value={sample.birthDate} />
-          <InfoItem label="民族" value={sample.ethnicity} />
-          <InfoItem label="身份证号" value={sample.idCard} />
-          <InfoItem label="联系电话" value={sample.phone} />
-        </div>
-      </InfoCard>
-
-      <InfoCard title="样本信息">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <InfoItem label="样本编号" value={<span className="font-mono">{sample.id}</span>} />
+          <InfoItem label="样本编号" value={<span className="font-mono text-xs">{sample.id}</span>} />
           <InfoItem label="内部编号" value={sample.internalId} />
+          <InfoItem label="性别" value={<span className={genderInfo.color}>{genderInfo.label}</span>} />
           <InfoItem label="样本类型" value={sample.sampleType} />
-          <InfoItem label="家系编号" value={sample.pedigreeId} />
-          <InfoItem label="家系名称" value={sample.pedigreeName} />
           <InfoItem label="创建时间" value={sample.createdAt} />
           <InfoItem label="更新时间" value={sample.updatedAt} />
         </div>
       </InfoCard>
 
+      <InfoCard title="匹配数据">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {sample.matchedPair ? (
+            <>
+              <InfoItem label="R1路径" value={<span className="font-mono text-xs break-all">{sample.matchedPair.r1Path}</span>} />
+              <InfoItem label="R2路径" value={<span className="font-mono text-xs break-all">{sample.matchedPair.r2Path}</span>} />
+            </>
+          ) : (
+            <InfoItem label="匹配数据" value="暂无匹配数据" />
+          )}
+        </div>
+      </InfoCard>
+
       <InfoCard title="送检信息">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <InfoItem label="送检医院" value={sample.hospital} />
-          <InfoItem label="送检项目" value={sample.testProject} />
           {sample.submissionInfo && (
             <>
-              <InfoItem label="送检科室" value={sample.submissionInfo.department} />
-              <InfoItem label="送检医生" value={sample.submissionInfo.doctor} />
               <InfoItem label="送检日期" value={sample.submissionInfo.submissionDate} />
+              <InfoItem label="采样日期" value={sample.submissionInfo.sampleCollectionDate} />
+              <InfoItem label="收样日期" value={sample.submissionInfo.sampleReceiveDate} />
               <InfoItem
                 label="样本质量"
                 value={

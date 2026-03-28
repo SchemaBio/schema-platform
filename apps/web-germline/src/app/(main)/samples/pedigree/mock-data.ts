@@ -4,36 +4,36 @@ import type { Pedigree, PedigreeListItem, PedigreeMember } from './types';
 export const mockPedigreeList: PedigreeListItem[] = [
   {
     id: 'FAM001',
-    name: '张氏家系',
+    name: 'FAM001',
     memberCount: 6,
     sampledCount: 3,
-    sampleIds: ['S2024120001', 'S2024120002', 'S2024120006'],
-    probandSampleId: 'S2024120001',
-    probandName: '张三',
+    sampleIds: ['a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'b2c3d4e5-f678-90ab-cdef-123456789012'],
+    probandSampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    probandInternalId: 'INT-001',
     disease: '遗传性心肌病',
     createdAt: '2024-12-15',
     updatedAt: '2024-12-25',
   },
   {
     id: 'FAM002',
-    name: '王氏家系',
+    name: 'FAM002',
     memberCount: 4,
     sampledCount: 2,
-    sampleIds: ['S2024120003', 'S2024120007'],
-    probandSampleId: 'S2024120003',
-    probandName: '王五',
+    sampleIds: ['c3d4e5f6-7890-abcd-ef12-345678901234'],
+    probandSampleId: 'c3d4e5f6-7890-abcd-ef12-345678901234',
+    probandInternalId: 'INT-003',
     disease: '智力发育迟缓',
     createdAt: '2024-12-18',
     updatedAt: '2024-12-22',
   },
   {
     id: 'FAM003',
-    name: '孙氏家系',
+    name: 'FAM003',
     memberCount: 3,
     sampledCount: 1,
-    sampleIds: ['S2024120005'],
-    probandSampleId: 'S2024120005',
-    probandName: '孙七',
+    sampleIds: ['e5f67890-abcd-ef12-3456-789012345678'],
+    probandSampleId: 'e5f67890-abcd-ef12-3456-789012345678',
+    probandInternalId: 'INT-005',
     disease: '遗传性耳聋',
     createdAt: '2024-12-20',
     updatedAt: '2024-12-24',
@@ -44,7 +44,7 @@ export const mockPedigreeList: PedigreeListItem[] = [
 const mockPedigrees: Record<string, Pedigree> = {
   'FAM001': {
     id: 'FAM001',
-    name: '张氏家系',
+    name: 'FAM001',
     probandId: 'M001',
     disease: '遗传性心肌病',
     createdAt: '2024-12-15',
@@ -54,7 +54,7 @@ const mockPedigrees: Record<string, Pedigree> = {
       // 第-2代（祖父母）
       {
         id: 'M005',
-        name: '张祖父',
+        name: '祖父',
         gender: 'male',
         birthYear: 1940,
         isDeceased: true,
@@ -67,7 +67,7 @@ const mockPedigrees: Record<string, Pedigree> = {
       },
       {
         id: 'M006',
-        name: '张祖母',
+        name: '祖母',
         gender: 'female',
         birthYear: 1942,
         relation: 'grandmother_paternal',
@@ -78,8 +78,8 @@ const mockPedigrees: Record<string, Pedigree> = {
       // 第-1代（父母）
       {
         id: 'M002',
-        sampleId: 'S2024120002',
-        name: '张父',
+        sampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012',
+        name: '父亲',
         gender: 'male',
         birthYear: 1968,
         relation: 'father',
@@ -93,7 +93,7 @@ const mockPedigrees: Record<string, Pedigree> = {
       },
       {
         id: 'M003',
-        name: '张母',
+        name: '母亲',
         gender: 'female',
         birthYear: 1970,
         relation: 'mother',
@@ -105,8 +105,8 @@ const mockPedigrees: Record<string, Pedigree> = {
       // 第0代（先证者及兄弟姐妹）
       {
         id: 'M001',
-        sampleId: 'S2024120001',
-        name: '张三',
+        sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        name: '先证者',
         gender: 'male',
         birthYear: 1996,
         relation: 'proband',
@@ -119,8 +119,7 @@ const mockPedigrees: Record<string, Pedigree> = {
       },
       {
         id: 'M004',
-        sampleId: 'S2024120006',
-        name: '张妹',
+        name: '妹妹',
         gender: 'female',
         birthYear: 1999,
         relation: 'sibling',
@@ -134,7 +133,7 @@ const mockPedigrees: Record<string, Pedigree> = {
   },
   'FAM002': {
     id: 'FAM002',
-    name: '王氏家系',
+    name: 'FAM002',
     probandId: 'M101',
     disease: '智力发育迟缓',
     createdAt: '2024-12-18',
@@ -142,7 +141,7 @@ const mockPedigrees: Record<string, Pedigree> = {
     members: [
       {
         id: 'M102',
-        name: '王父',
+        name: '父亲',
         gender: 'male',
         birthYear: 1985,
         relation: 'father',
@@ -153,8 +152,7 @@ const mockPedigrees: Record<string, Pedigree> = {
       },
       {
         id: 'M103',
-        sampleId: 'S2024120007',
-        name: '王母',
+        name: '母亲',
         gender: 'female',
         birthYear: 1988,
         relation: 'mother',
@@ -165,8 +163,8 @@ const mockPedigrees: Record<string, Pedigree> = {
       },
       {
         id: 'M101',
-        sampleId: 'S2024120003',
-        name: '王五',
+        sampleId: 'c3d4e5f6-7890-abcd-ef12-345678901234',
+        name: '先证者',
         gender: 'male',
         birthYear: 2019,
         relation: 'proband',
@@ -179,7 +177,7 @@ const mockPedigrees: Record<string, Pedigree> = {
       },
       {
         id: 'M104',
-        name: '王弟',
+        name: '弟弟',
         gender: 'male',
         birthYear: 2022,
         relation: 'sibling',
@@ -200,13 +198,13 @@ export async function getPedigreeDetail(pedigreeId: string): Promise<Pedigree | 
 }
 
 // 获取可用于添加到家系的样本列表
-export async function getAvailableSamples(): Promise<{ id: string; name: string; gender: 'male' | 'female' | 'unknown' }[]> {
+export async function getAvailableSamples(): Promise<{ id: string; internalId: string; gender: 'male' | 'female' | 'unknown' }[]> {
   await new Promise(resolve => setTimeout(resolve, 200));
   return [
-    { id: 'S2024120001', name: '张三', gender: 'male' },
-    { id: 'S2024120002', name: '李四', gender: 'female' },
-    { id: 'S2024120003', name: '王五', gender: 'male' },
-    { id: 'S2024120004', name: '赵六', gender: 'female' },
-    { id: 'S2024120005', name: '孙七', gender: 'male' },
+    { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', internalId: 'INT-001', gender: 'male' },
+    { id: 'b2c3d4e5-f678-90ab-cdef-123456789012', internalId: 'INT-002', gender: 'male' },
+    { id: 'c3d4e5f6-7890-abcd-ef12-345678901234', internalId: 'INT-003', gender: 'male' },
+    { id: 'd4e5f678-90ab-cdef-1234-567890123456', internalId: 'INT-004', gender: 'female' },
+    { id: 'e5f67890-abcd-ef12-3456-789012345678', internalId: 'INT-005', gender: 'male' },
   ];
 }

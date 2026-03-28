@@ -44,10 +44,10 @@ export function TaskHeader({ task, onBack }: TaskHeaderProps) {
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-fg-muted">
             <div className="flex items-center gap-1">
               <span className="font-medium text-fg-default">样本:</span>
-              <span>{task.sampleId}</span>
-              <span className="text-fg-subtle">({task.sampleName})</span>
+              <span className="font-mono text-xs">{task.sampleId.substring(0, 8)}</span>
+              <span className="text-fg-subtle">({task.internalId})</span>
             </div>
-            
+
             <div className="flex items-center gap-1">
               <span className="font-medium text-fg-default">分析流程:</span>
               <span>{task.pipeline}</span>

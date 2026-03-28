@@ -7,7 +7,7 @@ import { Button, Tag } from '@schema/ui-kit';
 import { ArrowLeft, Database, User, FileText, Activity, Users, RotateCcw } from 'lucide-react';
 import { getSampleDetail } from '../mock-data';
 import type { SampleDetail } from '../types';
-import { STATUS_CONFIG, GENDER_CONFIG } from '../types';
+import { GENDER_CONFIG } from '../types';
 import { MatchingTab } from './components/MatchingTab';
 import { SampleInfoTab } from './components/SampleInfoTab';
 
@@ -85,8 +85,8 @@ export default function SampleDetailPage() {
     return null;
   }
 
-  const statusInfo = STATUS_CONFIG[sample.status];
   const genderInfo = GENDER_CONFIG[sample.gender];
+  const isMatched = sample.matchedPair !== null;
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -120,13 +120,21 @@ export default function SampleDetailPage() {
             <h4 className="text-sm font-medium text-fg-default mb-3">家族史</h4>
             <div className="space-y-3">
               <div>
-                <span className="text-xs text-fg-muted">家系编号</span>
-                <p className="text-sm text-fg-default">{sample.pedigreeId || '-'}</p>
+                <span className="text-xs text-fg-muted">是否有家族史</span>
+                <p className="text-sm text-fg-default">{sample.familyHistory?.hasHistory ? '有' : '无'}</p>
               </div>
-              <div>
-                <span className="text-xs text-fg-muted">家系名称</span>
-                <p className="text-sm text-fg-default">{sample.pedigreeName || '-'}</p>
-              </div>
+              {sample.familyHistory?.hasHistory && sample.familyHistory.affectedMembers && (
+                <div>
+                  <span className="text-xs text-fg-muted">患病亲属</span>
+                  <div className="mt-1 space-y-1">
+                    {sample.familyHistory.affectedMembers.map((member, i) => (
+                      <div key={i} className="text-sm text-fg-default">
+                        {member.relation}: {member.condition}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -174,10 +182,9 @@ export default function SampleDetailPage() {
 
         <div className="flex items-center justify-between pb-3 border-b border-border-default">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-fg-default">{sample.name}</h2>
+            <h2 className="text-lg font-semibold text-fg-default">{sample.internalId}</h2>
             <span className={`text-sm ${genderInfo.color}`}>{genderInfo.label}</span>
-            <span className="text-sm text-fg-muted">{sample.age}岁</span>
-            <Tag variant={statusInfo.variant}>{statusInfo.label}</Tag>
+            <Tag variant={isMatched ? 'success' : 'warning'}>{isMatched ? '已匹配' : '未匹配'}</Tag>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -194,6 +201,7 @@ export default function SampleDetailPage() {
         <div className="flex items-center gap-4 text-xs text-fg-muted mt-2">
           <span>样本编号: <span className="font-mono">{uuid}</span></span>
           <span>样本类型: {sample.sampleType}</span>
+          <span>匹配数据: {sample.matchedPair ? '已匹配' : '无'}</span>
           <span>创建时间: {sample.createdAt}</span>
         </div>
       </div>

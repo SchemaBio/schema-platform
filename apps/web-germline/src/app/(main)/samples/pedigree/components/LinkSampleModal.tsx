@@ -1,10 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Input } from '@schema/ui-kit';
+import { Button, Input, Tag } from '@schema/ui-kit';
 import { X, Search } from 'lucide-react';
 import { mockSamples } from '../../mock-data';
-import { GENDER_CONFIG } from '../../types';
 
 interface LinkSampleModalProps {
   isOpen: boolean;
@@ -20,7 +19,7 @@ export function LinkSampleModal({ isOpen, onClose, onSelect, memberName }: LinkS
     if (!searchQuery) return mockSamples;
     const query = searchQuery.toLowerCase();
     return mockSamples.filter(
-      (s) => s.id.toLowerCase().includes(query) || s.name.includes(query)
+      (s) => s.id.toLowerCase().includes(query) || s.internalId.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
@@ -50,7 +49,7 @@ export function LinkSampleModal({ isOpen, onClose, onSelect, memberName }: LinkS
         {/* 搜索 */}
         <div className="px-6 py-3 border-b border-gray-200">
           <Input
-            placeholder="搜索样本编号或姓名..."
+            placeholder="搜索样本编号、内部编号..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             leftElement={<Search className="w-4 h-4" />}
@@ -62,7 +61,7 @@ export function LinkSampleModal({ isOpen, onClose, onSelect, memberName }: LinkS
           {filteredSamples.length > 0 ? (
             <div className="divide-y divide-gray-100">
               {filteredSamples.map((sample) => {
-                const genderInfo = GENDER_CONFIG[sample.gender];
+                const isMatched = sample.matchedPair !== null;
                 return (
                   <div
                     key={sample.id}
@@ -74,16 +73,14 @@ export function LinkSampleModal({ isOpen, onClose, onSelect, memberName }: LinkS
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-medium text-gray-900">{sample.id}</span>
-                        <span className="text-gray-500 ml-2">{sample.name}</span>
-                        <span className={`ml-2 text-sm ${genderInfo.color}`}>
-                          {genderInfo.label}
-                        </span>
+                        <span className="font-mono text-sm text-gray-900">{sample.id}</span>
+                        <span className="text-gray-500 ml-2">{sample.internalId}</span>
+                        <Tag variant={isMatched ? 'success' : 'warning'} className="ml-2">{isMatched ? '已匹配' : '未匹配'}</Tag>
                       </div>
                       <span className="text-sm text-gray-400">{sample.sampleType}</span>
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
-                      {sample.hospital} · {sample.testProject}
+                      {sample.clinicalDiagnosis}
                     </div>
                   </div>
                 );

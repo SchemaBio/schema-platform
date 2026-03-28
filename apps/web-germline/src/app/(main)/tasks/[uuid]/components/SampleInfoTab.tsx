@@ -58,8 +58,8 @@ export function SampleInfoTab({ taskId }: SampleInfoTabProps) {
       <div className="bg-canvas-subtle rounded-lg p-4">
         <h4 className="text-sm font-medium text-fg-default mb-3">基本信息</h4>
         <div className="grid grid-cols-2 gap-x-8">
-          <InfoRow label="样本编号" value={sampleInfo.sampleId} />
-          <InfoRow label="样本名称" value={sampleInfo.sampleName} />
+          <InfoRow label="样本编号" value={<span className="font-mono text-xs">{sampleInfo.sampleId}</span>} />
+          <InfoRow label="内部编号" value={sampleInfo.internalId} />
           <InfoRow label="性别" value={genderLabel[sampleInfo.gender]} />
           <InfoRow label="年龄" value={sampleInfo.age ? `${sampleInfo.age}岁` : undefined} />
           <InfoRow label="样本类型" value={sampleInfo.sampleType} />
@@ -74,8 +74,8 @@ export function SampleInfoTab({ taskId }: SampleInfoTabProps) {
         <h4 className="text-sm font-medium text-fg-default mb-3">临床信息</h4>
         <div className="space-y-0">
           <InfoRow label="临床诊断" value={sampleInfo.clinicalDiagnosis} />
-          <InfoRow 
-            label="表型" 
+          <InfoRow
+            label="表型"
             value={
               sampleInfo.phenotypes && sampleInfo.phenotypes.length > 0 ? (
                 <div className="flex flex-wrap gap-1">
@@ -84,7 +84,7 @@ export function SampleInfoTab({ taskId }: SampleInfoTabProps) {
                   ))}
                 </div>
               ) : undefined
-            } 
+            }
           />
           <InfoRow label="家族史" value={sampleInfo.familyHistory} />
         </div>

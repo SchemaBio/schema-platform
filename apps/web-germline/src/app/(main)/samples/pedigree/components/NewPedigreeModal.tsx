@@ -14,7 +14,7 @@ interface NewPedigreeModalProps {
 export interface NewPedigreeFormData {
   name: string;
   disease: string;
-  probandName: string;
+  probandInternalId: string; // 先证者内部编号
   probandGender: Gender;
   probandBirthYear: string;
   note: string;
@@ -30,7 +30,7 @@ export function NewPedigreeModal({ isOpen, onClose, onSubmit }: NewPedigreeModal
   const [formData, setFormData] = React.useState<NewPedigreeFormData>({
     name: '',
     disease: '',
-    probandName: '',
+    probandInternalId: '',
     probandGender: 'unknown',
     probandBirthYear: '',
     note: '',
@@ -48,7 +48,7 @@ export function NewPedigreeModal({ isOpen, onClose, onSubmit }: NewPedigreeModal
     setFormData({
       name: '',
       disease: '',
-      probandName: '',
+      probandInternalId: '',
       probandGender: 'unknown',
       probandBirthYear: '',
       note: '',
@@ -106,11 +106,11 @@ export function NewPedigreeModal({ isOpen, onClose, onSubmit }: NewPedigreeModal
             <h3 className="text-sm font-medium text-gray-700 mb-3">先证者信息</h3>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">姓名 *</label>
+                <label className="block text-xs text-gray-500 mb-1">内部编号 *</label>
                 <Input
-                  value={formData.probandName}
-                  onChange={(e) => handleChange('probandName', e.target.value)}
-                  placeholder="请输入姓名"
+                  value={formData.probandInternalId}
+                  onChange={(e) => handleChange('probandInternalId', e.target.value)}
+                  placeholder="如：INT-001"
                   required
                 />
               </div>

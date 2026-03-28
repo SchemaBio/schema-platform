@@ -9,7 +9,7 @@ import { Search, Eye, FileText, RotateCcw } from 'lucide-react';
 interface CompletedTask {
   id: string;
   sampleId: string;
-  sampleName: string;
+  internalId: string;
   pipeline: string;
   variantCount: number;
   completedAt: string;
@@ -20,8 +20,8 @@ interface CompletedTask {
 const mockCompletedTasks: CompletedTask[] = [
   {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     pipeline: 'WES-Germline-v1',
     variantCount: 15230,
     completedAt: '2024-12-20 14:25',
@@ -30,8 +30,8 @@ const mockCompletedTasks: CompletedTask[] = [
   },
   {
     id: 'g7h8i9j0-k1l2-3456-mnop-qr7890123456',
-    sampleId: 'S2024120006',
-    sampleName: '周**',
+    sampleId: 'f7g8h9i0-j1k2-3456-lmno-qr8901234567',
+    internalId: 'INT-006',
     pipeline: 'WES-Germline-v1',
     variantCount: 14890,
     completedAt: '2024-12-22 11:30',
@@ -40,8 +40,8 @@ const mockCompletedTasks: CompletedTask[] = [
   },
   {
     id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     pipeline: 'WES-Germline-v1',
     variantCount: 15680,
     completedAt: '2024-12-25 13:15',
@@ -60,7 +60,7 @@ export default function CompletedAnalysisPage() {
       (t) =>
         t.id.toLowerCase().includes(query) ||
         t.sampleId.toLowerCase().includes(query) ||
-        t.sampleName.includes(query)
+        t.internalId.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
@@ -80,8 +80,8 @@ export default function CompletedAnalysisPage() {
       header: '样本',
       accessor: (row) => (
         <div>
-          <div className="text-fg-default">{row.sampleId}</div>
-          <div className="text-xs text-fg-muted">{row.sampleName}</div>
+          <div className="font-mono text-xs">{row.sampleId.substring(0, 8)}...</div>
+          <div className="text-xs text-fg-muted">{row.internalId}</div>
         </div>
       ),
       width: 140,

@@ -205,7 +205,7 @@ export default function PedigreePage() {
       members: [
         {
           id: newMemberId,
-          name: data.probandName,
+          name: '先证者', // 使用通用名称
           gender: data.probandGender,
           birthYear: data.probandBirthYear ? parseInt(data.probandBirthYear) : undefined,
           relation: 'proband',
@@ -236,9 +236,9 @@ export default function PedigreePage() {
     if (!searchQuery) return mockPedigreeList;
     const query = searchQuery.toLowerCase();
     return mockPedigreeList.filter(
-      (p) => p.id.toLowerCase().includes(query) || 
-             p.name.includes(query) || 
-             p.probandName.includes(query)
+      (p) => p.id.toLowerCase().includes(query) ||
+             p.name.includes(query) ||
+             p.probandInternalId.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
@@ -276,7 +276,7 @@ export default function PedigreePage() {
       ),
       width: 160,
     },
-    { id: 'probandName', header: '先证者', accessor: 'probandName', width: 80 },
+    { id: 'probandInternalId', header: '先证者', accessor: 'probandInternalId', width: 80 },
     { id: 'disease', header: '主要疾病', accessor: (row) => row.disease || '-', width: 140 },
     {
       id: 'memberCount',

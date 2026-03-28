@@ -61,7 +61,7 @@ export interface PedigreeListItem {
   sampledCount: number;     // 已采样成员数
   sampleIds: string[];      // 家系内样本编号列表
   probandSampleId?: string; // 先证者样本编号
-  probandName: string;
+  probandInternalId: string; // 先证者内部编号
   disease?: string;
   createdAt: string;
   updatedAt: string;

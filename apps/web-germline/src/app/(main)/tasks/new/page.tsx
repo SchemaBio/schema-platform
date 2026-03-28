@@ -16,19 +16,18 @@ function generateUUID(): string {
 
 interface SampleOption {
   id: string;
-  name: string;
-  patientName: string;
+  internalId: string;
   hasData: boolean;
   previousTasks: number;
 }
 
 const mockSamples: SampleOption[] = [
-  { id: 'S2024120001', name: 'S2024120001', patientName: '张**', hasData: true, previousTasks: 2 },
-  { id: 'S2024120002', name: 'S2024120002', patientName: '李**', hasData: true, previousTasks: 1 },
-  { id: 'S2024120003', name: 'S2024120003', patientName: '王**', hasData: true, previousTasks: 1 },
-  { id: 'S2024120004', name: 'S2024120004', patientName: '赵**', hasData: true, previousTasks: 1 },
-  { id: 'S2024120005', name: 'S2024120005', patientName: '陈**', hasData: true, previousTasks: 0 },
-  { id: 'S2024120006', name: 'S2024120006', patientName: '周**', hasData: false, previousTasks: 0 },
+  { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', internalId: 'INT-001', hasData: true, previousTasks: 2 },
+  { id: 'b2c3d4e5-f678-90ab-cdef-123456789012', internalId: 'INT-002', hasData: true, previousTasks: 1 },
+  { id: 'c3d4e5f6-7890-abcd-ef12-345678901234', internalId: 'INT-003', hasData: true, previousTasks: 1 },
+  { id: 'd4e5f678-90ab-cdef-1234-567890123456', internalId: 'INT-004', hasData: true, previousTasks: 1 },
+  { id: 'e5f67890-abcd-ef12-3456-789012345678', internalId: 'INT-005', hasData: true, previousTasks: 0 },
+  { id: 'f6789012-abcd-ef12-3456-789012345678', internalId: 'INT-006', hasData: false, previousTasks: 0 },
 ];
 
 const mockPipelines = [
@@ -53,7 +52,8 @@ export default function NewAnalysisPage() {
     if (selectedSample && selectedPipeline) {
       const pipeline = mockPipelines.find((p) => p.value === selectedPipeline);
       const pipelineName = pipeline?.label.split(' ')[0] || '';
-      setTaskName(`${selectedSample} ${pipelineName}分析`);
+      const sample = mockSamples.find(s => s.id === selectedSample);
+      setTaskName(`${sample?.internalId || ''} ${pipelineName}分析`);
     }
   }, [selectedSample, selectedPipeline]);
 
@@ -98,7 +98,7 @@ export default function NewAnalysisPage() {
           <Select
             options={mockSamples.map((s) => ({
               value: s.id,
-              label: `${s.id} - ${s.patientName}${!s.hasData ? ' (无数据)' : ''}`,
+              label: `${s.internalId}${!s.hasData ? ' (无数据)' : ''}`,
               disabled: !s.hasData,
             }))}
             value={selectedSample}

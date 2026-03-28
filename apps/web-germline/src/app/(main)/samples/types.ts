@@ -1,33 +1,38 @@
 // 样本相关类型定义
 
-export type SampleStatus = 'pending' | 'matched' | 'analyzing' | 'completed';
 export type Gender = 'male' | 'female' | 'unknown';
 export type SampleType = '全血' | '唾液' | 'DNA' | '组织' | '其他';
+
+// 匹配数据结构（双端测序数据）
+export interface MatchedPair {
+  r1Path: string;  // R1文件路径
+  r2Path: string;  // R2文件路径
+}
 
 export interface Sample {
   id: string;
   internalId: string;  // 内部编号
-  name: string;
   gender: Gender;
-  age: number;
-  birthDate: string;
   sampleType: SampleType;
-  pedigreeId: string;
-  pedigreeName: string;
-  hospital: string;     // 送检单位
-  testProject: string;  // 送检项目
-  dataCount: number;
-  status: SampleStatus;
+  batch: string;  // 批次
+  clinicalDiagnosis: string;  // 临床诊断（简要）
+  hpoTerms: { id: string; name: string }[];  // HPO术语
+  matchedPair: MatchedPair | null;  // 匹配的双端数据（每组只能匹配一组）
+  remark: string;  // 备注
   createdAt: string;
   updatedAt: string;
 }
 
-export interface SampleDetail extends Sample {
+export interface SampleDetail {
   // 基本信息
-  idCard?: string;
-  phone?: string;
-  ethnicity?: string;
-  
+  id: string;
+  internalId: string;
+  gender: Gender;
+  sampleType: SampleType;
+  batch: string;
+  matchedPair: MatchedPair | null;
+  remark: string;
+
   // 临床诊断信息
   clinicalDiagnosis: {
     mainDiagnosis: string;
@@ -36,18 +41,15 @@ export interface SampleDetail extends Sample {
     onsetAge?: string;
     diseaseHistory?: string;
   };
-  
+
   // 送检信息
   submissionInfo: {
-    hospital: string;
-    department: string;
-    doctor: string;
     submissionDate: string;
     sampleCollectionDate: string;
     sampleReceiveDate: string;
     sampleQuality: 'good' | 'acceptable' | 'poor';
   };
-  
+
   // 项目信息
   projectInfo: {
     projectId: string;
@@ -57,7 +59,7 @@ export interface SampleDetail extends Sample {
     turnaroundDays: number;
     priority: 'normal' | 'urgent';
   };
-  
+
   // 家族史
   familyHistory: {
     hasHistory: boolean;
@@ -68,7 +70,7 @@ export interface SampleDetail extends Sample {
     }[];
     pedigreeNote?: string;
   };
-  
+
   // 关联分析任务
   analysisTasks: {
     id: string;
@@ -76,6 +78,9 @@ export interface SampleDetail extends Sample {
     status: string;
     createdAt: string;
   }[];
+
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OpenTab {
@@ -83,13 +88,6 @@ export interface OpenTab {
   sampleId: string;
   name: string;
 }
-
-export const STATUS_CONFIG: Record<SampleStatus, { label: string; variant: 'success' | 'warning' | 'danger' | 'info' | 'neutral' }> = {
-  pending: { label: '待匹配', variant: 'neutral' },
-  matched: { label: '已匹配', variant: 'info' },
-  analyzing: { label: '分析中', variant: 'warning' },
-  completed: { label: '已完成', variant: 'success' },
-};
 
 export const GENDER_CONFIG: Record<Gender, { label: string; color: string }> = {
   male: { label: '男', color: 'text-blue-600' },

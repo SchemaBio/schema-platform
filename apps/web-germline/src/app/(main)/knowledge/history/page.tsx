@@ -8,7 +8,7 @@ import { Search, Download, Filter } from 'lucide-react';
 interface HistoryVariant {
   id: string;
   sampleId: string;
-  patientName: string;
+  internalId: string;
   gene: string;
   chromosome: string;
   position: number;
@@ -27,8 +27,8 @@ interface HistoryVariant {
 const mockHistoryVariants: HistoryVariant[] = [
   {
     id: '1',
-    sampleId: 'S2024120001',
-    patientName: '张**',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     gene: 'BRCA1',
     chromosome: 'chr17',
     position: 43094464,
@@ -44,8 +44,8 @@ const mockHistoryVariants: HistoryVariant[] = [
   },
   {
     id: '2',
-    sampleId: 'S2024120015',
-    patientName: '李**',
+    sampleId: 'f1e2d3c4-b5a6-7890-abcd-ef1234567890',
+    internalId: 'INT-015',
     gene: 'PKD1',
     chromosome: 'chr16',
     position: 2138710,
@@ -61,8 +61,8 @@ const mockHistoryVariants: HistoryVariant[] = [
   },
   {
     id: '3',
-    sampleId: 'S2024120022',
-    patientName: '王**',
+    sampleId: 'e2d3c4b5-a6f7-8901-bcde-f12345678901',
+    internalId: 'INT-022',
     gene: 'MYH7',
     chromosome: 'chr14',
     position: 23893394,
@@ -78,8 +78,8 @@ const mockHistoryVariants: HistoryVariant[] = [
   },
   {
     id: '4',
-    sampleId: 'S2024120030',
-    patientName: '赵**',
+    sampleId: 'd3c4b5a6-f7e8-9012-cdef-123456789012',
+    internalId: 'INT-030',
     gene: 'SCN5A',
     chromosome: 'chr3',
     position: 38592065,
@@ -95,8 +95,8 @@ const mockHistoryVariants: HistoryVariant[] = [
   },
   {
     id: '5',
-    sampleId: 'S2024120045',
-    patientName: '陈**',
+    sampleId: 'c4b5a6f7-e8d9-0123-defa-234567890123',
+    internalId: 'INT-045',
     gene: 'LDLR',
     chromosome: 'chr19',
     position: 11224088,
@@ -136,8 +136,17 @@ export default function HistoryVariantsPage() {
       sortable: true,
     },
     { id: 'zygosity', header: '杂合性', accessor: 'zygosity', width: 80 },
-    { id: 'sampleId', header: '样本编号', accessor: 'sampleId', width: 130 },
-    { id: 'patientName', header: '患者', accessor: 'patientName', width: 80 },
+    {
+      id: 'sampleId',
+      header: '样本编号',
+      accessor: (row) => (
+        <div>
+          <div className="font-mono text-xs">{row.sampleId.substring(0, 8)}...</div>
+          <div className="text-xs text-fg-muted">{row.internalId}</div>
+        </div>
+      ),
+      width: 130,
+    },
     { id: 'reportDate', header: '报告日期', accessor: 'reportDate', width: 110, sortable: true },
     {
       id: 'detectionCount',

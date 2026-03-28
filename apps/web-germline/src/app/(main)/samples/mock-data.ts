@@ -5,97 +5,97 @@ export const mockSamples: Sample[] = [
   {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     internalId: 'INT-001',
-    name: '张三',
     gender: 'male',
-    age: 28,
-    birthDate: '1996-05-15',
     sampleType: '全血',
-    pedigreeId: 'FAM001',
-    pedigreeName: '张氏家系',
-    hospital: '北京协和医院',
-    testProject: '全外显子组测序',
-    dataCount: 2,
-    status: 'completed',
-    createdAt: '2024-12-20',
-    updatedAt: '2024-12-25',
+    batch: 'BATCH-2024-001',
+    clinicalDiagnosis: '遗传性心肌病待查',
+    hpoTerms: [
+      { id: 'HP:0001635', name: '充血性心力衰竭' },
+      { id: 'HP:0001962', name: '心悸' },
+    ],
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-001_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-001_R2.fastq.gz',
+    },
+    remark: '家系样本，先证者',
+    createdAt: '2024-12-20 10:30:45',
+    updatedAt: '2024-12-25 14:22:30',
   },
   {
     id: 'b2c3d4e5-f678-90ab-cdef-123456789012',
     internalId: 'INT-002',
-    name: '李四',
-    gender: 'female',
-    age: 35,
-    birthDate: '1989-08-22',
+    gender: 'male',
     sampleType: '唾液',
-    pedigreeId: 'FAM001',
-    pedigreeName: '张氏家系',
-    hospital: '上海儿童医学中心',
-    testProject: '神经发育障碍Panel',
-    dataCount: 1,
-    status: 'analyzing',
-    createdAt: '2024-12-21',
-    updatedAt: '2024-12-21',
+    batch: 'BATCH-2024-001',
+    clinicalDiagnosis: '智力发育迟缓',
+    hpoTerms: [
+      { id: 'HP:0001249', name: '智力障碍' },
+      { id: 'HP:0001263', name: '发育迟缓' },
+    ],
+    matchedPair: null,
+    remark: '',
+    createdAt: '2024-12-21 09:15:20',
+    updatedAt: '2024-12-21 09:15:20',
   },
   {
     id: 'c3d4e5f6-7890-abcd-ef12-345678901234',
     internalId: 'INT-003',
-    name: '王五',
     gender: 'male',
-    age: 5,
-    birthDate: '2019-03-10',
     sampleType: '全血',
-    pedigreeId: 'FAM002',
-    pedigreeName: '王氏家系',
-    hospital: '广州妇女儿童医院',
-    testProject: '遗传代谢病Panel',
-    dataCount: 0,
-    status: 'pending',
-    createdAt: '2024-12-22',
-    updatedAt: '2024-12-22',
+    batch: 'BATCH-2024-002',
+    clinicalDiagnosis: '疑似遗传代谢病',
+    hpoTerms: [],
+    matchedPair: null,
+    remark: '待补充临床信息',
+    createdAt: '2024-12-22 11:45:00',
+    updatedAt: '2024-12-22 11:45:00',
   },
   {
     id: 'd4e5f678-90ab-cdef-1234-567890123456',
     internalId: 'INT-004',
-    name: '赵六',
     gender: 'female',
-    age: 42,
-    birthDate: '1982-11-30',
     sampleType: 'DNA',
-    pedigreeId: '-',
-    pedigreeName: '-',
-    hospital: '浙江大学附属第一医院',
-    testProject: '遗传性肿瘤Panel',
-    dataCount: 3,
-    status: 'matched',
-    createdAt: '2024-12-23',
-    updatedAt: '2024-12-24',
+    batch: 'BATCH-2024-002',
+    clinicalDiagnosis: '家族性乳腺癌',
+    hpoTerms: [
+      { id: 'HP:0003002', name: '乳腺癌' },
+    ],
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-003_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-003_R2.fastq.gz',
+    },
+    remark: 'BRCA1/2检测',
+    createdAt: '2024-12-23 08:30:15',
+    updatedAt: '2024-12-24 16:40:50',
   },
   {
     id: 'e5f67890-abcd-ef12-3456-789012345678',
     internalId: 'INT-005',
-    name: '孙七',
     gender: 'male',
-    age: 18,
-    birthDate: '2006-07-08',
     sampleType: '组织',
-    pedigreeId: 'FAM003',
-    pedigreeName: '孙氏家系',
-    hospital: '中山大学附属第一医院',
-    testProject: '心血管疾病Panel',
-    dataCount: 1,
-    status: 'completed',
-    createdAt: '2024-12-24',
-    updatedAt: '2024-12-28',
+    batch: 'BATCH-2024-003',
+    clinicalDiagnosis: '肥厚型心肌病',
+    hpoTerms: [
+      { id: 'HP:0001639', name: '肥厚型心肌病' },
+    ],
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-006_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-006_R2.fastq.gz',
+    },
+    remark: '心肌组织样本',
+    createdAt: '2024-12-24 13:20:35',
+    updatedAt: '2024-12-28 09:10:00',
   },
 ];
 
 // Mock 样本详情数据
 const mockSampleDetails: Record<string, SampleDetail> = {
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
-    ...mockSamples[0],
-    idCard: '110***********1234',
-    phone: '138****5678',
-    ethnicity: '汉族',
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
+    gender: 'male',
+    sampleType: '全血',
+    batch: 'BATCH-2024-001',
     clinicalDiagnosis: {
       mainDiagnosis: '遗传性心肌病待查',
       symptoms: ['心悸', '胸闷', '运动后气短'],
@@ -107,10 +107,12 @@ const mockSampleDetails: Record<string, SampleDetail> = {
       onsetAge: '25岁',
       diseaseHistory: '患者于3年前开始出现活动后心悸、胸闷症状，近期加重。',
     },
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-001_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-001_R2.fastq.gz',
+    },
+    remark: '家系样本，先证者',
     submissionInfo: {
-      hospital: '北京协和医院',
-      department: '心内科',
-      doctor: '王医生',
       submissionDate: '2024-12-20',
       sampleCollectionDate: '2024-12-19',
       sampleReceiveDate: '2024-12-20',
@@ -136,20 +138,28 @@ const mockSampleDetails: Record<string, SampleDetail> = {
       { id: 'task-001-a1b2', name: 'WES分析', status: 'completed', createdAt: '2024-12-20' },
       { id: 'task-002-b2c3', name: 'CNV分析', status: 'completed', createdAt: '2024-12-21' },
     ],
+    createdAt: '2024-12-20 10:30:45',
+    updatedAt: '2024-12-25 14:22:30',
   },
   'b2c3d4e5-f678-90ab-cdef-123456789012': {
-    ...mockSamples[1],
-    ethnicity: '汉族',
+    id: 'b2c3d4e5-f678-90ab-cdef-123456789012',
+    internalId: 'INT-002',
+    gender: 'male',
+    sampleType: '唾液',
+    batch: 'BATCH-2024-001',
     clinicalDiagnosis: {
       mainDiagnosis: '智力发育迟缓',
       symptoms: ['语言发育迟缓', '运动发育迟缓'],
+      hpoTerms: [
+        { id: 'HP:0001249', name: '智力障碍' },
+        { id: 'HP:0001263', name: '发育迟缓' },
+      ],
       onsetAge: '2岁',
       diseaseHistory: '患儿2岁时发现语言发育明显落后于同龄儿童。',
     },
+    matchedPair: null,
+    remark: '',
     submissionInfo: {
-      hospital: '上海儿童医学中心',
-      department: '神经内科',
-      doctor: '李医生',
       submissionDate: '2024-12-21',
       sampleCollectionDate: '2024-12-20',
       sampleReceiveDate: '2024-12-21',
@@ -168,6 +178,8 @@ const mockSampleDetails: Record<string, SampleDetail> = {
     analysisTasks: [
       { id: 'task-003-c3d4', name: 'WES分析', status: 'running', createdAt: '2024-12-21' },
     ],
+    createdAt: '2024-12-21 09:15:20',
+    updatedAt: '2024-12-21 09:15:20',
   },
 };
 
@@ -175,15 +187,15 @@ const mockSampleDetails: Record<string, SampleDetail> = {
 export async function getSampleDetail(sampleId: string): Promise<SampleDetail | null> {
   // 模拟网络延迟
   await new Promise(resolve => setTimeout(resolve, 300));
-  
+
   // 如果有详细数据则返回，否则基于列表数据生成默认详情
   if (mockSampleDetails[sampleId]) {
     return mockSampleDetails[sampleId];
   }
-  
+
   const sample = mockSamples.find(s => s.id === sampleId);
   if (!sample) return null;
-  
+
   // 生成默认详情
   return {
     ...sample,
@@ -192,12 +204,9 @@ export async function getSampleDetail(sampleId: string): Promise<SampleDetail | 
       symptoms: [],
     },
     submissionInfo: {
-      hospital: '待补充',
-      department: '待补充',
-      doctor: '待补充',
-      submissionDate: sample.createdAt,
-      sampleCollectionDate: sample.createdAt,
-      sampleReceiveDate: sample.createdAt,
+      submissionDate: sample.createdAt.split(' ')[0],
+      sampleCollectionDate: sample.createdAt.split(' ')[0],
+      sampleReceiveDate: sample.createdAt.split(' ')[0],
       sampleQuality: 'good',
     },
     projectInfo: {

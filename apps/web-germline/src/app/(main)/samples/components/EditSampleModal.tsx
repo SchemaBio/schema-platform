@@ -3,15 +3,16 @@
 import * as React from 'react';
 import { Button, Input, Select, TextArea } from '@schema/ui-kit';
 import { X, Search } from 'lucide-react';
-import type { Gender, SampleType } from '../types';
+import type { Gender, SampleType, Sample } from '../types';
 
-interface NewSampleModalProps {
+interface EditSampleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: NewSampleFormData) => void;
+  onSubmit: (id: string, data: EditSampleFormData) => void;
+  sample: Sample | null;
 }
 
-export interface NewSampleFormData {
+export interface EditSampleFormData {
   internalId: string;
   gender: Gender;
   sampleType: SampleType;
@@ -51,8 +52,8 @@ const COMMON_HPO_TERMS = [
   { id: 'HP:0000518', name: '白内障' },
 ];
 
-export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProps) {
-  const [formData, setFormData] = React.useState<NewSampleFormData>({
+export function EditSampleModal({ isOpen, onClose, onSubmit, sample }: EditSampleModalProps) {
+  const [formData, setFormData] = React.useState<EditSampleFormData>({
     internalId: '',
     gender: 'unknown',
     sampleType: '全血',
@@ -67,6 +68,23 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
   const [hpoSearchQuery, setHpoSearchQuery] = React.useState('');
   const [showHpoDropdown, setShowHpoDropdown] = React.useState(false);
 
+  // 当 sample 变化时更新表单数据
+  React.useEffect(() => {
+    if (sample) {
+      setFormData({
+        internalId: sample.internalId,
+        gender: sample.gender,
+        sampleType: sample.sampleType,
+        batch: sample.batch,
+        clinicalDiagnosis: sample.clinicalDiagnosis,
+        hpoTerms: sample.hpoTerms || [],
+        r1Path: sample.matchedPair?.r1Path || '',
+        r2Path: sample.matchedPair?.r2Path || '',
+        remark: sample.remark,
+      });
+    }
+  }, [sample]);
+
   const filteredHpoTerms = React.useMemo(() => {
     if (!hpoSearchQuery) return COMMON_HPO_TERMS.slice(0, 5);
     const query = hpoSearchQuery.toLowerCase();
@@ -75,27 +93,8 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
     );
   }, [hpoSearchQuery]);
 
-  const handleChange = (field: keyof NewSampleFormData, value: string) => {
+  const handleChange = (field: keyof EditSampleFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-    onClose();
-    // 重置表单
-    setFormData({
-      internalId: '',
-      gender: 'unknown',
-      sampleType: '全血',
-      batch: '',
-      clinicalDiagnosis: '',
-      hpoTerms: [],
-      r1Path: '',
-      r2Path: '',
-      remark: '',
-    });
-    setHpoSearchQuery('');
   };
 
   const addHpoTerm = (term: { id: string; name: string }) => {
@@ -113,7 +112,15 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
     }));
   };
 
-  if (!isOpen) return null;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (sample) {
+      onSubmit(sample.id, formData);
+      onClose();
+    }
+  };
+
+  if (!isOpen || !sample) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -124,7 +131,7 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* 头部 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
-          <h2 className="text-lg font-medium text-fg-default">新建样本</h2>
+          <h2 className="text-lg font-medium text-fg-default">编辑样本</h2>
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default transition-colors"
@@ -139,6 +146,14 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
           <div className="mb-6">
             <h3 className="text-sm font-medium text-fg-default mb-3">基本信息</h3>
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-fg-muted mb-1">样本编号</label>
+                <Input
+                  value={sample.id}
+                  disabled
+                  className="bg-gray-50 text-fg-muted"
+                />
+              </div>
               <div>
                 <label className="block text-xs text-fg-muted mb-1">内部编号 *</label>
                 <Input
@@ -280,7 +295,7 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
             取消
           </Button>
           <Button variant="primary" onClick={(e: React.MouseEvent) => handleSubmit(e)}>
-            创建样本
+            保存
           </Button>
         </div>
       </div>

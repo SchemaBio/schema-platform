@@ -11,7 +11,7 @@ interface AnalysisTask {
   id: string;
   name: string;
   sampleId: string;
-  sampleName: string;
+  internalId: string;
   pipeline: string;
   pipelineVersion: string;
   status: 'queued' | 'running' | 'completed' | 'failed' | 'pending_interpretation';
@@ -25,9 +25,9 @@ interface AnalysisTask {
 const mockTasks: AnalysisTask[] = [
   {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    name: 'S2024120001 全外显子分析',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    name: 'INT-001 全外显子分析',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     status: 'completed',
@@ -38,9 +38,9 @@ const mockTasks: AnalysisTask[] = [
   },
   {
     id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    name: 'S2024120001 重新分析',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    name: 'INT-001 重新分析',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     status: 'pending_interpretation',
@@ -51,9 +51,9 @@ const mockTasks: AnalysisTask[] = [
   },
   {
     id: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
-    name: 'S2024120002 心血管Panel',
-    sampleId: 'S2024120002',
-    sampleName: '李**',
+    name: 'INT-002 心血管Panel',
+    sampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012',
+    internalId: 'INT-002',
     pipeline: 'Panel-Cardio',
     pipelineVersion: 'v2.0.1',
     status: 'running',
@@ -63,9 +63,9 @@ const mockTasks: AnalysisTask[] = [
   },
   {
     id: 'd4e5f6a7-b8c9-0123-defa-234567890123',
-    name: 'S2024120003 全外显子分析',
-    sampleId: 'S2024120003',
-    sampleName: '王**',
+    name: 'INT-003 全外显子分析',
+    sampleId: 'c3d4e5f6-7890-abcd-ef12-345678901234',
+    internalId: 'INT-003',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     status: 'queued',
@@ -75,9 +75,9 @@ const mockTasks: AnalysisTask[] = [
   },
   {
     id: 'e5f6a7b8-c9d0-1234-efab-345678901234',
-    name: 'S2024120004 全外显子分析',
-    sampleId: 'S2024120004',
-    sampleName: '赵**',
+    name: 'INT-004 全外显子分析',
+    sampleId: 'd4e5f678-90ab-cdef-1234-567890123456',
+    internalId: 'INT-004',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     status: 'failed',
@@ -123,7 +123,7 @@ export default function AnalysisPage() {
       id: `task-${Date.now()}`,
       name: data.taskName,
       sampleId: data.sampleId,
-      sampleName: data.patientName,
+      internalId: data.internalId,
       pipeline: data.pipelineName,
       pipelineVersion: data.pipelineVersion,
       status: 'queued',
@@ -174,8 +174,8 @@ export default function AnalysisPage() {
       (t) =>
         t.id.toLowerCase().includes(query) ||
         t.sampleId.toLowerCase().includes(query) ||
-        t.name.toLowerCase().includes(query) ||
-        t.sampleName.includes(query)
+        t.internalId.toLowerCase().includes(query) ||
+        t.name.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
@@ -185,8 +185,8 @@ export default function AnalysisPage() {
       header: '样本编号',
       accessor: (row) => (
         <div onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }}>
-          <span className="text-accent-fg hover:underline cursor-pointer">{row.sampleId}</span>
-          <div className="text-xs text-fg-muted">{row.sampleName}</div>
+          <span className="font-mono text-xs text-accent-fg hover:underline cursor-pointer">{row.sampleId.substring(0, 8)}</span>
+          <div className="text-xs text-fg-muted">{row.internalId}</div>
         </div>
       ),
       width: 140,

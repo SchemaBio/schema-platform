@@ -22,9 +22,9 @@ import type {
 const mockTasks: AnalysisTaskDetail[] = [
   {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    name: 'S2024120001 全外显子分析',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    name: 'INT-001 全外显子分析',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     status: 'completed',
@@ -34,9 +34,9 @@ const mockTasks: AnalysisTaskDetail[] = [
   },
   {
     id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    name: 'S2024120001 重新分析',
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    name: 'INT-001 重新分析',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     status: 'pending_interpretation',
@@ -46,9 +46,9 @@ const mockTasks: AnalysisTaskDetail[] = [
   },
   {
     id: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
-    name: 'S2024120002 心血管Panel',
-    sampleId: 'S2024120002',
-    sampleName: '李**',
+    name: 'INT-002 心血管Panel',
+    sampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012',
+    internalId: 'INT-002',
     pipeline: 'Panel-Cardio',
     pipelineVersion: 'v2.0.1',
     status: 'running',
@@ -267,8 +267,8 @@ const mockSNVIndels: SNVIndel[] = [
 // ============ Mock 样本信息数据 ============
 const mockSampleInfo: Record<string, SampleInfo> = {
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     gender: 'Male',
     age: 35,
     clinicalDiagnosis: '疑似遗传性心肌病',
@@ -280,8 +280,8 @@ const mockSampleInfo: Record<string, SampleInfo> = {
     reportDate: '2024-12-25',
   },
   'b2c3d4e5-f6a7-8901-bcde-f12345678901': {
-    sampleId: 'S2024120001',
-    sampleName: '张**',
+    sampleId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+    internalId: 'INT-001',
     gender: 'Male',
     age: 35,
     clinicalDiagnosis: '疑似遗传性心肌病',

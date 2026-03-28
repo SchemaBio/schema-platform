@@ -3,10 +3,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Tag, Button, Input, Select, TextArea } from '@schema/ui-kit';
-import { User, Stethoscope, FileText, FolderKanban, Users, Activity, GitBranch, Pencil, Save, X, Plus, Search } from 'lucide-react';
+import { User, Stethoscope, FileText, FolderKanban, Users, Activity, Pencil, Save, X, Search } from 'lucide-react';
 import { getSampleDetail } from '../mock-data';
 import type { SampleDetail } from '../types';
-import { STATUS_CONFIG, GENDER_CONFIG } from '../types';
+import { GENDER_CONFIG } from '../types';
 
 interface SampleDetailPanelProps {
   sampleId: string;
@@ -196,7 +196,7 @@ export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps)
     );
   }
 
-  const statusInfo = STATUS_CONFIG[sample.status];
+  const isMatched = sample.matchedPair !== null;
   const genderInfo = GENDER_CONFIG[sample.gender];
 
   const renderTabContent = () => {
@@ -204,56 +204,26 @@ export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps)
       case 'basic':
         return (
           <div className="space-y-4">
-            <InfoCard title="个人信息">
+            <InfoCard title="基本信息">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <InfoItem
-                  label="姓名"
-                  value={sample.name}
-                  isEditing={isEditing}
-                  editValue={editData.name}
-                  onEditChange={(v) => handleEditChange('name', v)}
-                />
+                <InfoItem label="样本编号" value={<span className="font-mono text-xs">{sample.id}</span>} />
+                <InfoItem label="内部编号" value={sample.internalId} />
                 <InfoItem label="性别" value={<span className={genderInfo.color}>{genderInfo.label}</span>} />
-                <InfoItem label="年龄" value={`${sample.age}岁`} />
-                <InfoItem
-                  label="出生日期"
-                  value={sample.birthDate}
-                  isEditing={isEditing}
-                  editValue={editData.birthDate}
-                  onEditChange={(v) => handleEditChange('birthDate', v)}
-                  type="date"
-                />
-                <InfoItem
-                  label="民族"
-                  value={sample.ethnicity}
-                  isEditing={isEditing}
-                  editValue={editData.ethnicity}
-                  onEditChange={(v) => handleEditChange('ethnicity', v)}
-                />
-                <InfoItem
-                  label="身份证号"
-                  value={sample.idCard}
-                  isEditing={isEditing}
-                  editValue={editData.idCard}
-                  onEditChange={(v) => handleEditChange('idCard', v)}
-                />
-                <InfoItem
-                  label="联系电话"
-                  value={sample.phone}
-                  isEditing={isEditing}
-                  editValue={editData.phone}
-                  onEditChange={(v) => handleEditChange('phone', v)}
-                />
-              </div>
-            </InfoCard>
-            <InfoCard title="样本信息">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <InfoItem label="样本编号" value={sample.id} />
                 <InfoItem label="样本类型" value={sample.sampleType} />
-                <InfoItem label="家系编号" value={sample.pedigreeId} />
-                <InfoItem label="家系名称" value={sample.pedigreeName} />
                 <InfoItem label="创建时间" value={sample.createdAt} />
                 <InfoItem label="更新时间" value={sample.updatedAt} />
+              </div>
+            </InfoCard>
+            <InfoCard title="匹配数据">
+              <div className="grid grid-cols-2 gap-4">
+                {sample.matchedPair ? (
+                  <>
+                    <InfoItem label="R1路径" value={<span className="font-mono text-xs break-all">{sample.matchedPair.r1Path}</span>} />
+                    <InfoItem label="R2路径" value={<span className="font-mono text-xs break-all">{sample.matchedPair.r2Path}</span>} />
+                  </>
+                ) : (
+                  <InfoItem label="匹配数据" value="暂无匹配数据" />
+                )}
               </div>
             </InfoCard>
           </div>
@@ -366,14 +336,11 @@ export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps)
         return (
           <InfoCard title="送检信息">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <InfoItem label="送检医院" value={sample.submissionInfo.hospital} />
-              <InfoItem label="送检科室" value={sample.submissionInfo.department} />
-              <InfoItem label="送检医生" value={sample.submissionInfo.doctor} />
               <InfoItem label="送检日期" value={sample.submissionInfo.submissionDate} />
               <InfoItem label="采样日期" value={sample.submissionInfo.sampleCollectionDate} />
               <InfoItem label="收样日期" value={sample.submissionInfo.sampleReceiveDate} />
-              <InfoItem 
-                label="样本质量" 
+              <InfoItem
+                label="样本质量"
                 value={
                   <Tag variant={
                     sample.submissionInfo.sampleQuality === 'good' ? 'success' :
@@ -382,7 +349,7 @@ export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps)
                     {sample.submissionInfo.sampleQuality === 'good' ? '良好' :
                      sample.submissionInfo.sampleQuality === 'acceptable' ? '合格' : '不合格'}
                   </Tag>
-                } 
+                }
               />
             </div>
           </InfoCard>
@@ -421,22 +388,6 @@ export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps)
       case 'family':
         return (
           <div className="space-y-4">
-            {/* 家系关联信息 */}
-            {sample.pedigreeId && sample.pedigreeId !== '-' && (
-              <InfoCard title="关联家系">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <InfoItem label="家系编号" value={sample.pedigreeId} />
-                    <InfoItem label="家系名称" value={sample.pedigreeName} />
-                  </div>
-                  <Link href={`/samples/pedigree?id=${sample.pedigreeId}`}>
-                    <Button variant="secondary" size="small" leftIcon={<GitBranch className="w-4 h-4" />}>
-                      查看家系图
-                    </Button>
-                  </Link>
-                </div>
-              </InfoCard>
-            )}
             <InfoCard title="家族史概况">
               <InfoItem
                 label="是否有家族史"
@@ -508,10 +459,9 @@ export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps)
       <div className="mb-4 pb-3 border-b border-border-default">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-3">
-            <h3 className="text-base font-medium text-fg-default">{sample.name}</h3>
+            <h3 className="text-base font-medium text-fg-default">{sample.internalId}</h3>
             <span className={`text-sm ${genderInfo.color}`}>{genderInfo.label}</span>
-            <span className="text-sm text-fg-muted">{sample.age}岁</span>
-            <Tag variant={statusInfo.variant}>{statusInfo.label}</Tag>
+            <Tag variant={isMatched ? 'success' : 'warning'}>{isMatched ? '已匹配' : '未匹配'}</Tag>
           </div>
           <div className="flex items-center gap-2">
             {isEditing ? (
@@ -539,9 +489,9 @@ export function SampleDetailPanel({ sampleId, onClose }: SampleDetailPanelProps)
           </div>
         </div>
         <div className="flex items-center gap-4 text-xs text-fg-muted">
-          <span>样本编号: {sample.id}</span>
+          <span>样本编号: <span className="font-mono">{sample.id.substring(0, 8)}...</span></span>
           <span>样本类型: {sample.sampleType}</span>
-          <span>家系: {sample.pedigreeName}</span>
+          <span>匹配数据: {sample.matchedPair ? '已匹配' : '无'}</span>
         </div>
       </div>
 

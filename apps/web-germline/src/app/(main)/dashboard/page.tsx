@@ -91,8 +91,8 @@ const statsCards = [
 const pendingSamples = [
   {
     id: '1',
-    sampleId: 'S2024120089',
-    patientName: '张**',
+    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
     testType: '全外显子组测序',
     priority: 'urgent' as const,
     receivedDate: '2024-12-25',
@@ -100,8 +100,8 @@ const pendingSamples = [
   },
   {
     id: '2',
-    sampleId: 'S2024120088',
-    patientName: '李**',
+    sampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012',
+    internalId: 'INT-002',
     testType: '遗传性心肌病Panel',
     priority: 'normal' as const,
     receivedDate: '2024-12-26',
@@ -109,8 +109,8 @@ const pendingSamples = [
   },
   {
     id: '3',
-    sampleId: 'S2024120087',
-    patientName: '王**',
+    sampleId: 'c3d4e5f6-7890-abcd-ef12-345678901234',
+    internalId: 'INT-003',
     testType: '遗传性肿瘤Panel',
     priority: 'urgent' as const,
     receivedDate: '2024-12-26',
@@ -118,8 +118,8 @@ const pendingSamples = [
   },
   {
     id: '4',
-    sampleId: 'S2024120086',
-    patientName: '赵**',
+    sampleId: 'd4e5f678-90ab-cdef-1234-567890123456',
+    internalId: 'INT-004',
     testType: '全外显子组测序',
     priority: 'normal' as const,
     receivedDate: '2024-12-27',
@@ -127,8 +127,8 @@ const pendingSamples = [
   },
   {
     id: '5',
-    sampleId: 'S2024120085',
-    patientName: '陈**',
+    sampleId: 'e5f67890-abcd-ef12-3456-789012345678',
+    internalId: 'INT-005',
     testType: '线粒体基因组测序',
     priority: 'normal' as const,
     receivedDate: '2024-12-27',
@@ -440,15 +440,16 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-fg-default">
-                        {sample.sampleId}
+                      <span className="font-medium text-fg-default font-mono text-sm">
+                        {sample.sampleId.substring(0, 8)}
                       </span>
+                      <span className="text-fg-muted text-sm">({sample.internalId})</span>
                       {sample.priority === 'urgent' && (
                         <Tag variant="danger">紧急</Tag>
                       )}
                     </div>
                     <div className="text-sm text-fg-muted mt-0.5">
-                      {sample.patientName} · {sample.testType}
+                      {sample.testType}
                     </div>
                   </div>
                 </div>

@@ -9,7 +9,7 @@ import { Eye, StopCircle } from 'lucide-react';
 interface RunningTask {
   id: string;
   sampleId: string;
-  sampleName: string;
+  internalId: string;
   pipeline: string;
   currentStep: string;
   progress: number;
@@ -20,8 +20,8 @@ interface RunningTask {
 const mockRunningTasks: RunningTask[] = [
   {
     id: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
-    sampleId: 'S2024120002',
-    sampleName: '李**',
+    sampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012',
+    internalId: 'INT-002',
     pipeline: 'Panel-Cardio',
     currentStep: '变异注释',
     progress: 65,
@@ -30,8 +30,8 @@ const mockRunningTasks: RunningTask[] = [
   },
   {
     id: 'h8i9j0k1-l2m3-4567-nopq-890123456789',
-    sampleId: 'S2024120008',
-    sampleName: '郑**',
+    sampleId: 'g9h0i1j2-k3l4-5678-mnop-901234567890',
+    internalId: 'INT-008',
     pipeline: 'WES-Germline-v1',
     currentStep: '序列比对',
     progress: 25,
@@ -57,8 +57,8 @@ export default function RunningAnalysisPage() {
       header: '样本',
       accessor: (row) => (
         <div>
-          <div className="text-fg-default">{row.sampleId}</div>
-          <div className="text-xs text-fg-muted">{row.sampleName}</div>
+          <div className="font-mono text-xs">{row.sampleId.substring(0, 8)}...</div>
+          <div className="text-xs text-fg-muted">{row.internalId}</div>
         </div>
       ),
       width: 140,
