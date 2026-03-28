@@ -38,13 +38,13 @@ func SetupRouter(deps *Dependencies, jwtManager *jwt.Manager) *gin.Engine {
 		// Auth logout
 		protected.POST("/auth/logout", deps.AuthHandler.Logout)
 
+		// Organization routes
+		orgs := protected.Group("/orgs")
+		deps.OrganizationHandler.RegisterRoutes(orgs)
+
 		// User routes
 		users := protected.Group("/users")
 		deps.UserHandler.RegisterRoutes(users)
-
-		// Team routes
-		teams := protected.Group("/teams")
-		deps.TeamHandler.RegisterRoutes(teams)
 
 		// Settings routes
 		settings := protected.Group("/settings")
@@ -124,7 +124,7 @@ func SetupRouter(deps *Dependencies, jwtManager *jwt.Manager) *gin.Engine {
 
 		// === Audit Routes (Admin only) ===
 		audits := protected.Group("/audits")
-		audits.Use(middleware.RequireAdmin())
+		audits.Use(middleware.RequireOwnerOrAdmin())
 		deps.AuditHandler.RegisterRoutes(audits)
 	}
 

@@ -24,36 +24,36 @@ func (Permission) TableName() string {
 	return "permissions"
 }
 
-// RolePermission represents the many-to-many relationship between roles and permissions
-type RolePermission struct {
+// OrgRolePermission represents the many-to-many relationship between org roles and permissions
+type OrgRolePermission struct {
 	ID           uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	Role         UserRole  `gorm:"type:varchar(20);not null" json:"role"`
+	OrgRole      OrgRole   `gorm:"type:varchar(20);not null" json:"orgRole"`
 	PermissionID uuid.UUID `gorm:"type:uuid;not null" json:"permissionId"`
 	CreatedAt    time.Time `gorm:"autoCreateTime" json:"createdAt"`
 }
 
-// TableName returns the table name for RolePermission
-func (RolePermission) TableName() string {
-	return "role_permissions"
+// TableName returns the table name for OrgRolePermission
+func (OrgRolePermission) TableName() string {
+	return "org_role_permissions"
 }
 
 // Define all permissions in the system
 var (
 	// User permissions
-	PermissionUserList     = &Permission{Code: "user:list", Name: "List Users", Description: "View list of users", Resource: "users", Action: "list"}
-	PermissionUserCreate   = &Permission{Code: "user:create", Name: "Create User", Description: "Create new users", Resource: "users", Action: "create"}
-	PermissionUserRead     = &Permission{Code: "user:read", Name: "Read User", Description: "View user details", Resource: "users", Action: "read"}
-	PermissionUserUpdate   = &Permission{Code: "user:update", Name: "Update User", Description: "Update user details", Resource: "users", Action: "update"}
-	PermissionUserDelete   = &Permission{Code: "user:delete", Name: "Delete User", Description: "Delete users", Resource: "users", Action: "delete"}
-	PermissionUserActivate = &Permission{Code: "user:activate", Name: "Activate User", Description: "Activate user accounts", Resource: "users", Action: "activate"}
+	PermissionUserList       = &Permission{Code: "user:list", Name: "List Users", Description: "View list of users", Resource: "users", Action: "list"}
+	PermissionUserCreate     = &Permission{Code: "user:create", Name: "Create User", Description: "Create new users", Resource: "users", Action: "create"}
+	PermissionUserRead       = &Permission{Code: "user:read", Name: "Read User", Description: "View user details", Resource: "users", Action: "read"}
+	PermissionUserUpdate     = &Permission{Code: "user:update", Name: "Update User", Description: "Update user details", Resource: "users", Action: "update"}
+	PermissionUserDelete     = &Permission{Code: "user:delete", Name: "Delete User", Description: "Delete users", Resource: "users", Action: "delete"}
+	PermissionUserActivate   = &Permission{Code: "user:activate", Name: "Activate User", Description: "Activate user accounts", Resource: "users", Action: "activate"}
 	PermissionUserDeactivate = &Permission{Code: "user:deactivate", Name: "Deactivate User", Description: "Deactivate user accounts", Resource: "users", Action: "deactivate"}
 
-	// Team permissions
-	PermissionTeamList     = &Permission{Code: "team:list", Name: "List Teams", Description: "View list of teams", Resource: "teams", Action: "list"}
-	PermissionTeamCreate   = &Permission{Code: "team:create", Name: "Create Team", Description: "Create new teams", Resource: "teams", Action: "create"}
-	PermissionTeamRead     = &Permission{Code: "team:read", Name: "Read Team", Description: "View team details", Resource: "teams", Action: "read"}
-	PermissionTeamUpdate   = &Permission{Code: "team:update", Name: "Update Team", Description: "Update team details", Resource: "teams", Action: "update"}
-	PermissionTeamDelete   = &Permission{Code: "team:delete", Name: "Delete Team", Description: "Delete teams", Resource: "teams", Action: "delete"}
+	// Organization permissions (for org management)
+	PermissionOrgManage       = &Permission{Code: "org:manage", Name: "Manage Organization", Description: "Manage organization settings", Resource: "organizations", Action: "manage"}
+	PermissionOrgUserCreate   = &Permission{Code: "org:user:create", Name: "Create Org User", Description: "Create users in organization", Resource: "organizations", Action: "user_create"}
+	PermissionOrgUserDelete   = &Permission{Code: "org:user:delete", Name: "Delete Org User", Description: "Remove users from organization", Resource: "organizations", Action: "user_delete"}
+	PermissionOrgUserUpdate   = &Permission{Code: "org:user:update", Name: "Update Org User Role", Description: "Update user roles in organization", Resource: "organizations", Action: "user_update"}
+	PermissionOrgUserInvite   = &Permission{Code: "org:user:invite", Name: "Invite Org User", Description: "Invite users to organization", Resource: "organizations", Action: "user_invite"}
 
 	// Patient permissions
 	PermissionPatientList     = &Permission{Code: "patient:list", Name: "List Patients", Description: "View list of patients", Resource: "patients", Action: "list"}
@@ -87,9 +87,8 @@ func AllPermissions() []*Permission {
 		PermissionUserList, PermissionUserCreate, PermissionUserRead,
 		PermissionUserUpdate, PermissionUserDelete, PermissionUserActivate, PermissionUserDeactivate,
 
-		// Team permissions
-		PermissionTeamList, PermissionTeamCreate, PermissionTeamRead,
-		PermissionTeamUpdate, PermissionTeamDelete,
+		// Organization permissions
+		PermissionOrgManage, PermissionOrgUserCreate, PermissionOrgUserDelete, PermissionOrgUserUpdate, PermissionOrgUserInvite,
 
 		// Patient permissions
 		PermissionPatientList, PermissionPatientCreate, PermissionPatientRead,
@@ -108,16 +107,35 @@ func AllPermissions() []*Permission {
 	}
 }
 
-// RolePermissions defines the default permissions for each role
-var RolePermissions = map[UserRole][]*Permission{
-	UserRoleAdmin: AllPermissions(), // Admins have all permissions
+// OrgRolePermissions defines the default permissions for each org role
+// OWNER inherits all ADMIN permissions plus organization management
+var OrgRolePermissions = map[OrgRole][]*Permission{
+	OrgRoleOwner: AllPermissions(), // Owners have all permissions including org management
 
-	UserRoleDoctor: {
+	OrgRoleAdmin: {
+		// User permissions (within org)
+		PermissionUserList, PermissionUserCreate, PermissionUserRead,
+		PermissionUserUpdate, PermissionUserActivate, PermissionUserDeactivate,
+
+		// Organization permissions (limited)
+		PermissionOrgUserCreate, PermissionOrgUserInvite,
+
+		// Patient permissions
+		PermissionPatientList, PermissionPatientCreate, PermissionPatientRead, PermissionPatientUpdate, PermissionPatientDelete,
+
+		// Sample permissions
+		PermissionSampleList, PermissionSampleCreate, PermissionSampleRead, PermissionSampleUpdate, PermissionSampleDelete,
+
+		// Batch permissions
+		PermissionBatchList, PermissionBatchCreate, PermissionBatchRead, PermissionBatchUpdate, PermissionBatchDelete,
+
+		// Settings
+		PermissionSettingsManage,
+	},
+
+	OrgRoleDoctor: {
 		// User permissions
 		PermissionUserRead,
-
-		// Team permissions
-		PermissionTeamList, PermissionTeamRead,
 
 		// Patient permissions
 		PermissionPatientList, PermissionPatientCreate, PermissionPatientRead, PermissionPatientUpdate,
@@ -129,12 +147,9 @@ var RolePermissions = map[UserRole][]*Permission{
 		PermissionBatchList, PermissionBatchRead,
 	},
 
-	UserRoleAnalyst: {
+	OrgRoleAnalyst: {
 		// User permissions
 		PermissionUserRead,
-
-		// Team permissions
-		PermissionTeamList, PermissionTeamRead,
 
 		// Patient permissions
 		PermissionPatientList, PermissionPatientRead,
@@ -146,12 +161,9 @@ var RolePermissions = map[UserRole][]*Permission{
 		PermissionBatchList, PermissionBatchCreate, PermissionBatchRead, PermissionBatchUpdate,
 	},
 
-	UserRoleViewer: {
+	OrgRoleViewer: {
 		// User permissions
 		PermissionUserRead,
-
-		// Team permissions
-		PermissionTeamList, PermissionTeamRead,
 
 		// Patient permissions
 		PermissionPatientList, PermissionPatientRead,
@@ -164,9 +176,13 @@ var RolePermissions = map[UserRole][]*Permission{
 	},
 }
 
-// HasPermission checks if a role has a specific permission
-func (r UserRole) HasPermission(permissionCode string) bool {
-	permissions, ok := RolePermissions[r]
+// HasPermission checks if an org role has a specific permission
+func (r OrgRole) HasPermission(permissionCode string) bool {
+	// Owner and Admin have all permissions
+	if r == OrgRoleOwner || r == OrgRoleAdmin {
+		return true
+	}
+	permissions, ok := OrgRolePermissions[r]
 	if !ok {
 		return false
 	}
@@ -178,13 +194,13 @@ func (r UserRole) HasPermission(permissionCode string) bool {
 	return false
 }
 
-// GetPermissions returns all permissions for a role
-func (r UserRole) GetPermissions() []*Permission {
-	return RolePermissions[r]
+// GetPermissions returns all permissions for an org role
+func (r OrgRole) GetPermissions() []*Permission {
+	return OrgRolePermissions[r]
 }
 
-// BeforeCreate hook for RolePermission
-func (rp *RolePermission) BeforeCreate(tx *gorm.DB) error {
+// BeforeCreate hook for OrgRolePermission
+func (rp *OrgRolePermission) BeforeCreate(tx *gorm.DB) error {
 	if rp.ID == uuid.Nil {
 		rp.ID = uuid.New()
 	}

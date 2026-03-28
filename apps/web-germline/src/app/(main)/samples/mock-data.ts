@@ -1,9 +1,9 @@
 import type { Sample, SampleDetail } from './types';
 
-// Mock 样本列表数据
+// Mock 样本列表数据 (using UUID format)
 export const mockSamples: Sample[] = [
   {
-    id: 'S2024120001',
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     internalId: 'INT-001',
     name: '张三',
     gender: 'male',
@@ -20,7 +20,7 @@ export const mockSamples: Sample[] = [
     updatedAt: '2024-12-25',
   },
   {
-    id: 'S2024120002',
+    id: 'b2c3d4e5-f678-90ab-cdef-123456789012',
     internalId: 'INT-002',
     name: '李四',
     gender: 'female',
@@ -37,7 +37,7 @@ export const mockSamples: Sample[] = [
     updatedAt: '2024-12-21',
   },
   {
-    id: 'S2024120003',
+    id: 'c3d4e5f6-7890-abcd-ef12-345678901234',
     internalId: 'INT-003',
     name: '王五',
     gender: 'male',
@@ -54,7 +54,7 @@ export const mockSamples: Sample[] = [
     updatedAt: '2024-12-22',
   },
   {
-    id: 'S2024120004',
+    id: 'd4e5f678-90ab-cdef-1234-567890123456',
     internalId: 'INT-004',
     name: '赵六',
     gender: 'female',
@@ -71,7 +71,7 @@ export const mockSamples: Sample[] = [
     updatedAt: '2024-12-24',
   },
   {
-    id: 'S2024120005',
+    id: 'e5f67890-abcd-ef12-3456-789012345678',
     internalId: 'INT-005',
     name: '孙七',
     gender: 'male',
@@ -91,7 +91,7 @@ export const mockSamples: Sample[] = [
 
 // Mock 样本详情数据
 const mockSampleDetails: Record<string, SampleDetail> = {
-  'S2024120001': {
+  'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
     ...mockSamples[0],
     idCard: '110***********1234',
     phone: '138****5678',
@@ -133,11 +133,11 @@ const mockSampleDetails: Record<string, SampleDetail> = {
       pedigreeNote: '家系中有明确的心血管疾病遗传史',
     },
     analysisTasks: [
-      { id: 'a1b2c3d4', name: 'WES分析', status: 'completed', createdAt: '2024-12-20' },
-      { id: 'b2c3d4e5', name: 'CNV分析', status: 'completed', createdAt: '2024-12-21' },
+      { id: 'task-001-a1b2', name: 'WES分析', status: 'completed', createdAt: '2024-12-20' },
+      { id: 'task-002-b2c3', name: 'CNV分析', status: 'completed', createdAt: '2024-12-21' },
     ],
   },
-  'S2024120002': {
+  'b2c3d4e5-f678-90ab-cdef-123456789012': {
     ...mockSamples[1],
     ethnicity: '汉族',
     clinicalDiagnosis: {
@@ -166,7 +166,7 @@ const mockSampleDetails: Record<string, SampleDetail> = {
       hasHistory: false,
     },
     analysisTasks: [
-      { id: 'c3d4e5f6', name: 'WES分析', status: 'running', createdAt: '2024-12-21' },
+      { id: 'task-003-c3d4', name: 'WES分析', status: 'running', createdAt: '2024-12-21' },
     ],
   },
 };

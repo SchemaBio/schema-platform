@@ -54,6 +54,7 @@ func (s *StringArray) Scan(value interface{}) error {
 // Patient represents a patient in the system
 type Patient struct {
 	ID         uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID      uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name       string         `gorm:"type:varchar(255);not null" json:"name"`
 	Gender     Gender         `gorm:"type:varchar(10);not null;default:'UNKNOWN'" json:"gender"`
 	BirthDate  *time.Time     `gorm:"type:date" json:"birthDate"`
@@ -64,8 +65,9 @@ type Patient struct {
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	Samples []Sample `gorm:"foreignKey:PatientID" json:"-"`
-	Creator *User    `gorm:"foreignKey:CreatedBy" json:"-"`
+	Org     *Organization `gorm:"foreignKey:OrgID" json:"-"`
+	Samples []Sample      `gorm:"foreignKey:PatientID" json:"-"`
+	Creator *User         `gorm:"foreignKey:CreatedBy" json:"-"`
 }
 
 // TableName returns the table name for Patient

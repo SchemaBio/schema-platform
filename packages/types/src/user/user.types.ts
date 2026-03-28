@@ -1,8 +1,20 @@
 /**
- * User roles in the system
+ * System-level roles
  */
-export enum UserRole {
-  /** System administrator with full access */
+export enum SystemRole {
+  /** Platform super admin with full access across all organizations */
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  /** Regular user */
+  USER = 'USER',
+}
+
+/**
+ * Organization-level roles
+ */
+export enum OrgRole {
+  /** Organization owner with full control */
+  OWNER = 'OWNER',
+  /** Organization admin */
   ADMIN = 'ADMIN',
   /** Medical doctor with clinical access */
   DOCTOR = 'DOCTOR',
@@ -22,12 +34,32 @@ export interface User {
   email: string;
   /** User display name */
   name: string;
-  /** User role determining permissions */
-  role: UserRole;
-  /** Team ID the user belongs to (null if not in a team) */
-  teamId: string | null;
+  /** User system-level role */
+  systemRole: SystemRole;
+  /** Primary organization ID */
+  primaryOrgId?: string;
+  /** Whether the user account is active */
+  isActive: boolean;
   /** ISO 8601 timestamp when the user was created */
   createdAt: string;
   /** ISO 8601 timestamp when the user was last updated */
   updatedAt: string;
+}
+
+/**
+ * Organization membership info for a user
+ */
+export interface UserOrganizationInfo {
+  /** Organization ID */
+  id: string;
+  /** Organization name */
+  name: string;
+  /** Organization slug (URL identifier) */
+  slug: string;
+  /** Organization description */
+  description?: string;
+  /** User's role in this organization */
+  orgRole: OrgRole;
+  /** ISO 8601 timestamp when the user joined */
+  joinedAt: string;
 }

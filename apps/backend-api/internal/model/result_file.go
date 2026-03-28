@@ -42,6 +42,7 @@ func (t ResultType) IsValid() bool {
 // ResultFile represents a Parquet result file reference
 type ResultFile struct {
 	ID          uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID       uuid.UUID `gorm:"type:uuid;not null;index" json:"orgId"`
 	TaskID      uuid.UUID `gorm:"type:uuid;not null;index" json:"taskId"`
 	ResultType  ResultType `gorm:"type:varchar(50);not null" json:"resultType"`
 	FilePath    string    `gorm:"type:text" json:"filePath"`
@@ -50,7 +51,8 @@ type ResultFile struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 
 	// Relationships
-	Task *AnalysisTask `gorm:"foreignKey:TaskID" json:"-"`
+	Org  *Organization  `gorm:"foreignKey:OrgID" json:"-"`
+	Task *AnalysisTask  `gorm:"foreignKey:TaskID" json:"-"`
 }
 
 // TableName returns the table name for ResultFile

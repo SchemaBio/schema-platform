@@ -17,6 +17,14 @@ const (
 	AnalysisTypeGermline AnalysisType = "germline"
 )
 
+// TenantMode represents the multi-tenancy mode
+type TenantMode string
+
+const (
+	TenantModeSingle TenantMode = "single" // Single-tenant (open-source deployment)
+	TenantModeMulti  TenantMode = "multi"  // Multi-tenant (SaaS)
+)
+
 // Config holds all configuration for the application
 type Config struct {
 	Server      ServerConfig
@@ -26,6 +34,24 @@ type Config struct {
 	Features    FeatureConfig
 	Admin       AdminConfig
 	Analysis    AnalysisConfig
+	Tenant      TenantConfig
+}
+
+// TenantConfig holds tenant-related configuration
+type TenantConfig struct {
+	Mode             TenantMode // single or multi
+	DefaultOrgSlug   string     // Default organization slug for single-tenant mode
+	AllowOrgCreation bool       // Allow users to create organizations (multi-tenant only)
+}
+
+// IsSingleTenant returns true if running in single-tenant mode
+func (t *TenantConfig) IsSingleTenant() bool {
+	return t.Mode == TenantModeSingle
+}
+
+// IsMultiTenant returns true if running in multi-tenant mode
+func (t *TenantConfig) IsMultiTenant() bool {
+	return t.Mode == TenantModeMulti
 }
 
 // AdminConfig holds default admin user configuration
@@ -228,6 +254,17 @@ func Load() (*Config, error) {
 		config.Analysis.Type = AnalysisTypeSomatic
 	}
 
+	// Tenant config
+	tenantMode := viper.GetString("tenant.mode")
+	switch tenantMode {
+	case "multi":
+		config.Tenant.Mode = TenantModeMulti
+	default:
+		config.Tenant.Mode = TenantModeSingle
+	}
+	config.Tenant.DefaultOrgSlug = viper.GetString("tenant.default_org_slug")
+	config.Tenant.AllowOrgCreation = viper.GetBool("tenant.allow_org_creation")
+
 	return config, nil
 }
 
@@ -268,4 +305,9 @@ func setDefaults() {
 	viper.SetDefault("admin.name", "System Administrator")
 	viper.SetDefault("admin.password", "Admin123!")
 	viper.SetDefault("admin.enabled", true)
+
+	// Tenant defaults
+	viper.SetDefault("tenant.mode", "single")
+	viper.SetDefault("tenant.default_org_slug", "default")
+	viper.SetDefault("tenant.allow_org_creation", false)
 }

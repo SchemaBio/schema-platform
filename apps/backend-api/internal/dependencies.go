@@ -18,7 +18,7 @@ type Dependencies struct {
 
 	// System Shared Repositories
 	UserRepo           *repository.UserRepository
-	TeamRepo           *repository.TeamRepository
+	OrganizationRepo   *repository.OrganizationRepository
 	SequencerRepo      *repository.SequencerRepository
 	SequencingRunRepo  *repository.SequencingRunRepository
 	SampleSheetRepo    *repository.SampleSheetRepository
@@ -53,7 +53,7 @@ type Dependencies struct {
 	// System Shared Services
 	AuthService        *service.AuthService
 	UserService        *service.UserService
-	TeamService        *service.TeamService
+	OrganizationService *service.OrganizationService
 	SettingsService    *service.SettingsService
 	SequencerService   *service.SequencerService
 	SampleSheetService *service.SampleSheetService
@@ -81,7 +81,7 @@ type Dependencies struct {
 	HealthHandler        *handler.HealthHandler
 	AuthHandler          *handler.AuthHandler
 	UserHandler          *handler.UserHandler
-	TeamHandler          *handler.TeamHandler
+	OrganizationHandler  *handler.OrganizationHandler
 	SettingsHandler      *handler.SettingsHandler
 	SequencerHandler     *handler.SequencerHandler
 	SampleSheetHandler   *handler.SampleSheetHandler
@@ -108,7 +108,7 @@ type Dependencies struct {
 func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpiryHours int) *Dependencies {
 	// Initialize system shared repositories
 	userRepo := repository.NewUserRepository(db)
-	teamRepo := repository.NewTeamRepository(db)
+	organizationRepo := repository.NewOrganizationRepository(db)
 	sequencerRepo := repository.NewSequencerRepository(db)
 	sequencingRunRepo := repository.NewSequencingRunRepository(db)
 	sampleSheetRepo := repository.NewSampleSheetRepository(db)
@@ -152,9 +152,9 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 	)
 
 	// Initialize system shared services
-	authService := service.NewAuthService(userRepo, jwtManager)
+	authService := service.NewAuthService(userRepo, jwtManager, organizationRepo)
 	userService := service.NewUserService(userRepo)
-	teamService := service.NewTeamService(teamRepo, userRepo)
+	organizationService := service.NewOrganizationService(organizationRepo, userRepo)
 	settingsService := service.NewSettingsService(db)
 	sequencerService := service.NewSequencerService(sequencerRepo)
 	sampleSheetService := service.NewSampleSheetService(sampleSheetRepo, sampleIndexRepo)
@@ -182,7 +182,7 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 	healthHandler := handler.NewHealthHandler(db)
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
-	teamHandler := handler.NewTeamHandler(teamService)
+	organizationHandler := handler.NewOrganizationHandler(organizationService)
 	settingsHandler := handler.NewSettingsHandler(settingsService)
 	sequencerHandler := handler.NewSequencerHandler(sequencerService)
 	sampleSheetHandler := handler.NewSampleSheetHandler(sampleSheetService)
@@ -210,7 +210,7 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 
 		// System Shared Repositories
 		UserRepo:          userRepo,
-		TeamRepo:          teamRepo,
+		OrganizationRepo:  organizationRepo,
 		SequencerRepo:     sequencerRepo,
 		SequencingRunRepo: sequencingRunRepo,
 		SampleSheetRepo:   sampleSheetRepo,
@@ -245,7 +245,7 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 		// System Shared Services
 		AuthService:        authService,
 		UserService:        userService,
-		TeamService:        teamService,
+		OrganizationService: organizationService,
 		SettingsService:    settingsService,
 		SequencerService:   sequencerService,
 		SampleSheetService: sampleSheetService,
@@ -273,7 +273,7 @@ func NewDependencies(db *gorm.DB, cfg *config.Config, jwtSecret string, jwtExpir
 		HealthHandler:        healthHandler,
 		AuthHandler:          authHandler,
 		UserHandler:          userHandler,
-		TeamHandler:          teamHandler,
+		OrganizationHandler:  organizationHandler,
 		SettingsHandler:      settingsHandler,
 		SequencerHandler:     sequencerHandler,
 		SampleSheetHandler:   sampleSheetHandler,

@@ -41,6 +41,7 @@ const (
 // Pedigree represents a family unit for genetic analysis
 type Pedigree struct {
 	ID               uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	OrgID            uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name             string         `gorm:"size:100;not null" json:"name"`
 	Disease          string         `gorm:"size:255" json:"disease"`
 	ProbandMemberID  *uuid.UUID     `gorm:"type:uuid" json:"probandMemberId"`
@@ -50,6 +51,7 @@ type Pedigree struct {
 	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
+	Org     *Organization    `gorm:"foreignKey:OrgID" json:"-"`
 	Members []PedigreeMember `gorm:"foreignKey:PedigreeID" json:"members,omitempty"`
 }
 

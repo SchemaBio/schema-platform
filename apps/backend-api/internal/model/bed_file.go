@@ -10,6 +10,7 @@ import (
 // BEDFile represents a BED file (target region file) in the system
 type BEDFile struct {
 	ID           uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID        uuid.UUID `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name         string    `gorm:"type:varchar(100);not null" json:"name"`
 	Description  string    `gorm:"type:text" json:"description"`
 	FilePath     string    `gorm:"type:varchar(255)" json:"filePath"`
@@ -18,6 +19,9 @@ type BEDFile struct {
 	GeneCount    int       `gorm:"type:int" json:"geneCount"`
 	CreatedAt    time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+
+	// Relationships
+	Org *Organization `gorm:"foreignKey:OrgID" json:"-"`
 }
 
 // TableName returns the table name for BEDFile

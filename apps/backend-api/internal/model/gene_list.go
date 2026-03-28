@@ -20,7 +20,8 @@ const (
 // GeneList represents a list of genes for analysis
 type GeneList struct {
 	ID              uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	Name            string         `gorm:"size:100;not null;uniqueIndex" json:"name"`
+	OrgID           uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
+	Name            string         `gorm:"size:100;not null" json:"name"`
 	Description     string         `gorm:"type:text" json:"description"`
 	Genes           datatypes.JSON `gorm:"type:jsonb" json:"genes"` // Array of gene symbols
 	Category        GeneListCategory `gorm:"size:50" json:"category"`
@@ -28,6 +29,9 @@ type GeneList struct {
 	CreatedAt       time.Time      `json:"createdAt"`
 	UpdatedAt       time.Time      `json:"updatedAt"`
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
+
+	// Relationships
+	Org *Organization `gorm:"foreignKey:OrgID" json:"-"`
 }
 
 // BeforeCreate sets the UUID for new GeneList

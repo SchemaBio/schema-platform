@@ -67,6 +67,7 @@ func (s DataFileStatus) IsValid() bool {
 // DataFile represents a raw sequencing data file in the system
 type DataFile struct {
 	ID         uuid.UUID     `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID      uuid.UUID     `gorm:"type:uuid;not null;index" json:"orgId"`
 	SampleID   *uuid.UUID    `gorm:"type:uuid;index" json:"sampleId"`
 	RunID      *uuid.UUID    `gorm:"type:uuid;index" json:"runId"`
 	Lane       string        `gorm:"type:varchar(10)" json:"lane"`
@@ -81,6 +82,7 @@ type DataFile struct {
 	CreatedAt  time.Time     `gorm:"autoCreateTime" json:"createdAt"`
 
 	// Relationships
+	Org    *Organization   `gorm:"foreignKey:OrgID" json:"-"`
 	Sample *Sample         `gorm:"foreignKey:SampleID" json:"-"`
 	Run    *SequencingRun  `gorm:"foreignKey:RunID" json:"-"`
 }

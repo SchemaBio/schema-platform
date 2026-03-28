@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/google/uuid"
 	"github.com/schema-platform/backend-api/internal/config"
 	"github.com/schema-platform/backend-api/internal/model"
 	"github.com/schema-platform/backend-api/internal/pkg/hash"
@@ -11,8 +12,44 @@ import (
 	"gorm.io/gorm"
 )
 
+// SeedDefaultOrganization creates the default organization if it doesn't exist
+func SeedDefaultOrganization(db *gorm.DB, tenantCfg *config.TenantConfig) (*model.Organization, error) {
+	ctx := context.Background()
+
+	// Check if default organization exists
+	var org model.Organization
+	err := db.WithContext(ctx).Where("slug = ?", tenantCfg.DefaultOrgSlug).First(&org).Error
+	if err == nil {
+		log.Printf("Default organization %s already exists", tenantCfg.DefaultOrgSlug)
+		return &org, nil
+	}
+
+	if err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	// Create default organization
+	org = model.Organization{
+		Name:        "Default Organization",
+		Slug:        tenantCfg.DefaultOrgSlug,
+		Description: "Default organization for single-tenant deployment",
+		Status:      model.OrgStatusActive,
+		Plan:        model.OrgPlanSelfHosted,
+		MaxUsers:    -1, // unlimited
+		Settings:    model.OrgSettings{},
+	}
+
+	if err := db.WithContext(ctx).Create(&org).Error; err != nil {
+		log.Printf("Failed to create default organization: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Default organization created: %s", org.Name)
+	return &org, nil
+}
+
 // SeedDefaultAdmin creates the default admin user if it doesn't exist
-func SeedDefaultAdmin(db *gorm.DB, cfg *config.AdminConfig) error {
+func SeedDefaultAdmin(db *gorm.DB, cfg *config.AdminConfig, tenantCfg *config.TenantConfig, defaultOrg *model.Organization) error {
 	if !cfg.Enabled {
 		log.Println("Admin user creation is disabled in config")
 		return nil
@@ -48,12 +85,25 @@ func SeedDefaultAdmin(db *gorm.DB, cfg *config.AdminConfig) error {
 		Email:        cfg.Email,
 		Name:         cfg.Name,
 		PasswordHash: passwordHash,
-		Role:         model.UserRoleAdmin,
+		SystemRole:   model.SystemRoleSuperAdmin,
+		PrimaryOrgID: &defaultOrg.ID,
 		IsActive:     true,
 	}
 
 	if err := userRepo.Create(ctx, admin); err != nil {
 		log.Printf("Failed to create admin user: %v", err)
+		return err
+	}
+
+	// Add admin to default organization as OWNER
+	orgMember := &model.OrgMember{
+		UserID:  admin.ID,
+		OrgID:   defaultOrg.ID,
+		OrgRole: model.OrgRoleOwner,
+	}
+
+	if err := db.WithContext(ctx).Create(orgMember).Error; err != nil {
+		log.Printf("Failed to add admin to default organization: %v", err)
 		return err
 	}
 
@@ -89,19 +139,23 @@ func SeedPermissions(db *gorm.DB) error {
 	return nil
 }
 
-// SeedRolePermissions seeds role-permission associations
-func SeedRolePermissions(db *gorm.DB) error {
+// SeedOrgRolePermissions seeds org role-permission associations
+func SeedOrgRolePermissions(db *gorm.DB) error {
 	ctx := context.Background()
 
-	roles := []model.UserRole{
-		model.UserRoleAdmin,
-		model.UserRoleDoctor,
-		model.UserRoleAnalyst,
-		model.UserRoleViewer,
+	roles := []model.OrgRole{
+		model.OrgRoleOwner,
+		model.OrgRoleAdmin,
+		model.OrgRoleDoctor,
+		model.OrgRoleAnalyst,
+		model.OrgRoleViewer,
 	}
 
 	for _, role := range roles {
 		permissions := role.GetPermissions()
+		if permissions == nil {
+			continue
+		}
 
 		for _, perm := range permissions {
 			// Get permission ID
@@ -115,8 +169,8 @@ func SeedRolePermissions(db *gorm.DB) error {
 
 			// Check if role-permission already exists
 			var count int64
-			err := db.WithContext(ctx).Model(&model.RolePermission{}).
-				Where("role = ? AND permission_id = ?", role, permModel.ID).
+			err := db.WithContext(ctx).Model(&model.OrgRolePermission{}).
+				Where("org_role = ? AND permission_id = ?", role, permModel.ID).
 				Count(&count).Error
 			if err != nil {
 				return err
@@ -124,41 +178,58 @@ func SeedRolePermissions(db *gorm.DB) error {
 
 			if count == 0 {
 				// Create role-permission
-				rp := &model.RolePermission{
-					Role:         role,
+				rp := &model.OrgRolePermission{
+					OrgRole:      role,
 					PermissionID: permModel.ID,
 				}
 				if err := db.WithContext(ctx).Create(rp).Error; err != nil {
-					log.Printf("Failed to create role-permission for %s: %v", role, err)
+					log.Printf("Failed to create org role-permission for %s: %v", role, err)
 					return err
 				}
 			}
 		}
 	}
 
-	log.Println("Role permissions seeded successfully")
+	log.Println("Org role permissions seeded successfully")
 	return nil
 }
 
 // SeedAll runs all database seeding
-func SeedAll(db *gorm.DB, adminCfg *config.AdminConfig) error {
+func SeedAll(db *gorm.DB, adminCfg *config.AdminConfig, tenantCfg *config.TenantConfig) error {
 	log.Println("Starting database seeding...")
+
+	// Seed default organization
+	defaultOrg, err := SeedDefaultOrganization(db, tenantCfg)
+	if err != nil {
+		return err
+	}
 
 	// Seed permissions
 	if err := SeedPermissions(db); err != nil {
 		return err
 	}
 
-	// Seed role permissions
-	if err := SeedRolePermissions(db); err != nil {
+	// Seed org role permissions
+	if err := SeedOrgRolePermissions(db); err != nil {
 		return err
 	}
 
 	// Seed admin user
-	if err := SeedDefaultAdmin(db, adminCfg); err != nil {
+	if err := SeedDefaultAdmin(db, adminCfg, tenantCfg, defaultOrg); err != nil {
 		return err
 	}
 
 	log.Println("Database seeding completed")
 	return nil
+}
+
+// GetDefaultOrgID returns the default organization ID
+func GetDefaultOrgID(db *gorm.DB, tenantCfg *config.TenantConfig) (uuid.UUID, error) {
+	ctx := context.Background()
+	var org model.Organization
+	err := db.WithContext(ctx).Where("slug = ?", tenantCfg.DefaultOrgSlug).First(&org).Error
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return org.ID, nil
 }

@@ -1,13 +1,7 @@
-// 用户信息
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'ADMIN' | 'DOCTOR' | 'ANALYST' | 'VIEWER';
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { User, UserOrganizationInfo } from './user';
+
+// 用户信息 (legacy compatibility)
+export type UserRole = 'ADMIN' | 'DOCTOR' | 'ANALYST' | 'VIEWER';
 
 // 登录请求
 export interface LoginRequest {
@@ -18,6 +12,8 @@ export interface LoginRequest {
 // 登录响应
 export interface LoginResponse {
   user: User;
+  organizations: UserOrganizationInfo[];
+  currentOrg?: UserOrganizationInfo;
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
@@ -33,4 +29,9 @@ export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
   expiresAt: string;
+}
+
+// Switch organization request
+export interface SwitchOrganizationRequest {
+  orgId: string;
 }

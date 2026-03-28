@@ -10,10 +10,12 @@ type LoginRequest struct {
 
 // LoginResponse represents the login response
 type LoginResponse struct {
-	AccessToken  string       `json:"accessToken"`
-	RefreshToken string       `json:"refreshToken"`
-	ExpiresAt    time.Time    `json:"expiresAt"`
-	User         UserResponse `json:"user"`
+	AccessToken    string               `json:"accessToken"`
+	RefreshToken   string               `json:"refreshToken"`
+	ExpiresAt      time.Time            `json:"expiresAt"`
+	User           UserResponse         `json:"user"`
+	Organizations  []UserOrganizationInfo `json:"organizations"`
+	CurrentOrg     *UserOrganizationInfo `json:"currentOrg,omitempty"`
 }
 
 // AuthToken represents the token pair
@@ -30,9 +32,11 @@ type RefreshRequest struct {
 
 // TokenPayload represents the JWT token payload
 type TokenPayload struct {
-	UserID string `json:"userId"`
-	Email  string `json:"email"`
-	Role   string `json:"role"`
+	UserID     string `json:"userId"`
+	Email      string `json:"email"`
+	SystemRole string `json:"systemRole"`
+	OrgID      string `json:"orgId"`
+	OrgRole    string `json:"orgRole"`
 }
 
 // RegisterRequest represents the registration request payload

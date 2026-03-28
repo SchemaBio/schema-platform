@@ -32,6 +32,7 @@ func (a AuditAction) IsValid() bool {
 // AuditLog represents an audit log entry
 type AuditLog struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID        uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
 	UserID       uuid.UUID      `gorm:"type:uuid;not null;index" json:"userId"`
 	UserEmail    string         `gorm:"type:varchar(255)" json:"userEmail"`
 	Action       AuditAction    `gorm:"type:varchar(20);not null;index" json:"action"`
@@ -43,6 +44,9 @@ type AuditLog struct {
 	UserAgent    string         `gorm:"type:text" json:"userAgent"`
 	RequestID    string         `gorm:"type:varchar(36);index" json:"requestId"`
 	CreatedAt    time.Time      `gorm:"autoCreateTime;index" json:"createdAt"`
+
+	// Relationships
+	Org *Organization `gorm:"foreignKey:OrgID" json:"-"`
 }
 
 // TableName returns the table name for AuditLog

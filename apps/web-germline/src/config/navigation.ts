@@ -29,6 +29,7 @@ import {
   LayoutDashboard,
   TestTube,
   Beaker,
+  ListTodo,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -49,28 +50,22 @@ export interface SidebarNavItem {
 export interface SidebarNavConfig {
   dashboard: SidebarNavItem[];
   samples: SidebarNavItem[];
-  lab: SidebarNavItem[];
-  data: SidebarNavItem[];
+  tasks: SidebarNavItem[];
   pipeline: SidebarNavItem[];
-  analysis: SidebarNavItem[];
-  reports: SidebarNavItem[];
   knowledge: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
 /**
  * Main navigation items displayed in the sidebar.
- * 业务流程：概览 → 样本管理 → 实验中心 → 数据管理 → 流程中心 → 分析中心 → 知识中心
+ * 业务流程：概览 → 样本管理 → 任务中心 → 知识中心 → 流程中心
  */
 export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   { label: '样本管理', href: '/samples', icon: Users },
-  { label: '实验中心', href: '/lab', icon: FlaskConical },
-  { label: '数据管理', href: '/data', icon: HardDrive },
-  { label: '流程中心', href: '/pipeline', icon: Workflow },
-  { label: '报告中心', href: '/analysis', icon: FileText },
-  // { label: '报告中心', href: '/reports', icon: FileText }, // 暂时关闭
+  { label: '任务中心', href: '/tasks', icon: ListTodo },
   { label: '知识中心', href: '/knowledge', icon: BookOpen },
+  { label: '流程中心', href: '/pipeline', icon: Workflow },
 ];
 
 /**
@@ -84,15 +79,12 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '样本列表', href: '/samples', icon: List },
     { label: '家系管理', href: '/samples/pedigree', icon: GitBranch },
   ],
-  // 实验中心 - 实验员操作
-  lab: [
-    { label: '上机表', href: '/lab', icon: FileSpreadsheet },
-    { label: '测序仪', href: '/lab/sequencers', icon: Server },
-  ],
-  // 数据管理 - 生信工程师操作
-  data: [
-    { label: '数据列表', href: '/data', icon: List },
-    { label: '数据匹配', href: '/data/matching', icon: Database },
+  // 任务中心 - 解读工程师操作
+  tasks: [
+    { label: '任务列表', href: '/tasks', icon: List },
+    { label: '进行中', href: '/tasks/running', icon: Clock },
+    { label: '待解读', href: '/tasks/pending', icon: FlaskConical },
+    { label: '已完成', href: '/tasks/completed', icon: CheckCircle },
   ],
   // 流程中心 - 生信工程师操作
   pipeline: [
@@ -102,21 +94,6 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '数据库管理', href: '/pipeline/database', icon: Server },
     { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
-  ],
-  // 报告中心 - 解读工程师操作
-  analysis: [
-    { label: '任务列表', href: '/analysis', icon: List },
-    // { label: '新建任务', href: '/analysis/new', icon: Play }, // 暂时关闭
-    { label: '进行中', href: '/analysis/running', icon: Clock },
-    { label: '待解读', href: '/analysis/pending', icon: FlaskConical },
-    { label: '已完成', href: '/analysis/completed', icon: CheckCircle },
-  ],
-  // 报告中心 - 解读工程师/审核操作
-  reports: [
-    { label: '报告列表', href: '/reports', icon: List },
-    { label: '生成报告', href: '/reports/new', icon: FilePlus },
-    { label: '待审核', href: '/reports/review', icon: FileCheck },
-    { label: '已发放', href: '/reports/released', icon: Send },
   ],
   // 知识中心 - 位点知识库
   knowledge: [

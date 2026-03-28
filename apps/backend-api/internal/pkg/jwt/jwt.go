@@ -21,12 +21,22 @@ const (
 	RefreshToken TokenType = "refresh"
 )
 
+// OrgClaim represents an organization membership claim
+type OrgClaim struct {
+	OrgID   string `json:"orgId"`
+	OrgName string `json:"orgName"`
+	OrgRole string `json:"orgRole"`
+}
+
 // Claims represents the JWT claims
 type Claims struct {
-	UserID    string    `json:"userId"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	TokenType TokenType `json:"tokenType"`
+	UserID     string     `json:"userId"`
+	Email      string     `json:"email"`
+	SystemRole string     `json:"systemRole"`         // System-level role (SUPER_ADMIN/USER)
+	OrgID      string     `json:"orgId"`              // Current organization ID
+	OrgRole    string     `json:"orgRole"`            // Current organization role
+	Orgs       []OrgClaim `json:"orgs,omitempty"`     // User's organization memberships
+	TokenType  TokenType  `json:"tokenType"`
 	jwt.RegisteredClaims
 }
 
@@ -48,25 +58,66 @@ func NewManager(secret string, accessExpiresIn, refreshExpiresIn time.Duration, 
 	}
 }
 
-// GenerateAccessToken generates a new access token
-func (m *Manager) GenerateAccessToken(userID, email, role string) (string, time.Time, error) {
+// OrgInfo contains organization info for token generation
+type OrgInfo struct {
+	OrgID   uuid.UUID
+	OrgName string
+	OrgRole string
+}
+
+// GenerateAccessToken generates a new access token with organization context
+func (m *Manager) GenerateAccessToken(userID, email, systemRole string, currentOrgID, currentOrgRole string, orgs []OrgInfo) (string, time.Time, error) {
 	expiresAt := time.Now().Add(m.accessExpiresIn)
-	return m.generateToken(userID, email, role, AccessToken, expiresAt)
+
+	// Convert OrgInfo to OrgClaim
+	orgClaims := make([]OrgClaim, len(orgs))
+	for i, org := range orgs {
+		orgClaims[i] = OrgClaim{
+			OrgID:   org.OrgID.String(),
+			OrgName: org.OrgName,
+			OrgRole: org.OrgRole,
+		}
+	}
+
+	claims := &Claims{
+		UserID:     userID,
+		Email:      email,
+		SystemRole: systemRole,
+		OrgID:      currentOrgID,
+		OrgRole:    currentOrgRole,
+		Orgs:       orgClaims,
+		TokenType:  AccessToken,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    m.issuer,
+			ID:        uuid.New().String(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(m.secret)
+	if err != nil {
+		return "", time.Time{}, err
+	}
+
+	return tokenString, expiresAt, nil
 }
 
 // GenerateRefreshToken generates a new refresh token
-func (m *Manager) GenerateRefreshToken(userID, email, role string) (string, time.Time, error) {
+func (m *Manager) GenerateRefreshToken(userID, email, systemRole string) (string, time.Time, error) {
 	expiresAt := time.Now().Add(m.refreshExpiresIn)
-	return m.generateToken(userID, email, role, RefreshToken, expiresAt)
+	return m.generateRefreshToken(userID, email, systemRole, expiresAt)
 }
 
-// generateToken generates a JWT token
-func (m *Manager) generateToken(userID, email, role string, tokenType TokenType, expiresAt time.Time) (string, time.Time, error) {
+// generateRefreshToken generates a refresh token (without org context since it's long-lived)
+func (m *Manager) generateRefreshToken(userID, email, systemRole string, expiresAt time.Time) (string, time.Time, error) {
 	claims := &Claims{
-		UserID:    userID,
-		Email:     email,
-		Role:      role,
-		TokenType: tokenType,
+		UserID:     userID,
+		Email:      email,
+		SystemRole: systemRole,
+		TokenType:  RefreshToken,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -138,11 +189,30 @@ func (m *Manager) ValidateRefreshToken(tokenString string) (*Claims, error) {
 }
 
 // RefreshAccessToken generates a new access token from a valid refresh token
-func (m *Manager) RefreshAccessToken(refreshToken string) (string, time.Time, error) {
+// Note: This requires the auth service to fetch org info separately
+func (m *Manager) RefreshAccessToken(refreshToken string) (*Claims, error) {
 	claims, err := m.ValidateRefreshToken(refreshToken)
 	if err != nil {
-		return "", time.Time{}, err
+		return nil, err
 	}
+	return claims, nil
+}
 
-	return m.GenerateAccessToken(claims.UserID, claims.Email, claims.Role)
+// IsSuperAdmin checks if the user has super admin system role
+func (c *Claims) IsSuperAdmin() bool {
+	return c.SystemRole == "SUPER_ADMIN"
+}
+
+// HasOrgRole checks if the user has a specific org role
+func (c *Claims) HasOrgRole(role string) bool {
+	return c.OrgRole == role
+}
+
+// GetOrgIDs returns all organization IDs the user belongs to
+func (c *Claims) GetOrgIDs() []string {
+	orgIDs := make([]string, len(c.Orgs))
+	for i, org := range c.Orgs {
+		orgIDs[i] = org.OrgID
+	}
+	return orgIDs
 }

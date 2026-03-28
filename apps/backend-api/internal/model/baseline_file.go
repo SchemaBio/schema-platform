@@ -28,6 +28,7 @@ func (t BaselineType) IsValid() bool {
 // BaselineFile represents a baseline file for CNV/MSI analysis
 type BaselineFile struct {
 	ID          uuid.UUID    `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID       uuid.UUID    `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name        string       `gorm:"type:varchar(100);not null" json:"name"`
 	BaselineType BaselineType `gorm:"type:varchar(20);not null" json:"baselineType"`
 	FilePath    string       `gorm:"type:varchar(255)" json:"filePath"`
@@ -35,6 +36,9 @@ type BaselineFile struct {
 	Description string       `gorm:"type:text" json:"description"`
 	CreatedAt   time.Time    `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time    `gorm:"autoUpdateTime" json:"updatedAt"`
+
+	// Relationships
+	Org *Organization `gorm:"foreignKey:OrgID" json:"-"`
 }
 
 // TableName returns the table name for BaselineFile

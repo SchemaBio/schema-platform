@@ -28,6 +28,7 @@ func (p StorageProtocol) IsValid() bool {
 // StorageSource represents a file storage backend configuration
 type StorageSource struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID        uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name         string         `gorm:"type:varchar(100);not null" json:"name"`
 	Protocol     StorageProtocol `gorm:"type:varchar(20);not null" json:"protocol"`
 	Endpoint     string         `gorm:"type:varchar(500)" json:"endpoint"`
@@ -36,6 +37,9 @@ type StorageSource struct {
 	IsDefault    bool           `gorm:"type:boolean;default:false" json:"isDefault"`
 	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
+
+	// Relationships
+	Org *Organization `gorm:"foreignKey:OrgID" json:"-"`
 }
 
 // TableName returns the table name for StorageSource

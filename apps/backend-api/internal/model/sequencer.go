@@ -45,8 +45,9 @@ func (s SequencerStatus) IsValid() bool {
 // Sequencer represents a sequencing platform/sequencer in the system
 type Sequencer struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID        uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name         string         `gorm:"type:varchar(100);not null" json:"name"`
-	SerialNumber string         `gorm:"type:varchar(100);uniqueIndex" json:"serialNumber"`
+	SerialNumber string         `gorm:"type:varchar(100;uniqueIndex:org_serial" json:"serialNumber"`
 	Platform     SequencerPlatform `gorm:"type:varchar(20);not null" json:"platform"`
 	Model        string         `gorm:"type:varchar(100)" json:"model"`
 	DataPath     string         `gorm:"type:text" json:"dataPath"`
@@ -54,6 +55,9 @@ type Sequencer struct {
 	LastSyncAt   *time.Time     `gorm:"-" json:"lastSyncAt"`
 	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
+
+	// Relationships
+	Org *Organization `gorm:"foreignKey:OrgID" json:"-"`
 }
 
 // TableName returns the table name for Sequencer

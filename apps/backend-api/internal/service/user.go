@@ -41,10 +41,20 @@ func (s *UserService) CreateUser(ctx context.Context, req *dto.UserCreateRequest
 		return nil, errors.NewInternalError("Failed to hash password")
 	}
 
-	// Set default role if not provided
-	role := model.UserRoleViewer
-	if req.Role != "" {
-		role = model.UserRole(req.Role)
+	// Set default system role if not provided
+	systemRole := model.SystemRoleUser
+	if req.SystemRole != "" {
+		systemRole = model.SystemRole(req.SystemRole)
+	}
+
+	// Parse primary org ID if provided
+	var primaryOrgID *uuid.UUID
+	if req.PrimaryOrgID != "" {
+		id, err := uuid.Parse(req.PrimaryOrgID)
+		if err != nil {
+			return nil, errors.NewValidationError("Invalid primary organization ID")
+		}
+		primaryOrgID = &id
 	}
 
 	// Create user
@@ -52,7 +62,8 @@ func (s *UserService) CreateUser(ctx context.Context, req *dto.UserCreateRequest
 		Email:        req.Email,
 		Name:         req.Name,
 		PasswordHash: passwordHash,
-		Role:         role,
+		SystemRole:   systemRole,
+		PrimaryOrgID: primaryOrgID,
 		IsActive:     true,
 	}
 
@@ -128,8 +139,15 @@ func (s *UserService) UpdateUser(ctx context.Context, userID string, req *dto.Us
 	if req.Name != nil {
 		user.Name = *req.Name
 	}
-	if req.Role != nil {
-		user.Role = model.UserRole(*req.Role)
+	if req.SystemRole != nil {
+		user.SystemRole = model.SystemRole(*req.SystemRole)
+	}
+	if req.PrimaryOrgID != nil {
+		id, err := uuid.Parse(*req.PrimaryOrgID)
+		if err != nil {
+			return nil, errors.NewValidationError("Invalid primary organization ID")
+		}
+		user.PrimaryOrgID = &id
 	}
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
@@ -288,13 +306,18 @@ func (s *UserService) ResetPassword(ctx context.Context, userID string, req *dto
 
 // toUserResponse converts a user model to a response DTO
 func (s *UserService) toUserResponse(user *model.User) *dto.UserResponse {
+	var primaryOrgID string
+	if user.PrimaryOrgID != nil {
+		primaryOrgID = user.PrimaryOrgID.String()
+	}
 	return &dto.UserResponse{
-		ID:        user.ID.String(),
-		Email:     user.Email,
-		Name:      user.Name,
-		Role:      string(user.Role),
-		IsActive:  user.IsActive,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:           user.ID.String(),
+		Email:        user.Email,
+		Name:         user.Name,
+		SystemRole:   string(user.SystemRole),
+		PrimaryOrgID: primaryOrgID,
+		IsActive:     user.IsActive,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
 	}
 }

@@ -57,6 +57,7 @@ func (g ReferenceGenome) IsValid() bool {
 // Pipeline represents an analysis pipeline configuration
 type Pipeline struct {
 	ID             uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID          uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name           string         `gorm:"type:varchar(100);not null" json:"name"`
 	BasePipeline   BasePipelineType `gorm:"type:varchar(50);not null" json:"basePipeline"`
 	Version        string         `gorm:"type:varchar(20);not null" json:"version"`
@@ -70,6 +71,7 @@ type Pipeline struct {
 	UpdatedAt      time.Time      `gorm:"autoUpdateTime" json:"updatedAt"`
 
 	// Relationships
+	Org          *Organization   `gorm:"foreignKey:OrgID" json:"-"`
 	AnalysisTasks []AnalysisTask `gorm:"foreignKey:PipelineID" json:"-"`
 }
 

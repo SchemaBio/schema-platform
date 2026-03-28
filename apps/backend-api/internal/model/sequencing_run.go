@@ -29,7 +29,8 @@ func (s SequencingRunStatus) IsValid() bool {
 // SequencingRun represents a sequencing run (Run) in the system
 type SequencingRun struct {
 	ID                    uuid.UUID             `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	RunID                 string                `gorm:"type:varchar(50);uniqueIndex" json:"runId"`
+	OrgID                 uuid.UUID             `gorm:"type:uuid;not null;index" json:"orgId"`
+	RunID                 string                `gorm:"type:varchar(50);uniqueIndex:org_run_id" json:"runId"`
 	SequencerID           uuid.UUID             `gorm:"type:uuid;not null;index" json:"sequencerId"`
 	FlowcellID            string                `gorm:"type:varchar(100)" json:"flowcellId"`
 	FlowcellType          string                `gorm:"type:varchar(50)" json:"flowcellType"`
@@ -44,7 +45,8 @@ type SequencingRun struct {
 	UpdatedAt             time.Time             `gorm:"autoUpdateTime" json:"updatedAt"`
 
 	// Relationships
-	Sequencer *Sequencer `gorm:"foreignKey:SequencerID" json:"-"`
+	Org       *Organization `gorm:"foreignKey:OrgID" json:"-"`
+	Sequencer *Sequencer    `gorm:"foreignKey:SequencerID" json:"-"`
 }
 
 // TableName returns the table name for SequencingRun

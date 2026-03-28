@@ -31,6 +31,7 @@ func (s AnalysisTaskStatus) IsValid() bool {
 // AnalysisTask represents an analysis task in the Somatic system
 type AnalysisTask struct {
 	ID                uuid.UUID          `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID             uuid.UUID          `gorm:"type:uuid;not null;index" json:"orgId"`
 	Name              string             `gorm:"type:varchar(255);not null" json:"name"`
 	SampleID          uuid.UUID          `gorm:"type:uuid;not null;index" json:"sampleId"`
 	PipelineID        *uuid.UUID         `gorm:"type:uuid;index" json:"pipelineId"`
@@ -46,9 +47,10 @@ type AnalysisTask struct {
 	DeletedAt         gorm.DeletedAt     `gorm:"index" json:"-"`
 
 	// Relationships
-	Sample       *Sample        `gorm:"foreignKey:SampleID" json:"-"`
-	Pipeline     *Pipeline      `gorm:"foreignKey:PipelineID" json:"-"`
-	ResultFiles  []ResultFile   `gorm:"foreignKey:TaskID" json:"-"`
+	Org        *Organization  `gorm:"foreignKey:OrgID" json:"-"`
+	Sample     *Sample        `gorm:"foreignKey:SampleID" json:"-"`
+	Pipeline   *Pipeline      `gorm:"foreignKey:PipelineID" json:"-"`
+	ResultFiles []ResultFile  `gorm:"foreignKey:TaskID" json:"-"`
 }
 
 // TableName returns the table name for AnalysisTask

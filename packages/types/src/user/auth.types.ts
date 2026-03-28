@@ -1,4 +1,4 @@
-import type { User } from './user.types.js';
+import type { User, UserOrganizationInfo } from './user.types.js';
 
 /**
  * Authentication token pair for JWT-based auth
@@ -28,4 +28,16 @@ export interface LoginRequest {
 export interface LoginResponse extends AuthToken {
   /** Authenticated user information */
   user: User;
+  /** Organizations the user belongs to */
+  organizations: UserOrganizationInfo[];
+  /** Current organization context */
+  currentOrg?: UserOrganizationInfo;
+}
+
+/**
+ * Switch organization request
+ */
+export interface SwitchOrganizationRequest {
+  /** Target organization ID */
+  orgId: string;
 }

@@ -29,6 +29,7 @@ const (
 // SangerValidation represents a Sanger sequencing validation record
 type SangerValidation struct {
 	ID            uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	OrgID         uuid.UUID      `gorm:"type:uuid;not null;index" json:"orgId"`
 	TaskID        uuid.UUID      `gorm:"type:uuid;not null;index" json:"taskId"`
 	VariantID     string         `gorm:"size:255;index" json:"variantId"`
 	VariantType   string         `gorm:"size:20" json:"variantType"` // SNV, Indel, CNV
@@ -53,7 +54,8 @@ type SangerValidation struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	Task *AnalysisTask `gorm:"foreignKey:TaskID" json:"-"`
+	Org  *Organization  `gorm:"foreignKey:OrgID" json:"-"`
+	Task *AnalysisTask  `gorm:"foreignKey:TaskID" json:"-"`
 }
 
 // BeforeCreate sets the UUID for new SangerValidation

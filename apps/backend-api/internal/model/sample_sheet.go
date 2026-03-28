@@ -28,6 +28,7 @@ func (s SampleSheetStatus) IsValid() bool {
 // SampleSheet represents a SampleSheet (样本上机清单) in the system
 type SampleSheet struct {
 	ID            uuid.UUID        `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID         uuid.UUID        `gorm:"type:uuid;not null;index" json:"orgId"`
 	FileName      string           `gorm:"type:varchar(255);not null" json:"fileName"`
 	RunID         *uuid.UUID       `gorm:"type:uuid;index" json:"runId"`
 	SequencerID   *uuid.UUID       `gorm:"type:uuid;index" json:"sequencerId"`
@@ -41,9 +42,10 @@ type SampleSheet struct {
 	UpdatedAt     time.Time        `gorm:"autoUpdateTime" json:"updatedAt"`
 
 	// Relationships
-	Run       *SequencingRun `gorm:"foreignKey:RunID" json:"-"`
-	Sequencer *Sequencer     `gorm:"foreignKey:SequencerID" json:"-"`
-	Indices   []SampleIndex  `gorm:"foreignKey:SampleSheetID" json:"-"`
+	Org       *Organization   `gorm:"foreignKey:OrgID" json:"-"`
+	Run       *SequencingRun  `gorm:"foreignKey:RunID" json:"-"`
+	Sequencer *Sequencer      `gorm:"foreignKey:SequencerID" json:"-"`
+	Indices   []SampleIndex   `gorm:"foreignKey:SampleSheetID" json:"-"`
 }
 
 // TableName returns the table name for SampleSheet

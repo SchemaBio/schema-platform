@@ -10,6 +10,7 @@ import (
 // SampleIndex represents a sample index sequence in the system
 type SampleIndex struct {
 	ID             uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID          uuid.UUID  `gorm:"type:uuid;not null;index" json:"orgId"`
 	SampleSheetID  uuid.UUID  `gorm:"type:uuid;not null;index" json:"sampleSheetId"`
 	SampleID       *uuid.UUID `gorm:"type:uuid;index" json:"sampleId"`
 	Lane           string     `gorm:"type:varchar(10)" json:"lane"`
@@ -21,8 +22,9 @@ type SampleIndex struct {
 	CreatedAt      time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 
 	// Relationships
-	SampleSheet *SampleSheet `gorm:"foreignKey:SampleSheetID" json:"-"`
-	Sample      *Sample      `gorm:"foreignKey:SampleID" json:"-"`
+	Org         *Organization `gorm:"foreignKey:OrgID" json:"-"`
+	SampleSheet *SampleSheet  `gorm:"foreignKey:SampleSheetID" json:"-"`
+	Sample      *Sample       `gorm:"foreignKey:SampleID" json:"-"`
 }
 
 // TableName returns the table name for SampleIndex

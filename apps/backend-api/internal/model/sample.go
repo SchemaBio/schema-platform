@@ -65,6 +65,7 @@ func (s SomaticSampleStatus) IsValid() bool {
 // Sample represents a tumor sample in the Somatic system
 type Sample struct {
 	ID               uuid.UUID         `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	OrgID            uuid.UUID         `gorm:"type:uuid;not null;index" json:"orgId"`
 	InternalID       string            `gorm:"type:varchar(50)" json:"internalId"`
 	Name             string            `gorm:"type:varchar(255);not null" json:"name"`
 	Gender           string            `gorm:"type:varchar(20)" json:"gender"`
@@ -74,6 +75,8 @@ type Sample struct {
 	NucleicAcidType  NucleicAcidType   `gorm:"type:varchar(10)" json:"nucleicAcidType"`
 	TumorType        string            `gorm:"type:varchar(100)" json:"tumorType"`
 	PairedSampleID   *uuid.UUID        `gorm:"type:uuid;index" json:"pairedSampleId"`
+	ParentSampleID   *uuid.UUID        `gorm:"type:uuid;index" json:"parentSampleId"` // 原样本ID（重做来源）
+	RedoReason       string            `gorm:"type:text" json:"redoReason"`          // 重做原因
 	Status           SomaticSampleStatus `gorm:"type:varchar(20);not null;default:'PENDING'" json:"status"`
 	Hospital         string            `gorm:"type:varchar(255)" json:"hospital"`
 	TestItems        string            `gorm:"type:text" json:"testItems"`
@@ -85,7 +88,9 @@ type Sample struct {
 	DeletedAt        gorm.DeletedAt    `gorm:"index" json:"-"`
 
 	// Relationships
+	Org            *Organization    `gorm:"foreignKey:OrgID" json:"-"`
 	PairedSample   *Sample          `gorm:"foreignKey:PairedSampleID" json:"-"`
+	ParentSample   *Sample          `gorm:"foreignKey:ParentSampleID" json:"parentSample"`
 	DataFiles      []DataFile       `gorm:"foreignKey:SampleID" json:"-"`
 	AnalysisTasks  []AnalysisTask   `gorm:"foreignKey:SampleID" json:"-"`
 }

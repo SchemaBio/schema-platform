@@ -5,16 +5,24 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button, Input } from '@schema/ui-kit';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
-import { authApi } from '@/lib/auth';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { ApiError } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login, isLoading: authLoading, isAuthenticated } = useAuth();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +36,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await authApi.login({ email, password });
+      await login(email, password);
       router.push('/dashboard');
     } catch (err) {
       if (err instanceof ApiError) {

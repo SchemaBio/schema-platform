@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/schema-platform/backend-api/internal/model"
 	"github.com/schema-platform/backend-api/internal/pkg/jwt"
 	"github.com/schema-platform/backend-api/internal/pkg/response"
@@ -18,8 +19,14 @@ const (
 	UserIDKey = "userID"
 	// UserEmailKey is the context key for user email
 	UserEmailKey = "userEmail"
-	// UserRoleKey is the context key for user role
-	UserRoleKey = "userRole"
+	// SystemRoleKey is the context key for system role
+	SystemRoleKey = "systemRole"
+	// OrgIDKey is the context key for organization ID
+	OrgIDKey = "orgID"
+	// OrgRoleKey is the context key for organization role
+	OrgRoleKey = "orgRole"
+	// OrgsKey is the context key for user's organizations
+	OrgsKey = "orgs"
 )
 
 // Auth creates an authentication middleware
@@ -63,23 +70,32 @@ func Auth(jwtManager *jwt.Manager) gin.HandlerFunc {
 		// Set user info in context
 		c.Set(UserIDKey, claims.UserID)
 		c.Set(UserEmailKey, claims.Email)
-		c.Set(UserRoleKey, claims.Role)
+		c.Set(SystemRoleKey, claims.SystemRole)
+		c.Set(OrgIDKey, claims.OrgID)
+		c.Set(OrgRoleKey, claims.OrgRole)
+		c.Set(OrgsKey, claims.Orgs)
 
 		c.Next()
 	}
 }
 
-// RequireRole creates a middleware that requires specific roles
-func RequireRole(roles ...model.UserRole) gin.HandlerFunc {
+// RequireOrgRole creates a middleware that requires specific org roles
+func RequireOrgRole(roles ...model.OrgRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userRole, exists := c.Get(UserRoleKey)
-		if !exists {
-			response.Unauthorized(c, "User role not found")
+		// Check if user is super admin (bypasses org role check)
+		if IsSuperAdmin(c) {
+			c.Next()
+			return
+		}
+
+		orgRole := GetOrgRole(c)
+		if orgRole == "" {
+			response.Unauthorized(c, "User organization role not found")
 			c.Abort()
 			return
 		}
 
-		role := model.UserRole(userRole.(string))
+		role := model.OrgRole(orgRole)
 		for _, r := range roles {
 			if role == r {
 				c.Next()
@@ -87,24 +103,36 @@ func RequireRole(roles ...model.UserRole) gin.HandlerFunc {
 			}
 		}
 
-		response.Forbidden(c, "Insufficient permissions")
+		response.Forbidden(c, "Insufficient organization permissions")
 		c.Abort()
 	}
 }
 
-// RequireAdmin creates a middleware that requires admin role
-func RequireAdmin() gin.HandlerFunc {
-	return RequireRole(model.UserRoleAdmin)
+// RequireSuperAdmin creates a middleware that requires super admin system role
+func RequireSuperAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !IsSuperAdmin(c) {
+			response.Forbidden(c, "Super admin access required")
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }
 
-// RequireDoctor creates a middleware that requires doctor or admin role
+// RequireOwnerOrAdmin creates a middleware that requires OWNER or ADMIN org role
+func RequireOwnerOrAdmin() gin.HandlerFunc {
+	return RequireOrgRole(model.OrgRoleOwner, model.OrgRoleAdmin)
+}
+
+// RequireDoctor creates a middleware that requires doctor or higher org role
 func RequireDoctor() gin.HandlerFunc {
-	return RequireRole(model.UserRoleAdmin, model.UserRoleDoctor)
+	return RequireOrgRole(model.OrgRoleOwner, model.OrgRoleAdmin, model.OrgRoleDoctor)
 }
 
-// RequireAnalyst creates a middleware that requires analyst, doctor, or admin role
+// RequireAnalyst creates a middleware that requires analyst or higher org role
 func RequireAnalyst() gin.HandlerFunc {
-	return RequireRole(model.UserRoleAdmin, model.UserRoleDoctor, model.UserRoleAnalyst)
+	return RequireOrgRole(model.OrgRoleOwner, model.OrgRoleAdmin, model.OrgRoleDoctor, model.OrgRoleAnalyst)
 }
 
 // GetUserID gets the user ID from context
@@ -125,44 +153,101 @@ func GetUserEmail(c *gin.Context) string {
 	return email.(string)
 }
 
-// GetUserRole gets the user role from context
-func GetUserRole(c *gin.Context) model.UserRole {
-	role, exists := c.Get(UserRoleKey)
+// GetSystemRole gets the system role from context
+func GetSystemRole(c *gin.Context) model.SystemRole {
+	role, exists := c.Get(SystemRoleKey)
 	if !exists {
 		return ""
 	}
-	return model.UserRole(role.(string))
+	return model.SystemRole(role.(string))
 }
 
-// IsAdmin checks if the current user is an admin
-func IsAdmin(c *gin.Context) bool {
-	return GetUserRole(c) == model.UserRoleAdmin
+// GetOrgID gets the organization ID from context as UUID
+func GetOrgID(c *gin.Context) uuid.UUID {
+	orgIDStr, exists := c.Get(OrgIDKey)
+	if !exists || orgIDStr == "" {
+		return uuid.Nil
+	}
+	orgID, err := uuid.Parse(orgIDStr.(string))
+	if err != nil {
+		return uuid.Nil
+	}
+	return orgID
 }
 
-// IsSelfOrAdmin checks if the current user is the target user or an admin
-func IsSelfOrAdmin(c *gin.Context, targetUserID string) bool {
-	return GetUserID(c) == targetUserID || IsAdmin(c)
+// GetOrgIDString gets the organization ID from context as string
+func GetOrgIDString(c *gin.Context) string {
+	orgID, exists := c.Get(OrgIDKey)
+	if !exists {
+		return ""
+	}
+	return orgID.(string)
 }
 
-// RequirePermission creates a middleware that requires specific permissions
+// GetOrgRole gets the organization role from context
+func GetOrgRole(c *gin.Context) model.OrgRole {
+	role, exists := c.Get(OrgRoleKey)
+	if !exists {
+		return ""
+	}
+	return model.OrgRole(role.(string))
+}
+
+// GetOrgs gets the user's organization memberships from context
+func GetOrgs(c *gin.Context) []jwt.OrgClaim {
+	orgs, exists := c.Get(OrgsKey)
+	if !exists {
+		return nil
+	}
+	return orgs.([]jwt.OrgClaim)
+}
+
+// IsSuperAdmin checks if the current user is a system super admin
+func IsSuperAdmin(c *gin.Context) bool {
+	return GetSystemRole(c) == model.SystemRoleSuperAdmin
+}
+
+// IsOrgOwner checks if the current user is an org owner
+func IsOrgOwner(c *gin.Context) bool {
+	return GetOrgRole(c) == model.OrgRoleOwner
+}
+
+// IsOrgAdmin checks if the current user is an org admin or higher
+func IsOrgAdmin(c *gin.Context) bool {
+	role := GetOrgRole(c)
+	return role == model.OrgRoleOwner || role == model.OrgRoleAdmin
+}
+
+// IsSelfOrOrgAdmin checks if the current user is the target user or an org admin
+func IsSelfOrOrgAdmin(c *gin.Context, targetUserID string) bool {
+	return GetUserID(c) == targetUserID || IsOrgAdmin(c) || IsSuperAdmin(c)
+}
+
+// RequirePermission creates a middleware that requires specific permissions based on org role
 func RequirePermission(permissionCodes ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userRole := GetUserRole(c)
-		if userRole == "" {
-			response.Unauthorized(c, "User role not found")
+		// Super admin has all permissions
+		if IsSuperAdmin(c) {
+			c.Next()
+			return
+		}
+
+		orgRole := GetOrgRole(c)
+		if orgRole == "" {
+			response.Unauthorized(c, "User organization role not found")
 			c.Abort()
 			return
 		}
 
-		// Admin has all permissions
-		if userRole == model.UserRoleAdmin {
+		// Owner and Admin have all permissions
+		if orgRole == model.OrgRoleOwner || orgRole == model.OrgRoleAdmin {
 			c.Next()
 			return
 		}
 
 		// Check if user has any of the required permissions
 		for _, code := range permissionCodes {
-			if userRole.HasPermission(code) {
+			if orgRole.HasPermission(code) {
 				c.Next()
 				return
 			}
@@ -181,15 +266,21 @@ func RequireAnyPermission(permissions ...string) gin.HandlerFunc {
 // RequireAllPermissions requires all of the specified permissions
 func RequireAllPermissions(permissionCodes ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userRole := GetUserRole(c)
-		if userRole == "" {
-			response.Unauthorized(c, "User role not found")
+		// Super admin has all permissions
+		if IsSuperAdmin(c) {
+			c.Next()
+			return
+		}
+
+		orgRole := GetOrgRole(c)
+		if orgRole == "" {
+			response.Unauthorized(c, "User organization role not found")
 			c.Abort()
 			return
 		}
 
-		// Admin has all permissions
-		if userRole == model.UserRoleAdmin {
+		// Owner and Admin have all permissions
+		if orgRole == model.OrgRoleOwner || orgRole == model.OrgRoleAdmin {
 			c.Next()
 			return
 		}
@@ -197,7 +288,7 @@ func RequireAllPermissions(permissionCodes ...string) gin.HandlerFunc {
 		// Check if user has all required permissions
 		hasAll := true
 		for _, code := range permissionCodes {
-			if !userRole.HasPermission(code) {
+			if !orgRole.HasPermission(code) {
 				hasAll = false
 				break
 			}
