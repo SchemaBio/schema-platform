@@ -6,16 +6,17 @@ import { Tag } from '@schema/ui-kit';
 import {
   Users,
   FlaskConical,
-  FileText,
   Clock,
   CheckCircle,
   AlertCircle,
   TrendingUp,
-  Calendar,
   ArrowRight,
   ListTodo,
   BookOpen,
   Workflow,
+  MessageSquare,
+  Send,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -123,34 +124,47 @@ const pendingSamples = [
   },
 ];
 
-// 最近完成的任务
-const recentCompletedTasks = [
+// 全局备注
+const globalNotes = [
   {
     id: '1',
-    taskId: 'TSK-a1b2c3d4',
-    sampleId: 'S2024120080',
-    patientName: '刘**',
-    completedAt: '2024-12-28 10:30',
-    variantsFound: 3,
-    status: 'pending_interpretation' as const,
+    content: '下周一开始系统维护，预计停机2小时，请提前保存工作内容。',
+    author: '张医生',
+    createdAt: '2024-12-28 14:30',
+    avatar: '张',
+    isOwner: true, // 当前用户发送的
   },
   {
     id: '2',
-    taskId: 'TSK-e5f6g7h8',
-    sampleId: 'S2024120079',
-    patientName: '孙**',
-    completedAt: '2024-12-28 09:15',
-    variantsFound: 1,
-    status: 'completed' as const,
+    content: '新增心血管Panel检测项目已上线，欢迎大家试用并反馈问题。',
+    author: '李工程师',
+    createdAt: '2024-12-28 10:15',
+    avatar: '李',
+    isOwner: false,
   },
   {
     id: '3',
-    taskId: 'TSK-i9j0k1l2',
-    sampleId: 'S2024120078',
-    patientName: '周**',
-    completedAt: '2024-12-27 18:45',
-    variantsFound: 5,
-    status: 'completed' as const,
+    content: '本周五下午3点召开项目进度会议，请相关人员准时参加。',
+    author: '王主任',
+    createdAt: '2024-12-27 16:45',
+    avatar: '王',
+    isOwner: false,
+  },
+  {
+    id: '4',
+    content: '提醒：请大家及时更新样本状态，确保流程追踪准确。',
+    author: '张医生',
+    createdAt: '2024-12-27 09:30',
+    avatar: '张',
+    isOwner: true,
+  },
+  {
+    id: '5',
+    content: '新版本已部署，修复了报告导出的问题。',
+    author: '李工程师',
+    createdAt: '2024-12-26 15:20',
+    avatar: '李',
+    isOwner: false,
   },
 ];
 
@@ -164,6 +178,12 @@ const weeklyStats = {
 
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState<string>('');
+  const [newNote, setNewNote] = useState('');
+  const [notes, setNotes] = useState(globalNotes);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; author: string } | null>(null);
+
+  // 当前用户是否是管理员（模拟）
+  const isAdmin = true;
 
   useEffect(() => {
     // 初始化时间
@@ -176,6 +196,44 @@ export default function DashboardPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+
+    const note = {
+      id: String(Date.now()),
+      content: newNote.trim(),
+      author: '张医生',
+      createdAt: new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).replace(/\//g, '-'),
+      avatar: '张',
+      isOwner: true,
+    };
+
+    setNotes([note, ...notes]);
+    setNewNote('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddNote();
+    }
+  };
+
+  const handleDeleteNote = (id: string) => {
+    setNotes(notes.filter((n) => n.id !== id));
+    setDeleteConfirm(null);
+  };
+
+  const canDeleteNote = (note: typeof notes[0]) => {
+    return note.isOwner || isAdmin;
+  };
 
   return (
     <PageContent>
@@ -247,13 +305,114 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* 全局备注 */}
+      <div className="mb-6 bg-canvas-default rounded-lg border border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h3 className="font-medium text-fg-default flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-accent-fg" />
+            全局备注
+          </h3>
+          <span className="text-xs text-fg-muted">组织内所有人可见</span>
+        </div>
+
+        {/* 发备注输入框 */}
+        <div className="p-4 border-b border-border bg-canvas-subtle">
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-accent-subtle flex items-center justify-center text-sm font-medium text-accent-fg shrink-0">
+              张
+            </div>
+            <div className="flex-1">
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="发布一条备注..."
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-accent-muted focus:border-accent-muted"
+                rows={2}
+              />
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={handleAddNote}
+                  disabled={!newNote.trim()}
+                  className="px-3 py-1.5 text-sm bg-accent-emphasis text-white rounded-md hover:bg-accent-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  发布
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 备注列表 */}
+        <div className="divide-y divide-border max-h-80 overflow-y-auto">
+          {notes.map((note) => (
+            <div key={note.id} className="p-4 hover:bg-canvas-subtle transition-colors group">
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-canvas-inset flex items-center justify-center text-sm font-medium text-fg-muted shrink-0">
+                  {note.avatar}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-fg-default">{note.author}</span>
+                    <span className="text-xs text-fg-muted">{note.createdAt}</span>
+                    {canDeleteNote(note) && (
+                      <button
+                        onClick={() => setDeleteConfirm({ id: note.id, author: note.author })}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-danger-subtle text-fg-muted hover:text-danger-fg transition-all"
+                        title="删除"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm text-fg-default whitespace-pre-wrap">{note.content}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {notes.length === 0 && (
+            <div className="p-8 text-center text-fg-muted text-sm">
+              暂无备注，发布第一条备注吧
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 删除确认弹窗 */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setDeleteConfirm(null)} />
+          <div className="relative bg-canvas-default rounded-lg shadow-lg border border-border p-4 w-full max-w-sm mx-4">
+            <h4 className="text-base font-medium text-fg-default mb-2">确认删除</h4>
+            <p className="text-sm text-fg-muted mb-4">
+              确定要删除 {deleteConfirm.author} 的这条备注吗？此操作不可撤销。
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-3 py-1.5 text-sm text-fg-default border border-border rounded-md hover:bg-canvas-subtle transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => handleDeleteNote(deleteConfirm.id)}
+                className="px-3 py-1.5 text-sm bg-danger-emphasis text-white rounded-md hover:bg-danger-muted transition-colors"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 待分析样本 */}
+        {/* 待分析任务 */}
         <div className="lg:col-span-2 bg-canvas-default rounded-lg border border-border">
           <div className="flex items-center justify-between p-4 border-b border-border">
             <h3 className="font-medium text-fg-default flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-orange-500" />
-              待分析样本
+              待分析任务
             </h3>
             <Link
               href="/tasks/pending"
@@ -328,56 +487,6 @@ export default function DashboardPage() {
               </span>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* 最近完成的任务 */}
-      <div className="mt-6 bg-canvas-default rounded-lg border border-border">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="font-medium text-fg-default flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            最近完成的任务
-          </h3>
-          <Link
-            href="/tasks/completed"
-            className="text-sm text-accent-fg hover:underline flex items-center gap-1"
-          >
-            查看全部 <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-canvas-subtle text-left text-sm text-fg-muted">
-                <th className="px-4 py-3 font-medium">样本编号</th>
-                <th className="px-4 py-3 font-medium">患者</th>
-                <th className="px-4 py-3 font-medium">完成时间</th>
-                <th className="px-4 py-3 font-medium">检出变异</th>
-                <th className="px-4 py-3 font-medium">状态</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {recentCompletedTasks.map((task) => (
-                <tr key={task.id} className="hover:bg-canvas-subtle transition-colors">
-                  <td className="px-4 py-3 text-sm text-fg-default">{task.sampleId}</td>
-                  <td className="px-4 py-3 text-sm text-fg-default">{task.patientName}</td>
-                  <td className="px-4 py-3 text-sm text-fg-muted">{task.completedAt}</td>
-                  <td className="px-4 py-3 text-sm">
-                    <span className="px-2 py-0.5 bg-accent-subtle text-accent-fg rounded">
-                      {task.variantsFound} 个
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {task.status === 'pending_interpretation' ? (
-                      <Tag variant="warning">待解读</Tag>
-                    ) : (
-                      <Tag variant="success">已完成</Tag>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </PageContent>
