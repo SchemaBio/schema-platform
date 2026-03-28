@@ -39,8 +39,11 @@ const statsCards = [
     change: '+128',
     changeLabel: '本月新增',
     icon: Users,
-    color: 'text-blue-500',
     bgColor: 'bg-blue-50',
+    iconColor: 'text-blue-500',
+    valueColor: 'text-blue-700',
+    titleColor: 'text-blue-600',
+    changeColor: 'text-blue-500',
     href: '/samples',
   },
   {
@@ -49,8 +52,11 @@ const statsCards = [
     change: '5',
     changeLabel: '紧急',
     icon: FlaskConical,
-    color: 'text-orange-500',
     bgColor: 'bg-orange-50',
+    iconColor: 'text-orange-500',
+    valueColor: 'text-orange-700',
+    titleColor: 'text-orange-600',
+    changeColor: 'text-orange-500',
     href: '/tasks/pending',
   },
   {
@@ -59,8 +65,11 @@ const statsCards = [
     change: '~2h',
     changeLabel: '预计完成',
     icon: Clock,
-    color: 'text-purple-500',
     bgColor: 'bg-purple-50',
+    iconColor: 'text-purple-500',
+    valueColor: 'text-purple-700',
+    titleColor: 'text-purple-600',
+    changeColor: 'text-purple-500',
     href: '/tasks/running',
   },
   {
@@ -69,8 +78,11 @@ const statsCards = [
     change: '+12',
     changeLabel: '本周',
     icon: CheckCircle,
-    color: 'text-green-500',
     bgColor: 'bg-green-50',
+    iconColor: 'text-green-500',
+    valueColor: 'text-green-700',
+    titleColor: 'text-green-600',
+    changeColor: 'text-green-500',
     href: '/tasks/completed',
   },
 ];
@@ -286,19 +298,17 @@ export default function DashboardPage() {
             <Link
               key={stat.title}
               href={stat.href}
-              className="p-4 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all"
+              className={`p-4 rounded-lg border border-border hover:shadow-md transition-all ${stat.bgColor}`}
             >
               <div className="flex items-start justify-between">
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <Icon className={`w-5 h-5 ${stat.color}`} />
-                </div>
-                <span className="text-xs text-fg-muted">
+                <Icon className={`w-8 h-8 ${stat.iconColor}`} />
+                <span className={`text-xs ${stat.changeColor}`}>
                   {stat.change} {stat.changeLabel}
                 </span>
               </div>
               <div className="mt-3">
-                <div className="text-2xl font-bold text-fg-default">{stat.value}</div>
-                <div className="text-sm text-fg-muted">{stat.title}</div>
+                <div className={`text-2xl font-bold ${stat.valueColor}`}>{stat.value}</div>
+                <div className={`text-sm ${stat.titleColor}`}>{stat.title}</div>
               </div>
             </Link>
           );
