@@ -105,8 +105,6 @@ S001,INT-001,男,全血,BATCH-2024-001,遗传性心肌病待查`;
     if (!hpoTerms || hpoTerms.length === 0) {
       return <span className="text-fg-muted">-</span>;
     }
-    const displayTerms = hpoTerms.slice(0, 2);
-    const moreCount = hpoTerms.length - 2;
     return (
       <Tooltip
         content={
@@ -120,16 +118,13 @@ S001,INT-001,男,全血,BATCH-2024-001,遗传性心肌病待查`;
           </div>
         }
       >
-        <span className="inline-flex items-center gap-1 flex-wrap">
-          {displayTerms.map(term => (
-            <span key={term.id} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200">
+        <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 text-xs">
+          {hpoTerms.map(term => (
+            <span key={term.id} className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 truncate">
               {term.id}
             </span>
           ))}
-          {moreCount > 0 && (
-            <span className="text-xs text-fg-muted">+{moreCount}</span>
-          )}
-        </span>
+        </div>
       </Tooltip>
     );
   };
@@ -180,7 +175,7 @@ S001,INT-001,男,全血,BATCH-2024-001,遗传性心肌病待查`;
       id: 'hpoTerms',
       header: 'HPO',
       accessor: (row) => <HpoCell hpoTerms={row.hpoTerms} />,
-      width: 140,
+      width: 160,
       align: 'center',
     },
     {

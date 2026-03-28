@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Tooltip } from '@schema/ui-kit';
 import { ChevronLeft } from 'lucide-react';
 import { UserMenu } from './UserMenu';
@@ -205,12 +205,22 @@ interface SubNavItemComponentProps {
 }
 
 function SubNavItemComponent({ item, collapsed, currentPath }: SubNavItemComponentProps) {
-  const isActive = item.href === currentPath;
+  const router = useRouter();
+  const isActive = item.href === currentPath || (item.href !== '/samples' && currentPath.startsWith(item.href));
   const Icon = item.icon;
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // 如果点击已激活的家系管理链接，强制刷新并添加 reset 参数
+    if (item.href === '/samples/pedigree' && isActive) {
+      e.preventDefault();
+      router.push('/samples/pedigree?reset=1');
+    }
+  };
 
   const content = (
     <Link
       href={item.href}
+      onClick={handleClick}
       className={`
         flex items-center gap-3 px-3 py-2 rounded-md text-sm
         transition-colors duration-fast

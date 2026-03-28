@@ -4,16 +4,17 @@ import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, ChevronRight, ChevronLeft, List, X, UserPlus, GitBranch, Trash2, Pencil, Save } from 'lucide-react';
-import { PedigreeTree, MemberDetailPanel, AddMemberModal, LinkSampleModal, NewPedigreeModal } from './components';
+import { Search, Plus, List, X, UserPlus, GitBranch, Trash2, Pencil, Save, Download, Upload } from 'lucide-react';
+import { PedigreeTree, MemberDetailPanel, AddMemberModal, LinkSampleModal, NewPedigreeModal, EditPedigreeModal } from './components';
 import type { NewPedigreeFormData } from './components/NewPedigreeModal';
-import { mockPedigreeList, getPedigreeDetail } from './mock-data';
+import type { EditPedigreeFormData } from './components/EditPedigreeModal';
+import { mockPedigreeList, getPedigreeDetail, generatePedigreeUUID, generateMemberUUID } from './mock-data';
 import type { PedigreeListItem, Pedigree, PedigreeMember } from './types';
 
 interface OpenTab {
   id: string;
   pedigreeId: string;
-  name: string;
+  name: string;  // 显示名称（使用 internalId）
 }
 
 export default function PedigreePage() {
@@ -21,7 +22,6 @@ export default function PedigreePage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
   const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
 
   // 当前查看的家系详情
   const [currentPedigree, setCurrentPedigree] = React.useState<Pedigree | null>(null);
@@ -43,17 +43,34 @@ export default function PedigreePage() {
   // 新建家系弹窗
   const [isNewPedigreeOpen, setIsNewPedigreeOpen] = React.useState(false);
 
+  // 编辑家系弹窗
+  const [isEditPedigreeOpen, setIsEditPedigreeOpen] = React.useState(false);
+  const [editingPedigree, setEditingPedigree] = React.useState<PedigreeListItem | null>(null);
+
   // 防止重复打开家系
   const processedPedigreeId = React.useRef<string | null>(null);
 
-  // 处理 URL 参数，自动打开对应家系
+  // 处理 URL 参数，自动打开对应家系或关闭所有标签
   React.useEffect(() => {
     const pedigreeId = searchParams.get('id');
+    const reset = searchParams.get('reset');
+
+    // 如果有 reset 参数，关闭所有标签返回列表视图
+    if (reset === '1') {
+      setOpenTabs([]);
+      setActiveTabId(null);
+      setCurrentPedigree(null);
+      setSelectedMember(null);
+      processedPedigreeId.current = null;
+      return;
+    }
+
+    // 否则处理打开家系
     if (pedigreeId && pedigreeId !== processedPedigreeId.current) {
       processedPedigreeId.current = pedigreeId;
       const pedigree = mockPedigreeList.find(p => p.id === pedigreeId);
       if (pedigree) {
-        handleOpenTabById(pedigreeId, pedigree.name);
+        handleOpenTabById(pedigreeId, pedigree.internalId);
       }
     }
   }, [searchParams]);
@@ -101,7 +118,7 @@ export default function PedigreePage() {
     const newTab: OpenTab = {
       id: `tab-${Date.now()}`,
       pedigreeId: pedigree.id,
-      name: pedigree.name,
+      name: pedigree.internalId,
     };
     setOpenTabs(prev => [...prev, newTab]);
     setActiveTabId(newTab.id);
@@ -190,24 +207,46 @@ export default function PedigreePage() {
   };
 
   // 创建新家系
-  const handleCreatePedigree = (data: NewPedigreeFormData) => {
-    const newPedigreeId = `FAM${String(mockPedigreeList.length + 1).padStart(3, '0')}`;
-    const newMemberId = `M${Date.now()}`;
+  const handleCreatePedigree = async (data: NewPedigreeFormData) => {
+    const newPedigreeId = generatePedigreeUUID();
+    const newMemberId = generateMemberUUID();
+
+    // 从样本列表获取先证者样本信息
+    const { mockSamples } = await import('../mock-data');
+    const probandSample = mockSamples.find((s: { id: string }) => s.id === data.probandSampleId);
+
+    if (!probandSample) {
+      console.error('未找到先证者样本');
+      return;
+    }
+
+    const now = new Date();
+    const formatDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
 
     const newPedigree: Pedigree = {
       id: newPedigreeId,
-      name: data.name,
+      internalId: data.internalId,
       probandId: newMemberId,
-      disease: data.disease || undefined,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      note: data.note || undefined,
+      probandSampleId: data.probandSampleId,
+      clinicalDiagnosis: data.clinicalDiagnosis || undefined,
+      batch: data.batch || undefined,
+      remark: data.remark || undefined,
+      createdAt: formatDate(now),
+      updatedAt: formatDate(now),
       members: [
         {
           id: newMemberId,
-          name: '先证者', // 使用通用名称
-          gender: data.probandGender,
-          birthYear: data.probandBirthYear ? parseInt(data.probandBirthYear) : undefined,
+          sampleId: data.probandSampleId,
+          name: '先证者',
+          gender: probandSample.gender,
           relation: 'proband',
           affectedStatus: 'affected',
           generation: 0,
@@ -220,7 +259,7 @@ export default function PedigreePage() {
     const newTab: OpenTab = {
       id: `tab-${Date.now()}`,
       pedigreeId: newPedigreeId,
-      name: data.name,
+      name: data.internalId,
     };
     setOpenTabs(prev => [...prev, newTab]);
     setActiveTabId(newTab.id);
@@ -231,16 +270,45 @@ export default function PedigreePage() {
     console.log('创建新家系:', newPedigree);
   };
 
+  // 打开编辑家系弹窗
+  const handleOpenEditPedigree = (pedigree: PedigreeListItem) => {
+    setEditingPedigree(pedigree);
+    setIsEditPedigreeOpen(true);
+  };
+
+  // 编辑家系
+  const handleEditPedigree = async (id: string, data: EditPedigreeFormData) => {
+    console.log('编辑家系:', id, data);
+    // TODO: 实际更新逻辑
+    // 这里暂时只打印日志，后续接入 API 时实现
+  };
+
   // 筛选家系
   const filteredPedigrees = React.useMemo(() => {
     if (!searchQuery) return mockPedigreeList;
     const query = searchQuery.toLowerCase();
     return mockPedigreeList.filter(
       (p) => p.id.toLowerCase().includes(query) ||
-             p.name.includes(query) ||
-             p.probandInternalId.toLowerCase().includes(query)
+             p.internalId.toLowerCase().includes(query) ||
+             p.sampleInternalIds.some(id => id.toLowerCase().includes(query))
     );
   }, [searchQuery]);
+
+  // 下载模板
+  const handleDownloadTemplate = () => {
+    const templateContent = `家系内部编号,批次,样本内部编号1,样本内部编号2,样本内部编号3,临床诊断,备注
+FAM-001,BATCH-2024-001,INT-001,INT-002,,遗传性心肌病待查,家系备注
+FAM-002,BATCH-2024-002,INT-003,,,智力发育迟缓,`;
+    const blob = new Blob(['\ufeff' + templateContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '家系导入模板.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   // 表格列定义
   const columns: Column<PedigreeListItem>[] = [
@@ -249,52 +317,102 @@ export default function PedigreePage() {
       header: '家系编号',
       accessor: (row) => (
         <span
-          className="text-accent-fg hover:underline cursor-pointer"
+          className="font-mono text-sm text-accent-fg hover:underline cursor-pointer"
           onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }}
         >
-          {row.id}
+          {row.id.substring(0, 8)}
         </span>
       ),
       width: 100,
+      align: 'center',
+    },
+    {
+      id: 'internalId',
+      header: '内部编号',
+      accessor: 'internalId',
+      width: 90,
+      align: 'center',
+    },
+    {
+      id: 'batch',
+      header: '批次',
+      accessor: (row) => row.batch || '-',
+      width: 120,
+      align: 'center',
     },
     {
       id: 'sampleIds',
       header: '样本编号',
       accessor: (row) => (
-        <div className="text-sm">
+        <div className="text-sm space-y-0.5">
           {row.sampleIds.length > 0 ? (
-            row.sampleIds.map((id) => (
+            row.sampleIds.map((id, index) => (
               <div
                 key={id}
-                className={id === row.probandSampleId ? 'text-accent-fg font-medium' : 'text-fg-default'}
+                className={`font-mono text-xs ${id === row.probandSampleId ? 'text-blue-600 font-semibold' : 'text-fg-default'}`}
               >
-                {id}{id === row.probandSampleId && ' (先证者)'}
+                {id.substring(0, 8)}
               </div>
             ))
-          ) : '-'}
+          ) : (
+            <span className="text-fg-muted">-</span>
+          )}
         </div>
       ),
-      width: 160,
+      width: 120,
+      align: 'center',
     },
-    { id: 'probandInternalId', header: '先证者', accessor: 'probandInternalId', width: 80 },
-    { id: 'disease', header: '主要疾病', accessor: (row) => row.disease || '-', width: 140 },
     {
-      id: 'memberCount',
-      header: '成员数',
+      id: 'sampleInternalIds',
+      header: '样本内部编号',
       accessor: (row) => (
-        <div className="text-fg-default">
-          {row.memberCount} 人
-          <span className="text-xs text-fg-muted ml-1">({row.sampledCount} 已采样)</span>
+        <div className="text-sm space-y-0.5">
+          {row.sampleInternalIds.length > 0 ? (
+            row.sampleInternalIds.map((id, index) => (
+              <div
+                key={id}
+                className={`text-xs ${row.sampleIds[index] === row.probandSampleId ? 'text-blue-600 font-semibold' : 'text-fg-default'}`}
+              >
+                {id}
+              </div>
+            ))
+          ) : (
+            <span className="text-fg-muted">-</span>
+          )}
         </div>
       ),
-      width: 130
+      width: 100,
+      align: 'center',
     },
-    { id: 'updatedAt', header: '更新时间', accessor: 'updatedAt', width: 100 },
+    {
+      id: 'clinicalDiagnosis',
+      header: '临床诊断',
+      accessor: (row) => row.clinicalDiagnosis || '-',
+      width: 140,
+    },
+    {
+      id: 'remark',
+      header: '备注',
+      accessor: (row) => (
+        <span className={row.remark ? 'text-fg-default truncate block max-w-[100px]' : 'text-fg-muted'}>
+          {row.remark || '-'}
+        </span>
+      ),
+      width: 100,
+    },
+    { id: 'updatedAt', header: '更新时间', accessor: 'updatedAt', width: 150 },
     {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="p-1.5 rounded text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+            onClick={() => handleOpenEditPedigree(row)}
+            aria-label="编辑"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
           <button
             className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
             onClick={() => console.log('删除', row.id)}
@@ -304,7 +422,8 @@ export default function PedigreePage() {
           </button>
         </div>
       ),
-      width: 60,
+      width: 70,
+      align: 'center',
     },
   ];
 
@@ -315,24 +434,10 @@ export default function PedigreePage() {
     <div className="flex h-full">
       {/* 左侧家系列表 */}
       {hasOpenTabs ? (
-        sidebarCollapsed ? (
-          <div className="w-10 flex-shrink-0 border-r border-border-default bg-canvas-subtle flex flex-col items-center py-2">
-            <button onClick={() => setSidebarCollapsed(false)} className="p-2 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default transition-colors" title="展开家系列表">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <div className="mt-2 text-xs text-fg-muted writing-mode-vertical">家系</div>
-            <div className="mt-auto mb-2 w-5 h-5 rounded-full bg-accent-emphasis text-white text-xs flex items-center justify-center">{openTabs.length}</div>
-          </div>
-        ) : (
-          <div className="w-56 flex-shrink-0 border-r border-border-default bg-canvas-subtle flex flex-col">
-            <div className="px-3 py-2 border-b border-border-default flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <List className="w-4 h-4 text-fg-muted" />
-                <span className="text-sm font-medium text-fg-default">家系列表</span>
-              </div>
-              <button onClick={() => setSidebarCollapsed(true)} className="p-1 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default transition-colors" title="收起">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+        <div className="w-56 flex-shrink-0 border-r border-border-default bg-canvas-subtle flex flex-col">
+            <div className="px-3 py-2 border-b border-border-default flex items-center gap-2">
+              <List className="w-4 h-4 text-fg-muted" />
+              <span className="text-sm font-medium text-fg-default">家系列表</span>
             </div>
             <div className="p-2 border-b border-border-default">
               <Input placeholder="搜索..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftElement={<Search className="w-3.5 h-3.5" />} className="text-xs" />
@@ -345,24 +450,27 @@ export default function PedigreePage() {
                   <div key={pedigree.id} onClick={() => handleOpenTab(pedigree)} className={`px-3 py-2 cursor-pointer border-b border-border-muted transition-colors ${isActive ? 'bg-accent-subtle border-l-2 border-l-accent-emphasis' : isOpen ? 'bg-canvas-inset' : 'hover:bg-canvas-inset'}`}>
                     <div className="flex items-center gap-2">
                       <GitBranch className="w-3 h-3 text-fg-muted" />
-                      <span className={`text-sm ${isActive ? 'text-accent-fg font-medium' : 'text-fg-default'}`}>{pedigree.id}</span>
+                      <span className={`font-mono text-sm ${isActive ? 'text-accent-fg font-medium' : 'text-fg-default'}`}>{pedigree.id.substring(0, 8)}</span>
                     </div>
-                    <div className="text-xs text-fg-muted ml-5 truncate">{pedigree.name} · {pedigree.memberCount}人</div>
+                    <div className="text-xs text-fg-muted ml-5 truncate">{pedigree.internalId} · {pedigree.sampleIds.length}样本</div>
                   </div>
                 );
               })}
             </div>
           </div>
-        )
       ) : (
         <div className="flex-1">
           <div className="p-6 h-full overflow-auto">
             <h2 className="text-lg font-medium text-fg-default mb-4">家系管理</h2>
             <div className="flex items-center justify-between mb-4">
               <div className="w-64">
-                <Input placeholder="搜索家系编号、名称、先证者..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftElement={<Search className="w-4 h-4" />} />
+                <Input placeholder="搜索家系编号、内部编号、样本..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} leftElement={<Search className="w-4 h-4" />} />
               </div>
-              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setIsNewPedigreeOpen(true)}>新建家系</Button>
+              <div className="flex items-center gap-2">
+                <Button variant="secondary" leftIcon={<Download className="w-4 h-4" />} onClick={handleDownloadTemplate}>下载模板</Button>
+                <Button variant="secondary" leftIcon={<Upload className="w-4 h-4" />}>批量导入</Button>
+                <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setIsNewPedigreeOpen(true)}>新建家系</Button>
+              </div>
             </div>
             <DataTable data={filteredPedigrees} columns={columns} rowKey="id" striped density="compact" />
           </div>
@@ -389,9 +497,9 @@ export default function PedigreePage() {
             <div className="flex items-center gap-2">
               {currentPedigree && (
                 <>
-                  <span className="text-sm text-fg-default font-medium">{currentPedigree.name}</span>
-                  {currentPedigree.disease && (
-                    <Tag variant="info">{currentPedigree.disease}</Tag>
+                  <span className="text-sm text-fg-default font-medium">{currentPedigree.internalId}</span>
+                  {currentPedigree.clinicalDiagnosis && (
+                    <Tag variant="info">{currentPedigree.clinicalDiagnosis}</Tag>
                   )}
                   <span className="text-xs text-fg-muted">{currentPedigree.members.length} 位成员</span>
                 </>
@@ -479,6 +587,17 @@ export default function PedigreePage() {
         isOpen={isNewPedigreeOpen}
         onClose={() => setIsNewPedigreeOpen(false)}
         onSubmit={handleCreatePedigree}
+      />
+
+      {/* 编辑家系弹窗 */}
+      <EditPedigreeModal
+        isOpen={isEditPedigreeOpen}
+        onClose={() => {
+          setIsEditPedigreeOpen(false);
+          setEditingPedigree(null);
+        }}
+        onSubmit={handleEditPedigree}
+        pedigree={editingPedigree}
       />
     </div>
   );

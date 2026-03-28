@@ -73,7 +73,7 @@ export function LinkSampleModal({ isOpen, onClose, onSelect, memberName }: LinkS
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-mono text-sm text-gray-900">{sample.id}</span>
+                        <span className="font-mono text-sm text-gray-900">{sample.id.substring(0, 8)}</span>
                         <span className="text-gray-500 ml-2">{sample.internalId}</span>
                         <Tag variant={isMatched ? 'success' : 'warning'} className="ml-2">{isMatched ? '已匹配' : '未匹配'}</Tag>
                       </div>

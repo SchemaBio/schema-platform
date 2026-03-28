@@ -1,7 +1,7 @@
 import type { Gender } from '../types';
 
 // 家系成员关系类型
-export type RelationType = 
+export type RelationType =
   | 'proband'      // 先证者
   | 'father'       // 父亲
   | 'mother'       // 母亲
@@ -22,8 +22,8 @@ export type AffectedStatus = 'affected' | 'unaffected' | 'unknown' | 'carrier';
 
 // 家系成员
 export interface PedigreeMember {
-  id: string;
-  sampleId?: string;        // 关联的样本ID（可选，未采样的成员没有）
+  id: string;                 // 成员ID (UUID)
+  sampleId?: string;          // 关联的样本UUID（必须存在于 /samples 中）
   name: string;
   gender: Gender;
   birthYear?: number;
@@ -31,23 +31,26 @@ export interface PedigreeMember {
   deceasedYear?: number;
   relation: RelationType;
   affectedStatus: AffectedStatus;
-  phenotypes?: string[];    // 表型描述
+  phenotypes?: string[];      // 表型描述
   // 家系关系
-  fatherId?: string;        // 父亲成员ID
-  motherId?: string;        // 母亲成员ID
-  spouseIds?: string[];     // 配偶成员ID列表
+  fatherId?: string;          // 父亲成员ID
+  motherId?: string;          // 母亲成员ID
+  spouseIds?: string[];       // 配偶成员ID列表
   // 位置信息（用于可视化）
-  generation: number;       // 代数（0为先证者所在代）
-  position: number;         // 同代中的位置
+  generation: number;         // 代数（0为先证者所在代）
+  position: number;           // 同代中的位置
 }
 
 // 家系
 export interface Pedigree {
-  id: string;
-  name: string;
-  probandId: string;        // 先证者成员ID
+  id: string;                 // 家系UUID
+  internalId: string;         // 家系内部编号
+  probandId: string;          // 先证者成员ID
+  probandSampleId?: string;   // 先证者样本UUID
   members: PedigreeMember[];
-  disease?: string;         // 主要疾病
+  clinicalDiagnosis?: string; // 临床诊断（先证者）
+  batch?: string;             // 批次
+  remark?: string;            // 备注
   createdAt: string;
   updatedAt: string;
   note?: string;
@@ -55,14 +58,16 @@ export interface Pedigree {
 
 // 家系列表项
 export interface PedigreeListItem {
-  id: string;
-  name: string;
-  memberCount: number;
-  sampledCount: number;     // 已采样成员数
-  sampleIds: string[];      // 家系内样本编号列表
-  probandSampleId?: string; // 先证者样本编号
-  probandInternalId: string; // 先证者内部编号
-  disease?: string;
+  id: string;                 // 家系UUID
+  internalId: string;         // 家系内部编号
+  sampleIds: string[];        // 家系内样本UUID列表
+  sampleInternalIds: string[]; // 样本内部编号列表（与sampleIds一一对应）
+  probandSampleId?: string;   // 先证者样本UUID
+  probandSampleInternalId?: string; // 先证者样本内部编号
+  probandIndex: number;       // 先证者在sampleIds中的索引
+  batch?: string;             // 批次
+  clinicalDiagnosis?: string; // 临床诊断（先证者）
+  remark?: string;            // 备注
   createdAt: string;
   updatedAt: string;
 }
