@@ -13,6 +13,9 @@ import {
   TrendingUp,
   Calendar,
   ArrowRight,
+  ListTodo,
+  BookOpen,
+  Workflow,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,7 +50,7 @@ const statsCards = [
     icon: FlaskConical,
     color: 'text-orange-500',
     bgColor: 'bg-orange-50',
-    href: '/analysis/pending',
+    href: '/tasks/pending',
   },
   {
     title: '进行中任务',
@@ -57,17 +60,17 @@ const statsCards = [
     icon: Clock,
     color: 'text-purple-500',
     bgColor: 'bg-purple-50',
-    href: '/analysis/running',
+    href: '/tasks/running',
   },
   {
-    title: '待审核报告',
-    value: '15',
-    change: '3',
-    changeLabel: '超过3天',
-    icon: FileText,
+    title: '已完成任务',
+    value: '156',
+    change: '+12',
+    changeLabel: '本周',
+    icon: CheckCircle,
     color: 'text-green-500',
     bgColor: 'bg-green-50',
-    href: '/reports/review',
+    href: '/tasks/completed',
   },
 ];
 
@@ -194,25 +197,25 @@ export default function DashboardPage() {
             <span className="text-sm text-fg-default">样本管理</span>
           </Link>
           <Link
-            href="/lab"
+            href="/tasks"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
-            <FlaskConical className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">实验中心</span>
+            <ListTodo className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">任务中心</span>
+          </Link>
+          <Link
+            href="/knowledge"
+            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
+          >
+            <BookOpen className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">知识中心</span>
           </Link>
           <Link
             href="/pipeline"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
-            <Clock className="w-4 h-4 text-fg-muted" />
+            <Workflow className="w-4 h-4 text-fg-muted" />
             <span className="text-sm text-fg-default">流程中心</span>
-          </Link>
-          <Link
-            href="/analysis"
-            className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">报告中心</span>
           </Link>
         </div>
       </div>
@@ -253,7 +256,7 @@ export default function DashboardPage() {
               待分析样本
             </h3>
             <Link
-              href="/analysis/pending"
+              href="/tasks/pending"
               className="text-sm text-accent-fg hover:underline flex items-center gap-1"
             >
               查看全部 <ArrowRight className="w-3 h-3" />
@@ -336,7 +339,7 @@ export default function DashboardPage() {
             最近完成的任务
           </h3>
           <Link
-            href="/analysis/completed"
+            href="/tasks/completed"
             className="text-sm text-accent-fg hover:underline flex items-center gap-1"
           >
             查看全部 <ArrowRight className="w-3 h-3" />
