@@ -1,11 +1,34 @@
 'use client';
 
 import * as React from 'react';
-import { Button, Input, DataTable, Tag, Select } from '@schema/ui-kit';
+import { Button, Input, DataTable, Tag, Tooltip } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, RotateCcw, X, ChevronRight, ChevronLeft, List, Play, Square, Pencil, Trash2, Download, Upload, BookOpen } from 'lucide-react';
+import { Search, Plus, RotateCcw, X, ChevronRight, ChevronLeft, List, Play, Square, Pencil, Trash2, Download, Upload, BookOpen, ChevronDown } from 'lucide-react';
 import { AnalysisDetailPanel, NewTaskModal, EditTaskModal } from './components';
 import type { NewTaskFormData, EditTaskFormData, AnalysisTask } from './components';
+
+// 简化的ID显示组件（点击复制，无复制按钮）
+function IdCell({ id }: { id: string }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <Tooltip content={id} placement="top" variant="default">
+      <span
+        className={`font-mono text-xs cursor-pointer ${copied ? 'text-green-500' : 'text-accent-fg hover:underline'}`}
+        onClick={handleClick}
+      >
+        {id.substring(0, 8)}
+      </span>
+    </Tooltip>
+  );
+}
 
 // Mock data
 const mockTasks: AnalysisTask[] = [
@@ -96,6 +119,91 @@ const statusFilterOptions = [
   { value: 'completed', label: '已完成' },
   { value: 'failed', label: '失败' },
 ];
+
+// 状态筛选下拉组件
+function StatusFilterDropdown({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭下拉
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // 获取当前选中项的显示
+  const getCurrentDisplay = () => {
+    if (value === 'all') {
+      return <span className="text-sm text-fg-default">全部状态</span>;
+    }
+    const config = statusConfig[value as AnalysisTask['status']];
+    return <Tag variant={config.variant} className="w-14 justify-center">{config.label}</Tag>;
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-1.5 border border-border-default rounded bg-canvas-default hover:bg-canvas-inset transition-colors"
+      >
+        {getCurrentDisplay()}
+        <ChevronDown className={`w-4 h-4 text-fg-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-30 py-1 min-w-[120px]">
+          {/* 全部状态选项 */}
+          <button
+            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${
+              value === 'all' ? 'bg-gray-100' : ''
+            }`}
+            onClick={() => {
+              onChange('all');
+              setIsOpen(false);
+            }}
+          >
+            <span className="text-fg-default">全部状态</span>
+          </button>
+
+          {/* 各状态选项 */}
+          {statusFilterOptions.filter(opt => opt.value !== 'all').map((option) => {
+            const config = statusConfig[option.value as AnalysisTask['status']];
+            const isSelected = value === option.value;
+            return (
+              <button
+                key={option.value}
+                className={`w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 ${
+                  isSelected ? 'bg-gray-100' : ''
+                }`}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+              >
+                <Tag variant={config.variant} className="w-14 justify-center">{config.label}</Tag>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface OpenTab {
   id: string;
@@ -305,6 +413,7 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
         ...t,
         internalId: data.internalId,
         pipeline: data.pipeline,
+        remark: data.remark,
       };
     }));
   };
@@ -378,12 +487,19 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
 
   const columns: Column<AnalysisTask>[] = [
     {
+      id: 'taskId',
+      header: '任务编号',
+      accessor: (row) => <IdCell id={row.id} />,
+      width: 100,
+      align: 'center',
+    },
+    {
       id: 'sample',
       header: '样本编号',
       accessor: (row) => (
-        <div onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }} className="text-center">
-          <span className="font-mono text-xs text-accent-fg hover:underline cursor-pointer">{row.sampleId.substring(0, 8)}</span>
-          <div className="text-xs text-fg-muted">{row.internalId}</div>
+        <div className="flex flex-col items-center gap-0.5">
+          <IdCell id={row.sampleId} />
+          <span className="text-xs text-fg-muted">{row.internalId}</span>
         </div>
       ),
       width: 140,
@@ -431,7 +547,6 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
       align: 'center',
     },
     { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 150, align: 'center' },
-    { id: 'createdBy', header: '创建者', accessor: 'createdBy', width: 70, align: 'center' },
     {
       id: 'remark',
       header: '备注',
@@ -566,11 +681,9 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
                   />
                 </div>
                 <div className="w-36">
-                  <Select
+                  <StatusFilterDropdown
                     value={statusFilter}
-                    onChange={(value) => setStatusFilter(Array.isArray(value) ? value[0] : value)}
-                    options={statusFilterOptions}
-                    placeholder="选择状态"
+                    onChange={(value) => setStatusFilter(value)}
                   />
                 </div>
               </div>

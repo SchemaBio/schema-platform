@@ -4,11 +4,34 @@ import * as React from 'react';
 import { Button, Input, DataTable, Tooltip } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, Plus, Download, Upload, Trash2, Pencil, CheckCircle, XCircle } from 'lucide-react';
-import { NewSampleModal, EditSampleModal, UUIDCell } from './components';
+import { NewSampleModal, EditSampleModal } from './components';
 import { mockSamples } from './mock-data';
 import type { Sample } from './types';
 import { GENDER_CONFIG } from './types';
 import type { EditSampleFormData } from './components';
+
+// 简化的ID显示组件（点击复制，无复制按钮）
+function IdCell({ id }: { id: string }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <Tooltip content={id} placement="top" variant="default">
+      <span
+        className={`font-mono text-xs cursor-pointer ${copied ? 'text-green-500' : 'text-accent-fg hover:underline'}`}
+        onClick={handleClick}
+      >
+        {id.substring(0, 8)}
+      </span>
+    </Tooltip>
+  );
+}
 
 export default function SamplesPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -133,7 +156,7 @@ S001,INT-001,男,全血,BATCH-2024-001,遗传性心肌病待查`;
     {
       id: 'sample',
       header: '样本编号',
-      accessor: (row) => <UUIDCell uuid={row.id} />,
+      accessor: (row) => <IdCell id={row.id} />,
       width: 120,
     },
     {

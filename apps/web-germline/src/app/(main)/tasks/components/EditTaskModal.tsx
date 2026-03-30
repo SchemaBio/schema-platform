@@ -28,6 +28,7 @@ interface EditTaskModalProps {
 export interface EditTaskFormData {
   internalId: string;
   pipeline: string;
+  remark: string;
 }
 
 const pipelineOptions = [
@@ -42,6 +43,7 @@ export function EditTaskModal({ isOpen, onClose, onSubmit, task }: EditTaskModal
   const [formData, setFormData] = React.useState<EditTaskFormData>({
     internalId: '',
     pipeline: '',
+    remark: '',
   });
 
   // 当 task 变化时更新表单数据
@@ -50,6 +52,7 @@ export function EditTaskModal({ isOpen, onClose, onSubmit, task }: EditTaskModal
       setFormData({
         internalId: task.internalId,
         pipeline: task.pipeline,
+        remark: task.remark || '',
       });
     }
   }, [task]);
@@ -121,6 +124,14 @@ export function EditTaskModal({ isOpen, onClose, onSubmit, task }: EditTaskModal
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-xs text-fg-muted mb-1">备注</label>
+              <Input
+                value={formData.remark}
+                onChange={(e) => handleChange('remark', e.target.value)}
+                placeholder="可选备注信息"
+              />
             </div>
           </div>
         </form>
