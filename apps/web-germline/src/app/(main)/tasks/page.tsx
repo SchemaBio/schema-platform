@@ -120,6 +120,24 @@ function TaskActionsCell({
   onDelete: (id: string) => void;
   onView: (task: AnalysisTask) => void;
 }) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const deleteConfirmRef = React.useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭删除确认弹窗
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (deleteConfirmRef.current && !deleteConfirmRef.current.contains(event.target as Node)) {
+        setShowDeleteConfirm(false);
+      }
+    };
+    if (showDeleteConfirm) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDeleteConfirm]);
+
   // 动态按钮配置：根据状态和进度自动切换
   // 1. 启动 - 排队中(queued)状态
   // 2. 停止 - 运行中(running)状态
@@ -163,6 +181,7 @@ function TaskActionsCell({
 
   const primaryAction = getPrimaryAction();
   const canEdit = task.status !== 'running';
+  const canDelete = task.status !== 'running';
 
   return (
     <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -187,20 +206,51 @@ function TaskActionsCell({
         }}
         disabled={!canEdit}
         aria-label="编辑"
-        title="编辑"
+        title={canEdit ? '编辑' : '运行中不可编辑'}
       >
         <Pencil className="w-4 h-4" />
       </button>
 
       {/* 删除按钮 */}
-      <button
-        className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors"
-        onClick={() => onDelete(task.id)}
-        aria-label="删除"
-        title="删除"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+      <div className="relative" ref={deleteConfirmRef}>
+        <button
+          className={`p-1.5 rounded transition-colors ${
+            canDelete ? 'text-gray-400 hover:text-red-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
+          }`}
+          onClick={() => {
+            if (canDelete) setShowDeleteConfirm(true);
+          }}
+          disabled={!canDelete}
+          aria-label="删除"
+          title={canDelete ? '删除' : '运行中不可删除'}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+
+        {/* 删除确认弹窗 */}
+        {showDeleteConfirm && (
+          <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-md shadow-lg z-20 p-2">
+            <div className="text-xs text-gray-600 mb-2 text-center">确认删除此任务？</div>
+            <div className="flex gap-1">
+              <button
+                className="flex-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                取消
+              </button>
+              <button
+                className="flex-1 px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                onClick={() => {
+                  onDelete(task.id);
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -331,39 +381,42 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
       id: 'sample',
       header: '样本编号',
       accessor: (row) => (
-        <div onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }}>
+        <div onClick={(e) => { e.stopPropagation(); handleOpenTab(row); }} className="text-center">
           <span className="font-mono text-xs text-accent-fg hover:underline cursor-pointer">{row.sampleId.substring(0, 8)}</span>
           <div className="text-xs text-fg-muted">{row.internalId}</div>
         </div>
       ),
       width: 140,
+      align: 'center',
     },
     {
       id: 'pipeline',
       header: '分析流程',
       accessor: (row) => (
-        <div>
+        <div className="text-center">
           <div className="text-fg-default">{row.pipeline}</div>
           <div className="text-xs text-fg-muted">{row.pipelineVersion}</div>
         </div>
       ),
       width: 140,
+      align: 'center',
     },
     {
       id: 'status',
       header: '状态',
       accessor: (row) => {
         const config = statusConfig[row.status];
-        return <Tag variant={config.variant}>{config.label}</Tag>;
+        return <Tag variant={config.variant} className="w-14 justify-center">{config.label}</Tag>;
       },
       width: 90,
+      align: 'center',
     },
     {
       id: 'progress',
       header: '进度',
       accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-2 bg-canvas-inset rounded-full overflow-hidden">
+        <div className="flex items-center justify-center gap-2">
+          <div className="flex-1 h-2 bg-canvas-inset rounded-full overflow-hidden max-w-[60px]">
             <div
               className={`h-full rounded-full transition-all ${
                 row.status === 'failed' ? 'bg-danger-emphasis' : 'bg-accent-emphasis'
@@ -375,18 +428,20 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
         </div>
       ),
       width: 120,
+      align: 'center',
     },
-    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 150 },
-    { id: 'createdBy', header: '创建者', accessor: 'createdBy', width: 70 },
+    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 150, align: 'center' },
+    { id: 'createdBy', header: '创建者', accessor: 'createdBy', width: 70, align: 'center' },
     {
       id: 'remark',
       header: '备注',
       accessor: (row) => (
-        <span className={row.remark ? 'text-fg-default truncate block max-w-[100px]' : 'text-fg-muted'}>
+        <span className={row.remark ? 'text-fg-default truncate block max-w-[100px] text-center' : 'text-fg-muted text-center'}>
           {row.remark || '-'}
         </span>
       ),
       width: 100,
+      align: 'center',
     },
     {
       id: 'actions',
