@@ -8,7 +8,10 @@ interface PedigreeTreeProps {
   members: PedigreeMember[];
   probandId: string;
   selectedMemberId?: string;
+  isEditMode?: boolean;
   onSelectMember?: (member: PedigreeMember) => void;
+  onContextMenu?: (member: PedigreeMember, position: { x: number; y: number }) => void;
+  onDoubleClick?: (member: PedigreeMember) => void;
 }
 
 // 节点尺寸配置
@@ -18,20 +21,24 @@ const NODE_SPACING_Y = 100;
 const COUPLE_SPACING = 20;
 
 // 绘制家系符号
-function PedigreeSymbol({ 
-  member, 
-  x, 
-  y, 
-  isSelected, 
+function PedigreeSymbol({
+  member,
+  x,
+  y,
+  isSelected,
   isProband,
-  onClick 
-}: { 
-  member: PedigreeMember; 
-  x: number; 
-  y: number; 
+  onClick,
+  onContextMenu,
+  onDoubleClick
+}: {
+  member: PedigreeMember;
+  x: number;
+  y: number;
   isSelected: boolean;
   isProband: boolean;
   onClick: () => void;
+  onContextMenu?: (position: { x: number; y: number }) => void;
+  onDoubleClick?: () => void;
 }) {
   const size = NODE_SIZE;
   const halfSize = size / 2;
@@ -47,6 +54,11 @@ function PedigreeSymbol({
       height={size}
       className={`${statusConfig.color} stroke-gray-800 stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-blue-500 stroke-[3px]' : ''}`}
       onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu?.({ x: e.clientX, y: e.clientY });
+      }}
+      onDoubleClick={() => onDoubleClick?.()}
     />
   ) : member.gender === 'female' ? (
     // 女性：圆形
@@ -56,6 +68,11 @@ function PedigreeSymbol({
       r={halfSize}
       className={`${statusConfig.color} stroke-gray-800 stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-blue-500 stroke-[3px]' : ''}`}
       onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu?.({ x: e.clientX, y: e.clientY });
+      }}
+      onDoubleClick={() => onDoubleClick?.()}
     />
   ) : (
     // 未知：菱形
@@ -63,6 +80,11 @@ function PedigreeSymbol({
       points={`${x},${y - halfSize} ${x + halfSize},${y} ${x},${y + halfSize} ${x - halfSize},${y}`}
       className={`${statusConfig.color} stroke-gray-800 stroke-2 cursor-pointer transition-all ${isSelected ? 'stroke-blue-500 stroke-[3px]' : ''}`}
       onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu?.({ x: e.clientX, y: e.clientY });
+      }}
+      onDoubleClick={() => onDoubleClick?.()}
     />
   );
 
@@ -109,7 +131,7 @@ function PedigreeSymbol({
   );
 }
 
-export function PedigreeTree({ members, probandId, selectedMemberId, onSelectMember }: PedigreeTreeProps) {
+export function PedigreeTree({ members, probandId, selectedMemberId, isEditMode, onSelectMember, onContextMenu, onDoubleClick }: PedigreeTreeProps) {
   // 按代分组
   const generations = React.useMemo(() => {
     const genMap = new Map<number, PedigreeMember[]>();
@@ -228,7 +250,7 @@ export function PedigreeTree({ members, probandId, selectedMemberId, onSelectMem
         {members.map(member => {
           const pos = memberPositions.get(member.id);
           if (!pos) return null;
-          
+
           return (
             <PedigreeSymbol
               key={member.id}
@@ -238,6 +260,8 @@ export function PedigreeTree({ members, probandId, selectedMemberId, onSelectMem
               isSelected={member.id === selectedMemberId}
               isProband={member.id === probandId}
               onClick={() => onSelectMember?.(member)}
+              onContextMenu={(position) => onContextMenu?.(member, position)}
+              onDoubleClick={() => onDoubleClick?.(member)}
             />
           );
         })}

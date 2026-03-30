@@ -5,16 +5,28 @@ import { useSearchParams } from 'next/navigation';
 import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, Plus, List, X, UserPlus, GitBranch, Trash2, Pencil, Save, Download, Upload } from 'lucide-react';
-import { PedigreeTree, MemberDetailPanel, AddMemberModal, LinkSampleModal, NewPedigreeModal, EditPedigreeModal } from './components';
+import { PedigreeTree, MemberDetailPanel, AddMemberModal, LinkSampleModal, NewPedigreeModal, EditPedigreeModal, ConfirmDialog, EditMemberModal, ContextMenu } from './components';
+import type { ContextMenuItem } from './components';
 import type { NewPedigreeFormData } from './components/NewPedigreeModal';
 import type { EditPedigreeFormData } from './components/EditPedigreeModal';
 import { mockPedigreeList, getPedigreeDetail, generatePedigreeUUID, generateMemberUUID } from './mock-data';
-import type { PedigreeListItem, Pedigree, PedigreeMember } from './types';
+import type { PedigreeListItem, Pedigree, PedigreeMember, RelationType } from './types';
 
 interface OpenTab {
   id: string;
   pedigreeId: string;
   name: string;  // 显示名称（使用 internalId）
+}
+
+// 格式化日期工具函数
+function formatDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 export default function PedigreePage() {
@@ -46,6 +58,33 @@ export default function PedigreePage() {
   // 编辑家系弹窗
   const [isEditPedigreeOpen, setIsEditPedigreeOpen] = React.useState(false);
   const [editingPedigree, setEditingPedigree] = React.useState<PedigreeListItem | null>(null);
+
+  // 删除家系确认弹窗
+  const [isDeletePedigreeOpen, setIsDeletePedigreeOpen] = React.useState(false);
+  const [deletingPedigreeId, setDeletingPedigreeId] = React.useState<string | null>(null);
+
+  // 删除成员确认弹窗
+  const [isDeleteMemberOpen, setIsDeleteMemberOpen] = React.useState(false);
+  const [deletingMemberId, setDeletingMemberId] = React.useState<string | null>(null);
+
+  // 编辑成员弹窗
+  const [isEditMemberOpen, setIsEditMemberOpen] = React.useState(false);
+  const [editingMember, setEditingMember] = React.useState<PedigreeMember | null>(null);
+
+  // 上下文菜单
+  const [contextMenu, setContextMenu] = React.useState<{
+    isOpen: boolean;
+    position: { x: number; y: number };
+    member: PedigreeMember | null;
+  }>({ isOpen: false, position: { x: 0, y: 0 }, member: null });
+
+  // 添加成员预填充提示
+  const [addMemberHint, setAddMemberHint] = React.useState<{
+    defaultFatherId?: string;
+    defaultMotherId?: string;
+    defaultRelation?: RelationType;
+    defaultSpouseId?: string;
+  } | null>(null);
 
   // 防止重复打开家系
   const processedPedigreeId = React.useRef<string | null>(null);
@@ -165,20 +204,49 @@ export default function PedigreePage() {
   // 添加成员
   const handleAddMember = (memberData: Omit<PedigreeMember, 'id' | 'generation' | 'position'>) => {
     if (!currentPedigree) return;
-    
+
+    const newMemberId = `M${Date.now()}`;
+
+    // 计算 generation
+    let generation = 0;
+    if (memberData.fatherId || memberData.motherId) {
+      const parentGen = Math.max(
+        memberData.fatherId ? (currentPedigree.members.find(m => m.id === memberData.fatherId)?.generation ?? 0) : -Infinity,
+        memberData.motherId ? (currentPedigree.members.find(m => m.id === memberData.motherId)?.generation ?? 0) : -Infinity
+      );
+      generation = parentGen + 1;
+    }
+
     const newMember: PedigreeMember = {
       ...memberData,
-      id: `M${Date.now()}`,
-      generation: memberData.fatherId || memberData.motherId 
-        ? (currentPedigree.members.find(m => m.id === memberData.fatherId)?.generation ?? 0) + 1
-        : 0,
-      position: currentPedigree.members.filter(m => m.generation === 0).length,
+      id: newMemberId,
+      generation,
+      position: currentPedigree.members.filter(m => m.generation === generation).length,
     };
-    
-    setCurrentPedigree(prev => prev ? {
-      ...prev,
-      members: [...prev.members, newMember],
-    } : null);
+
+    setCurrentPedigree(prev => {
+      if (!prev) return null;
+
+      let updatedMembers = [...prev.members, newMember];
+
+      // 处理配偶双向关联
+      if (memberData.spouseIds && memberData.spouseIds.length > 0) {
+        updatedMembers = updatedMembers.map(m => {
+          if (memberData.spouseIds!.includes(m.id)) {
+            return { ...m, spouseIds: [...(m.spouseIds || []), newMemberId] };
+          }
+          return m;
+        });
+      }
+
+      return {
+        ...prev,
+        members: updatedMembers,
+      };
+    });
+
+    // 清除预填充提示
+    setAddMemberHint(null);
   };
 
   // 打开关联样本弹窗
@@ -278,10 +346,243 @@ export default function PedigreePage() {
 
   // 编辑家系
   const handleEditPedigree = async (id: string, data: EditPedigreeFormData) => {
-    console.log('编辑家系:', id, data);
-    // TODO: 实际更新逻辑
-    // 这里暂时只打印日志，后续接入 API 时实现
+    // 1. 更新 currentPedigree（如果匹配）
+    if (currentPedigree?.id === id) {
+      setCurrentPedigree(prev => prev ? {
+        ...prev,
+        internalId: data.internalId,
+        clinicalDiagnosis: data.clinicalDiagnosis || undefined,
+        batch: data.batch || undefined,
+        remark: data.remark || undefined,
+        updatedAt: formatDate(new Date()),
+      } : null);
+    }
+
+    // 2. 更新 tab 名称（如果 internalId 变化）
+    setOpenTabs(prev => prev.map(tab =>
+      tab.pedigreeId === id ? { ...tab, name: data.internalId } : tab
+    ));
+
+    // 3. 更新 mockPedigreeList（实际项目中应调用 API）
+    const listIndex = mockPedigreeList.findIndex(p => p.id === id);
+    if (listIndex !== -1) {
+      mockPedigreeList[listIndex] = {
+        ...mockPedigreeList[listIndex],
+        internalId: data.internalId,
+        clinicalDiagnosis: data.clinicalDiagnosis || undefined,
+        batch: data.batch || undefined,
+        remark: data.remark || undefined,
+        updatedAt: formatDate(new Date()),
+      };
+    }
+
+    // 关闭弹窗
+    setIsEditPedigreeOpen(false);
+    setEditingPedigree(null);
   };
+
+  // 删除家系
+  const handleDeletePedigree = () => {
+    if (!deletingPedigreeId) return;
+
+    // 关闭相关标签页
+    const tabToClose = openTabs.find(t => t.pedigreeId === deletingPedigreeId);
+    if (tabToClose) {
+      handleCloseTab(tabToClose.id);
+    }
+
+    // 从列表中移除（实际项目中应调用 API）
+    console.log('删除家系:', deletingPedigreeId);
+
+    setIsDeletePedigreeOpen(false);
+    setDeletingPedigreeId(null);
+  };
+
+  // 打开删除家系确认弹窗
+  const handleOpenDeletePedigree = (pedigreeId: string) => {
+    setDeletingPedigreeId(pedigreeId);
+    setIsDeletePedigreeOpen(true);
+  };
+
+  // 删除成员（含孤儿引用清理）
+  const handleConfirmDeleteMember = () => {
+    if (!currentPedigree || !deletingMemberId) return;
+
+    // 检查是否为先证者
+    const memberToDelete = currentPedigree.members.find(m => m.id === deletingMemberId);
+    if (memberToDelete?.relation === 'proband') {
+      alert('无法删除先证者');
+      setIsDeleteMemberOpen(false);
+      setDeletingMemberId(null);
+      return;
+    }
+
+    setCurrentPedigree(prev => {
+      if (!prev) return null;
+
+      const updatedMembers = prev.members
+        // 移除该成员
+        .filter(m => m.id !== deletingMemberId)
+        // 清理孤儿引用：移除 fatherId/motherId/spouseIds 中对该成员的引用
+        .map(m => ({
+          ...m,
+          fatherId: m.fatherId === deletingMemberId ? undefined : m.fatherId,
+          motherId: m.motherId === deletingMemberId ? undefined : m.motherId,
+          spouseIds: m.spouseIds?.filter(id => id !== deletingMemberId),
+        }));
+
+      return {
+        ...prev,
+        members: updatedMembers,
+      };
+    });
+
+    // 如果删除的是当前选中的成员，清除选中状态
+    if (selectedMember?.id === deletingMemberId) {
+      setSelectedMember(null);
+    }
+
+    setIsDeleteMemberOpen(false);
+    setDeletingMemberId(null);
+  };
+
+  // 编辑成员
+  const handleEditMember = (memberId: string, updates: Partial<PedigreeMember>) => {
+    if (!currentPedigree) return;
+
+    setCurrentPedigree(prev => {
+      if (!prev) return null;
+      const oldMember = prev.members.find(m => m.id === memberId);
+
+      let updatedMembers = prev.members.map(m =>
+        m.id === memberId ? { ...m, ...updates } : m
+      );
+
+      // 处理配偶双向同步
+      if (updates.spouseIds && oldMember) {
+        const removedSpouses = (oldMember.spouseIds || []).filter(
+          id => !(updates.spouseIds || []).includes(id)
+        );
+        const addedSpouses = (updates.spouseIds || []).filter(
+          id => !(oldMember.spouseIds || []).includes(id)
+        );
+
+        updatedMembers = updatedMembers.map(m => {
+          if (removedSpouses.includes(m.id)) {
+            return { ...m, spouseIds: (m.spouseIds || []).filter(id => id !== memberId) };
+          }
+          if (addedSpouses.includes(m.id)) {
+            return { ...m, spouseIds: [...(m.spouseIds || []), memberId] };
+          }
+          return m;
+        });
+      }
+
+      return { ...prev, members: updatedMembers, updatedAt: formatDate(new Date()) };
+    });
+
+    // 同步选中成员
+    if (selectedMember?.id === memberId) {
+      setSelectedMember(prev => prev ? { ...prev, ...updates } : null);
+    }
+  };
+
+  // 上下文菜单处理
+  const handleContextMenu = (member: PedigreeMember, position: { x: number; y: number }) => {
+    setContextMenu({ isOpen: true, position, member });
+    setSelectedMember(member);
+  };
+
+  // 双击编辑
+  const handleDoubleClick = (member: PedigreeMember) => {
+    if (!isEditMode) return;
+    setEditingMember(member);
+    setIsEditMemberOpen(true);
+  };
+
+  // 设为先证者
+  const handleSetProband = (memberId: string) => {
+    if (!currentPedigree) return;
+    setCurrentPedigree(prev => prev ? {
+      ...prev,
+      probandId: memberId,
+      members: prev.members.map(m => {
+        if (m.id === memberId) return { ...m, relation: 'proband' as RelationType };
+        if (m.id === prev.probandId) return { ...m, relation: 'other' as RelationType };
+        return m;
+      }),
+    } : null);
+  };
+
+  // 上下文菜单项
+  const contextMenuItems: ContextMenuItem[] = React.useMemo(() => {
+    if (!contextMenu.member || !isEditMode) return [];
+    const member = contextMenu.member;
+    return [
+      {
+        label: '编辑成员',
+        icon: <Pencil className="w-4 h-4" />,
+        onClick: () => {
+          setEditingMember(member);
+          setIsEditMemberOpen(true);
+        },
+      },
+      { separator: true },
+      {
+        label: '添加子女',
+        icon: <UserPlus className="w-4 h-4" />,
+        onClick: () => {
+          setAddMemberHint({
+            defaultFatherId: member.gender === 'male' ? member.id : member.spouseIds?.[0],
+            defaultMotherId: member.gender === 'female' ? member.id : member.spouseIds?.[0],
+            defaultRelation: 'child' as RelationType,
+          });
+          setIsAddMemberOpen(true);
+        },
+      },
+      {
+        label: '添加兄弟姐妹',
+        icon: <UserPlus className="w-4 h-4" />,
+        onClick: () => {
+          setAddMemberHint({
+            defaultFatherId: member.fatherId,
+            defaultMotherId: member.motherId,
+            defaultRelation: 'sibling' as RelationType,
+          });
+          setIsAddMemberOpen(true);
+        },
+      },
+      {
+        label: '添加配偶',
+        icon: <UserPlus className="w-4 h-4" />,
+        onClick: () => {
+          setAddMemberHint({
+            defaultRelation: 'spouse' as RelationType,
+            defaultSpouseId: member.id,
+          });
+          setIsAddMemberOpen(true);
+        },
+      },
+      { separator: true },
+      {
+        label: '设为先证者',
+        icon: <GitBranch className="w-4 h-4" />,
+        onClick: () => handleSetProband(member.id),
+        disabled: member.id === currentPedigree?.probandId,
+      },
+      { separator: true },
+      {
+        label: '删除成员',
+        icon: <Trash2 className="w-4 h-4" />,
+        onClick: () => {
+          setDeletingMemberId(member.id);
+          setIsDeleteMemberOpen(true);
+        },
+        danger: true,
+        disabled: member.relation === 'proband',
+      },
+    ];
+  }, [contextMenu.member, isEditMode, currentPedigree]);
 
   // 筛选家系
   const filteredPedigrees = React.useMemo(() => {
@@ -415,7 +716,7 @@ FAM-002,BATCH-2024-002,INT-003,,,智力发育迟缓,`;
           </button>
           <button
             className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-            onClick={() => console.log('删除', row.id)}
+            onClick={() => handleOpenDeletePedigree(row.id)}
             aria-label="删除"
           >
             <Trash2 className="w-4 h-4" />
@@ -481,7 +782,7 @@ FAM-002,BATCH-2024-002,INT-003,,,智力发育迟缓,`;
       {hasOpenTabs && (
         <div className="flex-1 flex flex-col min-w-0">
           {/* 标签栏 */}
-          <div className="flex items-center border-b border-border-default bg-canvas-subtle overflow-x-auto flex-shrink-0">
+          <div className="flex items-center border-b border-border-default bg-canvas-subtle flex-shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overflow-x-auto">
             {openTabs.map((tab) => (
               <div key={tab.id} onClick={() => handleSwitchTab(tab.id)} className={`flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-border-muted text-sm whitespace-nowrap transition-colors ${activeTabId === tab.id ? 'bg-canvas-default text-fg-default border-b-2 border-b-accent-emphasis -mb-px' : 'text-fg-muted hover:bg-canvas-inset hover:text-fg-default'}`}>
                 <span>{tab.name}</span>
@@ -534,7 +835,10 @@ FAM-002,BATCH-2024-002,INT-003,,,智力发育迟缓,`;
                 members={currentPedigree.members}
                 probandId={currentPedigree.probandId}
                 selectedMemberId={selectedMember?.id}
+                isEditMode={isEditMode}
                 onSelectMember={setSelectedMember}
+                onContextMenu={handleContextMenu}
+                onDoubleClick={handleDoubleClick}
               />
             ) : (
               <div className="flex items-center justify-center h-full text-fg-muted">
@@ -549,16 +853,16 @@ FAM-002,BATCH-2024-002,INT-003,,,智力发育迟缓,`;
       {selectedMember && (
         <MemberDetailPanel
           member={selectedMember}
+          isEditMode={isEditMode}
           onClose={() => setSelectedMember(null)}
+          onEditMember={(member) => {
+            setEditingMember(member);
+            setIsEditMemberOpen(true);
+          }}
           onLinkSample={handleOpenLinkSample}
           onRemoveMember={(memberId) => {
-            if (currentPedigree) {
-              setCurrentPedigree(prev => prev ? {
-                ...prev,
-                members: prev.members.filter(m => m.id !== memberId),
-              } : null);
-              setSelectedMember(null);
-            }
+            setDeletingMemberId(memberId);
+            setIsDeleteMemberOpen(true);
           }}
         />
       )}
@@ -566,9 +870,16 @@ FAM-002,BATCH-2024-002,INT-003,,,智力发育迟缓,`;
       {/* 添加成员弹窗 */}
       <AddMemberModal
         isOpen={isAddMemberOpen}
-        onClose={() => setIsAddMemberOpen(false)}
+        onClose={() => {
+          setIsAddMemberOpen(false);
+          setAddMemberHint(null);
+        }}
         onSubmit={handleAddMember}
         existingMembers={currentPedigree?.members || []}
+        defaultFatherId={addMemberHint?.defaultFatherId}
+        defaultMotherId={addMemberHint?.defaultMotherId}
+        defaultRelation={addMemberHint?.defaultRelation}
+        defaultSpouseId={addMemberHint?.defaultSpouseId}
       />
 
       {/* 关联样本弹窗 */}
@@ -598,6 +909,54 @@ FAM-002,BATCH-2024-002,INT-003,,,智力发育迟缓,`;
         }}
         onSubmit={handleEditPedigree}
         pedigree={editingPedigree}
+      />
+
+      {/* 删除家系确认弹窗 */}
+      <ConfirmDialog
+        isOpen={isDeletePedigreeOpen}
+        onClose={() => {
+          setIsDeletePedigreeOpen(false);
+          setDeletingPedigreeId(null);
+        }}
+        onConfirm={handleDeletePedigree}
+        title="删除家系"
+        message={`确定要删除家系 ${deletingPedigreeId ? mockPedigreeList.find(p => p.id === deletingPedigreeId)?.internalId || deletingPedigreeId.substring(0, 8) : ''} 吗？此操作不可撤销。`}
+        confirmLabel="删除"
+        confirmVariant="danger"
+      />
+
+      {/* 删除成员确认弹窗 */}
+      <ConfirmDialog
+        isOpen={isDeleteMemberOpen}
+        onClose={() => {
+          setIsDeleteMemberOpen(false);
+          setDeletingMemberId(null);
+        }}
+        onConfirm={handleConfirmDeleteMember}
+        title="删除成员"
+        message={`确定要删除成员 ${currentPedigree?.members.find(m => m.id === deletingMemberId)?.name || ''} 吗？此操作将同时清理相关的家庭关系引用。`}
+        confirmLabel="删除"
+        confirmVariant="danger"
+      />
+
+      {/* 编辑成员弹窗 */}
+      <EditMemberModal
+        isOpen={isEditMemberOpen}
+        onClose={() => {
+          setIsEditMemberOpen(false);
+          setEditingMember(null);
+        }}
+        onSubmit={handleEditMember}
+        member={editingMember}
+        existingMembers={currentPedigree?.members || []}
+      />
+
+      {/* 上下文菜单 */}
+      <ContextMenu
+        isOpen={contextMenu.isOpen && isEditMode}
+        onClose={() => setContextMenu(prev => ({ ...prev, isOpen: false }))}
+        position={contextMenu.position}
+        items={contextMenuItems}
       />
     </div>
   );

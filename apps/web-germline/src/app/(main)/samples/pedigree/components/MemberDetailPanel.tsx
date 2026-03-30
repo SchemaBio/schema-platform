@@ -2,14 +2,16 @@
 
 import * as React from 'react';
 import { Button, Tag } from '@schema/ui-kit';
-import { X, User, Link2, Trash2 } from 'lucide-react';
+import { X, User, Link2, Trash2, Pencil } from 'lucide-react';
 import type { PedigreeMember } from '../types';
 import { RELATION_CONFIG, AFFECTED_STATUS_CONFIG } from '../types';
 import { GENDER_CONFIG } from '../../types';
 
 interface MemberDetailPanelProps {
   member: PedigreeMember;
+  isEditMode?: boolean;
   onClose: () => void;
+  onEditMember?: (member: PedigreeMember) => void;
   onLinkSample?: (memberId: string) => void;
   onRemoveMember?: (memberId: string) => void;
 }
@@ -23,7 +25,7 @@ function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function MemberDetailPanel({ member, onClose, onLinkSample, onRemoveMember }: MemberDetailPanelProps) {
+export function MemberDetailPanel({ member, isEditMode, onClose, onEditMember, onLinkSample, onRemoveMember }: MemberDetailPanelProps) {
   const genderInfo = GENDER_CONFIG[member.gender];
   const relationInfo = RELATION_CONFIG[member.relation];
   const statusInfo = AFFECTED_STATUS_CONFIG[member.affectedStatus];
@@ -116,10 +118,20 @@ export function MemberDetailPanel({ member, onClose, onLinkSample, onRemoveMembe
 
       {/* 底部操作 */}
       <div className="p-4 border-t border-border-default space-y-2">
+        {isEditMode && (
+          <Button
+            variant="secondary"
+            className="w-full"
+            leftIcon={<Pencil className="w-4 h-4" />}
+            onClick={() => onEditMember?.(member)}
+          >
+            编辑成员信息
+          </Button>
+        )}
         {!member.sampleId && (
-          <Button 
-            variant="secondary" 
-            className="w-full" 
+          <Button
+            variant="secondary"
+            className="w-full"
             leftIcon={<Link2 className="w-4 h-4" />}
             onClick={() => onLinkSample?.(member.id)}
           >
@@ -127,9 +139,9 @@ export function MemberDetailPanel({ member, onClose, onLinkSample, onRemoveMembe
           </Button>
         )}
         {member.relation !== 'proband' && (
-          <Button 
-            variant="ghost" 
-            className="w-full text-danger-fg hover:bg-danger-subtle" 
+          <Button
+            variant="ghost"
+            className="w-full text-danger-fg hover:bg-danger-subtle"
             leftIcon={<Trash2 className="w-4 h-4" />}
             onClick={() => onRemoveMember?.(member.id)}
           >

@@ -4,3 +4,7 @@ export { AddMemberModal } from './AddMemberModal';
 export { LinkSampleModal } from './LinkSampleModal';
 export { NewPedigreeModal } from './NewPedigreeModal';
 export { EditPedigreeModal } from './EditPedigreeModal';
+export { ConfirmDialog } from './ConfirmDialog';
+export { EditMemberModal } from './EditMemberModal';
+export { ContextMenu } from './ContextMenu';
+export type { ContextMenuItem } from './ContextMenu';

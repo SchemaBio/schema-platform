@@ -1,5 +1,8 @@
 import type { Gender } from '../types';
 
+// 重新导出 Gender 以供其他模块使用
+export type { Gender } from '../types';
+
 // 家系成员关系类型
 export type RelationType =
   | 'proband'      // 先证者
