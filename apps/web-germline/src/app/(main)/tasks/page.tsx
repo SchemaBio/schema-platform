@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Button, Input, DataTable, Tag, Select } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, Eye, RotateCcw, X, ChevronRight, ChevronLeft, List, Play, Square, Pencil, Trash2, Download, Upload, MoreVertical } from 'lucide-react';
+import { Search, Plus, RotateCcw, X, ChevronRight, ChevronLeft, List, Play, Square, Pencil, Trash2, Download, Upload, BookOpen } from 'lucide-react';
 import { AnalysisDetailPanel, NewTaskModal, EditTaskModal } from './components';
 import type { NewTaskFormData, EditTaskFormData, AnalysisTask } from './components';
 
@@ -120,48 +120,49 @@ function TaskActionsCell({
   onDelete: (id: string) => void;
   onView: (task: AnalysisTask) => void;
 }) {
-  const [showMenu, setShowMenu] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-
-  // 点击外部关闭菜单
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-    if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showMenu]);
-
-  // 状态转换按钮配置
+  // 动态按钮配置：根据状态和进度自动切换
+  // 1. 启动 - 排队中(queued)状态
+  // 2. 停止 - 运行中(running)状态
+  // 3. 解读 - 待解读(pending_interpretation)或已完成(completed)状态
+  // 4. 重试 - 失败(failed)状态
   const getPrimaryAction = () => {
-    if (task.status === 'queued' || task.status === 'failed') {
-      return {
-        label: '启动',
-        icon: Play,
-        onClick: () => onStart(task.id),
-        className: 'text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300',
-      };
+    switch (task.status) {
+      case 'queued':
+        return {
+          label: '启动',
+          icon: Play,
+          onClick: () => onStart(task.id),
+          className: 'text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300',
+        };
+      case 'running':
+        return {
+          label: '停止',
+          icon: Square,
+          onClick: () => onStop(task.id),
+          className: 'text-orange-600 hover:bg-orange-50 border-orange-200 hover:border-orange-300',
+        };
+      case 'pending_interpretation':
+      case 'completed':
+        return {
+          label: '解读',
+          icon: BookOpen,
+          onClick: () => onView(task),
+          className: 'text-blue-600 hover:bg-blue-50 border-blue-200 hover:border-blue-300',
+        };
+      case 'failed':
+        return {
+          label: '重试',
+          icon: RotateCcw,
+          onClick: () => onStart(task.id),
+          className: 'text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300',
+        };
+      default:
+        return null;
     }
-    if (task.status === 'running') {
-      return {
-        label: '停止',
-        icon: Square,
-        onClick: () => onStop(task.id),
-        className: 'text-orange-600 hover:bg-orange-50 border-orange-200 hover:border-orange-300',
-      };
-    }
-    return null;
   };
 
   const primaryAction = getPrimaryAction();
   const canEdit = task.status !== 'running';
-  const canRetry = task.status === 'failed';
 
   return (
     <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -176,66 +177,30 @@ function TaskActionsCell({
         </button>
       )}
 
-      {/* 查看按钮 */}
+      {/* 编辑按钮 */}
       <button
-        className="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-        onClick={() => onView(task)}
-        aria-label="查看"
-        title="查看详情"
+        className={`p-1.5 rounded transition-colors ${
+          canEdit ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
+        }`}
+        onClick={() => {
+          if (canEdit) onEdit(task);
+        }}
+        disabled={!canEdit}
+        aria-label="编辑"
+        title="编辑"
       >
-        <Eye className="w-4 h-4" />
+        <Pencil className="w-4 h-4" />
       </button>
 
-      {/* 更多操作下拉菜单 */}
-      <div className="relative" ref={menuRef}>
-        <button
-          className="p-1.5 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          onClick={() => setShowMenu(!showMenu)}
-          aria-label="更多操作"
-          title="更多操作"
-        >
-          <MoreVertical className="w-4 h-4" />
-        </button>
-
-        {showMenu && (
-          <div className="absolute right-0 top-full mt-1 w-28 bg-white border border-gray-200 rounded-md shadow-lg z-20 py-1">
-            <button
-              className={`w-full px-3 py-1.5 text-left text-sm flex items-center gap-2 ${
-                canEdit ? 'text-gray-700 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed'
-              }`}
-              onClick={() => {
-                if (canEdit) {
-                  onEdit(task);
-                  setShowMenu(false);
-                }
-              }}
-              disabled={!canEdit}
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              编辑
-            </button>
-            <button
-              className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-              onClick={() => {
-                onDelete(task.id);
-                setShowMenu(false);
-              }}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              删除
-            </button>
-            {canRetry && (
-              <button
-                className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                onClick={() => setShowMenu(false)}
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                重试
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      {/* 删除按钮 */}
+      <button
+        className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors"
+        onClick={() => onDelete(task.id)}
+        aria-label="删除"
+        title="删除"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   );
 }
