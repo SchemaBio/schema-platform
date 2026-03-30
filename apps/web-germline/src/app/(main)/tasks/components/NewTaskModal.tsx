@@ -38,7 +38,7 @@ export interface NewTaskFormData {
   pipelineId: string;
   pipelineName: string;
   pipelineVersion: string;
-  taskName: string;
+  remark: string;
 }
 
 interface NewTaskModalProps {
@@ -51,7 +51,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
   const [sampleSearch, setSampleSearch] = React.useState('');
   const [selectedSample, setSelectedSample] = React.useState<Sample | null>(null);
   const [selectedPipeline, setSelectedPipeline] = React.useState<string>('');
-  const [taskName, setTaskName] = React.useState('');
+  const [remark, setRemark] = React.useState('');
 
   // 筛选样本
   const filteredSamples = React.useMemo(() => {
@@ -62,18 +62,8 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
     );
   }, [sampleSearch]);
 
-  // 自动生成任务名称
-  React.useEffect(() => {
-    if (selectedSample && selectedPipeline) {
-      const pipeline = mockPipelines.find(p => p.id === selectedPipeline);
-      if (pipeline) {
-        setTaskName(`${selectedSample.internalId} ${pipeline.name}分析`);
-      }
-    }
-  }, [selectedSample, selectedPipeline]);
-
   const handleSubmit = () => {
-    if (!selectedSample || !selectedPipeline || !taskName) return;
+    if (!selectedSample || !selectedPipeline) return;
 
     const pipeline = mockPipelines.find(p => p.id === selectedPipeline);
     if (!pipeline) return;
@@ -84,7 +74,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
       pipelineId: pipeline.id,
       pipelineName: pipeline.name,
       pipelineVersion: pipeline.version,
-      taskName,
+      remark,
     });
     handleClose();
   };
@@ -93,7 +83,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
     setSampleSearch('');
     setSelectedSample(null);
     setSelectedPipeline('');
-    setTaskName('');
+    setRemark('');
     onClose();
   };
 
@@ -168,15 +158,14 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
             />
           </div>
 
-          {/* 任务名称 */}
+          {/* 备注 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">任务名称 *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">备注</label>
             <Input
-              value={taskName}
-              onChange={(e) => setTaskName(e.target.value)}
-              placeholder="请输入任务名称"
+              value={remark}
+              onChange={(e) => setRemark(e.target.value)}
+              placeholder="请输入备注信息（可选）"
             />
-            <p className="text-xs text-gray-500 mt-1">任务名称会根据样本和流程自动生成，也可手动修改</p>
           </div>
         </div>
 
@@ -185,7 +174,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
           <Button
             variant="primary"
             onClick={handleSubmit}
-            disabled={!selectedSample || !selectedPipeline || !taskName}
+            disabled={!selectedSample || !selectedPipeline}
           >
             创建任务
           </Button>

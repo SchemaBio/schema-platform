@@ -80,12 +80,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '家系管理', href: '/samples/pedigree', icon: GitBranch },
   ],
   // 任务中心 - 解读工程师操作
-  tasks: [
-    { label: '任务列表', href: '/tasks', icon: List },
-    { label: '进行中', href: '/tasks/running', icon: Clock },
-    { label: '待解读', href: '/tasks/pending', icon: FlaskConical },
-    { label: '已完成', href: '/tasks/completed', icon: CheckCircle },
-  ],
+  tasks: [],
   // 流程中心 - 生信工程师操作
   pipeline: [
     { label: '流程列表', href: '/pipeline', icon: List },
