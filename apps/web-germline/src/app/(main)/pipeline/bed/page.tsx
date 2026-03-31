@@ -25,7 +25,7 @@ const mockBedFiles: BedFile[] = [
     totalSize: '67.3 MB',
     genomeVersion: 'hg38',
     description: 'Agilent SureSelect Human All Exon V7',
-    uploadedAt: '2024-01-10',
+    uploadedAt: '2024-01-10 14:30:25',
     uploadedBy: '王工',
   },
   {
@@ -35,7 +35,7 @@ const mockBedFiles: BedFile[] = [
     totalSize: '2.1 MB',
     genomeVersion: 'hg38',
     description: '心血管疾病相关基因Panel',
-    uploadedAt: '2024-03-15',
+    uploadedAt: '2024-03-15 09:15:42',
     uploadedBy: '李工',
   },
   {
@@ -45,7 +45,7 @@ const mockBedFiles: BedFile[] = [
     totalSize: '89.2 MB',
     genomeVersion: 'hg38',
     description: 'IDT xGen Exome Research Panel v2',
-    uploadedAt: '2024-06-20',
+    uploadedAt: '2024-06-20 16:45:38',
     uploadedBy: '王工',
   },
 ];
@@ -64,33 +64,46 @@ export default function BedFilesPage() {
   }, [searchQuery]);
 
   const columns: Column<BedFile>[] = [
-    { id: 'name', header: '文件名', accessor: 'name', width: 250 },
+    { id: 'name', header: '文件名', accessor: 'name', width: 250, align: 'center' },
     {
       id: 'targetRegions',
       header: '目标区域数',
       accessor: (row) => row.targetRegions.toLocaleString(),
       width: 120,
+      align: 'center',
     },
-    { id: 'totalSize', header: '文件大小', accessor: 'totalSize', width: 100 },
+    { id: 'totalSize', header: '文件大小', accessor: 'totalSize', width: 100, align: 'center' },
     {
       id: 'genomeVersion',
       header: '参考基因组',
       accessor: (row) => <Tag variant="info">{row.genomeVersion}</Tag>,
       width: 100,
+      align: 'center',
     },
-    { id: 'description', header: '描述', accessor: 'description', width: 250 },
-    { id: 'uploadedAt', header: '上传时间', accessor: 'uploadedAt', width: 120 },
-    { id: 'uploadedBy', header: '上传者', accessor: 'uploadedBy', width: 80 },
+    { id: 'description', header: '描述', accessor: 'description', width: 250, align: 'center' },
+    { id: 'uploadedAt', header: '上传时间', accessor: 'uploadedAt', width: 180, align: 'center' },
+    { id: 'uploadedBy', header: '上传者', accessor: 'uploadedBy', width: 80, align: 'center' },
     {
       id: 'actions',
       header: '操作',
       accessor: () => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="small" iconOnly aria-label="下载" leftIcon={<Download className="w-4 h-4" />} />
-          <Button variant="ghost" size="small" iconOnly aria-label="删除" leftIcon={<Trash2 className="w-4 h-4 text-danger-fg" />} />
+        <div className="flex items-center justify-center gap-1">
+          <button
+            className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
+            title="下载"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+            title="删除"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
       width: 100,
+      align: 'center',
     },
   ];
 

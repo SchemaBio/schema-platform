@@ -1,8 +1,8 @@
 'use client';
 
 import { PageContent } from '@/components/layout';
-import { Button, Input, Tag } from '@schema/ui-kit';
-import { Plus, Search, Trash2, Play, Square, RotateCcw, Check, ChevronDown, ChevronRight, X, Upload } from 'lucide-react';
+import { Button, Input } from '@schema/ui-kit';
+import { Plus, Search, Trash2, ChevronDown, ChevronRight, X, Upload } from 'lucide-react';
 import * as React from 'react';
 
 interface BaselineFile {
@@ -11,9 +11,7 @@ interface BaselineFile {
   sampleCount: number;
   bedFile: string;
   description: string;
-  status: 'queued' | 'building' | 'completed' | 'failed';
-  progress: number;
-  sampleIds: string[];  // 样本UUID列表
+  sampleIds: string[];
   createdAt: string;
   createdBy: string;
 }
@@ -25,8 +23,6 @@ const mockBaselines: BaselineFile[] = [
     sampleCount: 100,
     bedFile: 'Agilent_SureSelect_V7.bed',
     description: 'WES V7 CNV检测基线（100样本）',
-    status: 'completed',
-    progress: 100,
     sampleIds: [
       'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       'b2c3d4e5-f6a7-8901-bcde-f12345678901',
@@ -43,8 +39,6 @@ const mockBaselines: BaselineFile[] = [
     sampleCount: 200,
     bedFile: 'Agilent_SureSelect_V7.bed',
     description: 'WES V7 CNV检测基线（200样本）',
-    status: 'building',
-    progress: 65,
     sampleIds: [
       'f6a7b8c9-d0e1-2345-fabc-456789012345',
       'a7b8c9d0-e1f2-3456-abcd-567890123456',
@@ -59,8 +53,6 @@ const mockBaselines: BaselineFile[] = [
     sampleCount: 80,
     bedFile: 'IDT_xGen_Exome_v2.bed',
     description: 'IDT xGen Exome CNV检测基线',
-    status: 'queued',
-    progress: 0,
     sampleIds: [
       'c9d0e1f2-a3b4-5678-cdef-789012345678',
       'd0e1f2a3-b4c5-6789-defa-890123456789',
@@ -68,29 +60,7 @@ const mockBaselines: BaselineFile[] = [
     createdAt: '2024-09-20',
     createdBy: '王工',
   },
-  {
-    id: '4',
-    name: 'Cardio_Panel_CNV_Baseline',
-    sampleCount: 50,
-    bedFile: 'Cardio_Panel_v2.bed',
-    description: '心血管Panel CNV检测基线',
-    status: 'failed',
-    progress: 30,
-    sampleIds: [
-      'e1f2a3b4-c5d6-7890-efab-901234567890',
-      'f2a3b4c5-d6e7-8901-fabc-012345678901',
-    ],
-    createdAt: '2024-12-01',
-    createdBy: '李工',
-  },
 ];
-
-const statusConfig: Record<BaselineFile['status'], { label: string; variant: 'neutral' | 'success' | 'info' | 'danger' }> = {
-  queued: { label: '排队中', variant: 'neutral' },
-  building: { label: '构建中', variant: 'info' },
-  completed: { label: '已完成', variant: 'success' },
-  failed: { label: '失败', variant: 'danger' },
-};
 
 // 删除确认弹窗
 function DeleteConfirmModal({
@@ -335,35 +305,11 @@ export default function CNVBaselinePage() {
       sampleCount: data.sampleIds.length,
       bedFile: data.bedFile,
       description: data.description || `${data.name} CNV基线`,
-      status: 'queued',
-      progress: 0,
       sampleIds: data.sampleIds,
       createdAt: new Date().toISOString().split('T')[0],
       createdBy: '当前用户',
     };
     setBaselines((prev) => [newBaseline, ...prev]);
-  };
-
-  const handleStartBuild = (id: string) => {
-    setBaselines((prev) =>
-      prev.map((b) => {
-        if (b.id === id) {
-          return { ...b, status: 'building' as const, progress: 0 };
-        }
-        return b;
-      })
-    );
-  };
-
-  const handleStopBuild = (id: string) => {
-    setBaselines((prev) =>
-      prev.map((b) => {
-        if (b.id === id) {
-          return { ...b, status: 'queued' as const, progress: 0 };
-        }
-        return b;
-      })
-    );
   };
 
   const handleDeleteBaseline = () => {
@@ -382,46 +328,6 @@ export default function CNVBaselinePage() {
         f.description.toLowerCase().includes(query)
     );
   }, [searchQuery, baselines]);
-
-  // 获取主要操作按钮配置
-  const getPrimaryAction = (baseline: BaselineFile) => {
-    switch (baseline.status) {
-      case 'queued':
-        return {
-          label: '启动',
-          icon: Play,
-          onClick: () => handleStartBuild(baseline.id),
-          className: 'text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300',
-          disabled: false,
-        };
-      case 'building':
-        return {
-          label: '停止',
-          icon: Square,
-          onClick: () => handleStopBuild(baseline.id),
-          className: 'text-orange-600 hover:bg-orange-50 border-orange-200 hover:border-orange-300',
-          disabled: false,
-        };
-      case 'failed':
-        return {
-          label: '重试',
-          icon: RotateCcw,
-          onClick: () => handleStartBuild(baseline.id),
-          className: 'text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300',
-          disabled: false,
-        };
-      case 'completed':
-        return {
-          label: '完成',
-          icon: Check,
-          onClick: () => {},
-          className: 'text-gray-400 border-gray-200 cursor-default',
-          disabled: true,
-        };
-      default:
-        return null;
-    }
-  };
 
   return (
     <PageContent>
@@ -453,9 +359,6 @@ export default function CNVBaselinePage() {
         <div className="divide-y divide-border">
           {filteredFiles.map((baseline) => {
             const isExpanded = expandedIds.has(baseline.id);
-            const config = statusConfig[baseline.status];
-            const primaryAction = getPrimaryAction(baseline);
-            const canDelete = baseline.status !== 'building';
 
             return (
               <div key={baseline.id}>
@@ -475,49 +378,20 @@ export default function CNVBaselinePage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm font-medium text-fg-default">{baseline.name}</span>
-                        <Tag variant={config.variant} className="justify-center">
-                          {config.label}
-                        </Tag>
                         <span className="text-xs text-fg-muted">{baseline.sampleCount} 个样本</span>
                       </div>
                       <p className="text-xs text-fg-muted truncate">{baseline.description}</p>
-                    </div>
-                    {/* 进度条 */}
-                    <div className="flex items-center gap-2 w-32">
-                      <div className="flex-1 h-2 bg-canvas-inset rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            baseline.status === 'failed' ? 'bg-danger-emphasis' : 'bg-accent-emphasis'
-                          }`}
-                          style={{ width: `${baseline.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-fg-muted w-8 text-right">{baseline.progress}%</span>
                     </div>
                     <div className="text-xs text-fg-muted shrink-0">
                       {baseline.createdAt}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 ml-4 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    {/* 主要操作按钮 */}
-                    {primaryAction && (
-                      <button
-                        onClick={primaryAction.disabled ? undefined : primaryAction.onClick}
-                        disabled={primaryAction.disabled}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded transition-colors ${primaryAction.className} ${primaryAction.disabled ? 'opacity-60 cursor-default' : ''}`}
-                      >
-                        <primaryAction.icon className="w-3.5 h-3.5" />
-                        {primaryAction.label}
-                      </button>
-                    )}
                     {/* 删除按钮 */}
                     <button
-                      className={`p-1.5 rounded transition-colors ${
-                        canDelete ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' : 'text-gray-300 cursor-not-allowed'
-                      }`}
-                      title={canDelete ? '删除' : '构建中不可删除'}
-                      onClick={() => canDelete && setDeleteTarget(baseline)}
-                      disabled={!canDelete}
+                      className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="删除"
+                      onClick={() => setDeleteTarget(baseline)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

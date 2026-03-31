@@ -242,12 +242,13 @@ export default function ReportTemplatesPage() {
       id: 'name',
       header: '模板名称',
       accessor: (row) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <FileText className="w-4 h-4 text-fg-muted" />
           <span className="font-medium font-mono text-fg-default">{row.name}</span>
         </div>
       ),
       width: 200,
+      align: 'center',
     },
     {
       id: 'description',
@@ -256,6 +257,7 @@ export default function ReportTemplatesPage() {
         <span className="text-fg-muted text-sm">{row.description || '-'}</span>
       ),
       width: 250,
+      align: 'center',
     },
     {
       id: 'apiEndpoint',
@@ -266,6 +268,7 @@ export default function ReportTemplatesPage() {
         </span>
       ),
       width: 260,
+      align: 'center',
     },
     {
       id: 'status',
@@ -275,46 +278,50 @@ export default function ReportTemplatesPage() {
         return <Tag variant={config.variant}>{config.label}</Tag>;
       },
       width: 80,
+      align: 'center',
     },
     {
       id: 'updatedAt',
       header: '更新时间',
       accessor: 'updatedAt',
       width: 100,
+      align: 'center',
     },
     {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="small"
-            iconOnly
-            aria-label="编辑"
+        <div className="flex items-center justify-center gap-1">
+          <button
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
+            title="编辑"
             onClick={() => handleEdit(row)}
-            leftIcon={<Pencil className="w-4 h-4" />}
-          />
-          <Button
-            variant="danger"
-            size="small"
-            iconOnly
-            aria-label="删除"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="删除"
             onClick={() => handleDelete(row)}
             disabled={row.status === 'active'}
-            leftIcon={<Trash2 className="w-4 h-4" />}
-          />
-          <Button
-            variant={row.status === 'active' ? 'secondary' : 'primary'}
-            size="small"
-            iconOnly
-            aria-label={row.status === 'active' ? '停用' : '启用'}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+          <button
+            className={`p-1.5 rounded transition-colors ${
+              row.status === 'active'
+                ? 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-orange-600'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-green-600'
+            }`}
+            title={row.status === 'active' ? '停用' : '启用'}
             onClick={() => handleToggleStatus(row)}
-            leftIcon={row.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
-          />
+          >
+            {row.status === 'active' ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+          </button>
         </div>
       ),
       width: 130,
+      align: 'center',
     },
   ];
 

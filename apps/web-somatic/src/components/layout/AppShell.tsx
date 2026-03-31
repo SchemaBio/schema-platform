@@ -41,8 +41,11 @@ const pathLabelMap: Record<string, string> = {
   matching: '数据匹配',
   // 流程中心子页面
   bed: 'BED 文件',
+  'gene-list': '基因列表',
   database: '数据库管理',
-  baseline: '基线文件',
+  baseline: 'CNV 基线',
+  'msi-baseline': 'MSI 基线',
+  templates: '报告模板',
   config: '流程配置',
   // 分析中心子页面
   running: '进行中',

@@ -495,7 +495,7 @@ export default function PipelineListPage() {
   }, [searchQuery, pipelines]);
 
   const columns: Column<Pipeline>[] = [
-    { id: 'name', header: '流程名称', accessor: 'name', width: 180 },
+    { id: 'name', header: '流程名称', accessor: 'name', width: 180, align: 'center' },
     {
       id: 'basePipeline',
       header: '基础流程',
@@ -503,10 +503,11 @@ export default function PipelineListPage() {
         <Tag variant="info">{getBasePipelineLabel(row.basePipeline)}</Tag>
       ),
       width: 130,
+      align: 'center',
     },
-    { id: 'version', header: '版本', accessor: 'version', width: 80 },
-    { id: 'referenceGenome', header: '参考基因组', accessor: 'referenceGenome', width: 100 },
-    { id: 'bedFile', header: 'BED 文件', accessor: 'bedFile', width: 180 },
+    { id: 'version', header: '版本', accessor: 'version', width: 80, align: 'center' },
+    { id: 'referenceGenome', header: '参考基因组', accessor: 'referenceGenome', width: 100, align: 'center' },
+    { id: 'bedFile', header: 'BED 文件', accessor: 'bedFile', width: 180, align: 'center' },
     {
       id: 'status',
       header: '状态',
@@ -516,30 +517,35 @@ export default function PipelineListPage() {
         </Tag>
       ),
       width: 80,
+      align: 'center',
     },
-    { id: 'updatedAt', header: '更新时间', accessor: 'updatedAt', width: 110 },
+    { id: 'updatedAt', header: '更新时间', accessor: 'updatedAt', width: 110, align: 'center' },
     {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-1">
           <button
             onClick={() => setEditingPipeline(row)}
-            className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
             title="编辑"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleToggleStatus(row.id)}
-            className="p-1.5 rounded text-gray-400 hover:text-accent-fg hover:bg-accent-subtle transition-colors"
+            className={`p-1.5 rounded transition-colors ${
+              row.status === 'active'
+                ? 'hover:bg-orange-50 dark:hover:bg-orange-900/20 text-gray-600 dark:text-gray-400 hover:text-orange-600'
+                : 'hover:bg-green-50 dark:hover:bg-green-900/20 text-gray-600 dark:text-gray-400 hover:text-green-600'
+            }`}
             title={row.status === 'active' ? '停用' : '启用'}
           >
             {row.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
           <button
             onClick={() => setDeletingPipeline(row)}
-            className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
             title="删除"
           >
             <Trash2 className="w-4 h-4" />
@@ -547,6 +553,7 @@ export default function PipelineListPage() {
         </div>
       ),
       width: 100,
+      align: 'center',
     },
   ];
 
