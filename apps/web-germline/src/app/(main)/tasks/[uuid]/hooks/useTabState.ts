@@ -25,8 +25,8 @@ export function useTabState(uuid: string): UseTabStateReturn {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // 从URL获取当前标签页
-  const activeTab = (searchParams.get('tab') as TabType) || 'sample-info';
+  // 从URL获取当前标签页，默认为质控结果
+  const activeTab = (searchParams.get('tab') as TabType) || 'qc';
 
   // 各标签页的筛选状态（保存在内存中）
   const [tabStates, setTabStates] = React.useState<TabStates>({

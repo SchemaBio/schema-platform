@@ -13,6 +13,7 @@ export interface Sample {
   id: string;
   internalId: string;  // 内部编号
   gender: Gender;
+  age?: number;  // 年龄
   sampleType: SampleType;
   batch: string;  // 批次
   clinicalDiagnosis: string;  // 临床诊断（简要）
@@ -28,6 +29,7 @@ export interface SampleDetail {
   id: string;
   internalId: string;
   gender: Gender;
+  age?: number;  // 年龄
   sampleType: SampleType;
   batch: string;
   matchedPair: MatchedPair | null;

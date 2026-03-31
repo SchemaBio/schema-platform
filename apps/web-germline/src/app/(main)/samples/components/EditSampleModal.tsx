@@ -15,6 +15,7 @@ interface EditSampleModalProps {
 export interface EditSampleFormData {
   internalId: string;
   gender: Gender;
+  age?: number;
   sampleType: SampleType;
   batch: string;
   clinicalDiagnosis: string;
@@ -56,6 +57,7 @@ export function EditSampleModal({ isOpen, onClose, onSubmit, sample }: EditSampl
   const [formData, setFormData] = React.useState<EditSampleFormData>({
     internalId: '',
     gender: 'unknown',
+    age: undefined,
     sampleType: '全血',
     batch: '',
     clinicalDiagnosis: '',
@@ -74,6 +76,7 @@ export function EditSampleModal({ isOpen, onClose, onSubmit, sample }: EditSampl
       setFormData({
         internalId: sample.internalId,
         gender: sample.gender,
+        age: sample.age,
         sampleType: sample.sampleType,
         batch: sample.batch,
         clinicalDiagnosis: sample.clinicalDiagnosis,
@@ -177,6 +180,20 @@ export function EditSampleModal({ isOpen, onClose, onSubmit, sample }: EditSampl
                   value={formData.gender}
                   onChange={(value) => handleChange('gender', Array.isArray(value) ? value[0] : value)}
                   options={genderOptions}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-fg-muted mb-1">年龄</label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="150"
+                  value={formData.age ?? ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    age: e.target.value ? parseInt(e.target.value, 10) : undefined
+                  }))}
+                  placeholder="如：35"
                 />
               </div>
               <div>

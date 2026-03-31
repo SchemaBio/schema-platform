@@ -74,6 +74,7 @@ S001,INT-001,男,全血,BATCH-2024-001,遗传性心肌病待查`;
         ...s,
         internalId: data.internalId,
         gender: data.gender,
+        age: data.age,
         sampleType: data.sampleType,
         batch: data.batch,
         clinicalDiagnosis: data.clinicalDiagnosis,
@@ -179,6 +180,13 @@ S001,INT-001,男,全血,BATCH-2024-001,遗传性心肌病待查`;
         return <span className={genderInfo.color}>{genderInfo.label}</span>;
       },
       width: 50,
+      align: 'center',
+    },
+    {
+      id: 'age',
+      header: '年龄',
+      accessor: (row) => row.age !== undefined ? `${row.age}岁` : '-',
+      width: 60,
       align: 'center',
     },
     {

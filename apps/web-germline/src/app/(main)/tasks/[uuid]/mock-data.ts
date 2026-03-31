@@ -8,7 +8,6 @@ import type {
   SNVIndel,
   CNVSegment,
   CNVExon,
-  SampleInfo,
   STR,
   MitochondrialVariant,
   UPDRegion,
@@ -17,6 +16,8 @@ import type {
   PaginatedResult,
   ACMGClassification,
 } from './types';
+import type { SampleDetail } from '@/app/(main)/samples/types';
+import { mockSampleDetails, mockSamples } from '@/app/(main)/samples/mock-data';
 
 // ============ Mock任务数据 ============
 const mockTasks: AnalysisTaskDetail[] = [
@@ -264,34 +265,50 @@ const mockSNVIndels: SNVIndel[] = [
   },
 ];
 
-// ============ Mock 样本信息数据 ============
-const mockSampleInfo: Record<string, SampleInfo> = {
-  'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
-    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    internalId: 'INT-001',
-    gender: 'Male',
-    age: 35,
-    clinicalDiagnosis: '疑似遗传性心肌病',
-    phenotypes: ['心肌肥厚', '心律不齐', '运动后晕厥'],
-    familyHistory: '父亲有心脏病史',
-    sampleType: '外周血',
-    collectionDate: '2024-12-18',
-    receivedDate: '2024-12-19',
-    reportDate: '2024-12-25',
-  },
-  'b2c3d4e5-f6a7-8901-bcde-f12345678901': {
-    sampleId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    internalId: 'INT-001',
-    gender: 'Male',
-    age: 35,
-    clinicalDiagnosis: '疑似遗传性心肌病',
-    phenotypes: ['心肌肥厚', '心律不齐', '运动后晕厥'],
-    familyHistory: '父亲有心脏病史',
-    sampleType: '外周血',
-    collectionDate: '2024-12-18',
-    receivedDate: '2024-12-19',
-  },
-};
+// ============ Mock 样本详情数据 ============
+
+export async function getSampleDetailByTaskId(taskId: string): Promise<SampleDetail | null> {
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // 通过任务ID找到对应的样本ID
+  const task = mockTasks.find(t => t.id === taskId);
+  if (!task) return null;
+
+  // 返回样本详情
+  if (mockSampleDetails[task.sampleId]) {
+    return mockSampleDetails[task.sampleId];
+  }
+
+  // 如果没有详细数据，基于列表数据生成默认详情
+  const sample = mockSamples.find(s => s.id === task.sampleId);
+  if (!sample) return null;
+
+  return {
+    ...sample,
+    clinicalDiagnosis: {
+      mainDiagnosis: sample.clinicalDiagnosis || '待补充',
+      symptoms: [],
+      hpoTerms: sample.hpoTerms,
+    },
+    submissionInfo: {
+      submissionDate: sample.createdAt.split(' ')[0],
+      sampleCollectionDate: sample.createdAt.split(' ')[0],
+      sampleReceiveDate: sample.createdAt.split(' ')[0],
+      sampleQuality: 'good',
+    },
+    projectInfo: {
+      projectId: '-',
+      projectName: '待分配',
+      testItems: [],
+      turnaroundDays: 15,
+      priority: 'normal',
+    },
+    familyHistory: {
+      hasHistory: false,
+    },
+    analysisTasks: [],
+  };
+}
 
 // ============ Mock CNV数据(片段级别) ============
 const mockCNVSegments: CNVSegment[] = [
@@ -736,11 +753,6 @@ export async function getSNVIndels(
     ['gene', 'chromosome', 'hgvsc', 'hgvsp'],
     ['gene', 'chromosome', 'position', 'alleleFrequency', 'depth', 'acmgClassification']
   );
-}
-
-export async function getSampleInfo(uuid: string): Promise<SampleInfo | null> {
-  await new Promise(resolve => setTimeout(resolve, 100));
-  return mockSampleInfo[uuid] ?? mockSampleInfo['a1b2c3d4-e5f6-7890-abcd-ef1234567890'];
 }
 
 export async function getCNVSegments(

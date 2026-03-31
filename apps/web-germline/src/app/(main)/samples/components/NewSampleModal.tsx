@@ -14,6 +14,7 @@ interface NewSampleModalProps {
 export interface NewSampleFormData {
   internalId: string;
   gender: Gender;
+  age?: number;
   sampleType: SampleType;
   batch: string;
   clinicalDiagnosis: string;
@@ -55,6 +56,7 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
   const [formData, setFormData] = React.useState<NewSampleFormData>({
     internalId: '',
     gender: 'unknown',
+    age: undefined,
     sampleType: '全血',
     batch: '',
     clinicalDiagnosis: '',
@@ -87,6 +89,7 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
     setFormData({
       internalId: '',
       gender: 'unknown',
+      age: undefined,
       sampleType: '全血',
       batch: '',
       clinicalDiagnosis: '',
@@ -162,6 +165,20 @@ export function NewSampleModal({ isOpen, onClose, onSubmit }: NewSampleModalProp
                   value={formData.gender}
                   onChange={(value) => handleChange('gender', Array.isArray(value) ? value[0] : value)}
                   options={genderOptions}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-fg-muted mb-1">年龄</label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="150"
+                  value={formData.age ?? ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    age: e.target.value ? parseInt(e.target.value, 10) : undefined
+                  }))}
+                  placeholder="如：35"
                 />
               </div>
               <div>

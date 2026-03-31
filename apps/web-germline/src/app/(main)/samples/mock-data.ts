@@ -6,6 +6,7 @@ export const mockSamples: Sample[] = [
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     internalId: 'INT-001',
     gender: 'male',
+    age: 35,
     sampleType: '全血',
     batch: 'BATCH-2024-001',
     clinicalDiagnosis: '遗传性心肌病待查',
@@ -25,6 +26,7 @@ export const mockSamples: Sample[] = [
     id: 'b2c3d4e5-f678-90ab-cdef-123456789012',
     internalId: 'INT-002',
     gender: 'male',
+    age: 5,
     sampleType: '唾液',
     batch: 'BATCH-2024-001',
     clinicalDiagnosis: '智力发育迟缓',
@@ -41,6 +43,7 @@ export const mockSamples: Sample[] = [
     id: 'c3d4e5f6-7890-abcd-ef12-345678901234',
     internalId: 'INT-003',
     gender: 'male',
+    age: 28,
     sampleType: '全血',
     batch: 'BATCH-2024-002',
     clinicalDiagnosis: '疑似遗传代谢病',
@@ -54,6 +57,7 @@ export const mockSamples: Sample[] = [
     id: 'd4e5f678-90ab-cdef-1234-567890123456',
     internalId: 'INT-004',
     gender: 'female',
+    age: 42,
     sampleType: 'DNA',
     batch: 'BATCH-2024-002',
     clinicalDiagnosis: '家族性乳腺癌',
@@ -72,6 +76,7 @@ export const mockSamples: Sample[] = [
     id: 'e5f67890-abcd-ef12-3456-789012345678',
     internalId: 'INT-005',
     gender: 'male',
+    age: 55,
     sampleType: '组织',
     batch: 'BATCH-2024-003',
     clinicalDiagnosis: '肥厚型心肌病',
@@ -89,11 +94,12 @@ export const mockSamples: Sample[] = [
 ];
 
 // Mock 样本详情数据
-const mockSampleDetails: Record<string, SampleDetail> = {
+export const mockSampleDetails: Record<string, SampleDetail> = {
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
     id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     internalId: 'INT-001',
     gender: 'male',
+    age: 35,
     sampleType: '全血',
     batch: 'BATCH-2024-001',
     clinicalDiagnosis: {
@@ -145,6 +151,7 @@ const mockSampleDetails: Record<string, SampleDetail> = {
     id: 'b2c3d4e5-f678-90ab-cdef-123456789012',
     internalId: 'INT-002',
     gender: 'male',
+    age: 5,
     sampleType: '唾液',
     batch: 'BATCH-2024-001',
     clinicalDiagnosis: {

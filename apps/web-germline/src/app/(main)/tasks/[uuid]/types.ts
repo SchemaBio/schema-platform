@@ -107,21 +107,6 @@ export interface SNVIndel extends VariantReviewStatus {
   inheritanceMode?: string;      // 遗传模式
 }
 
-// ============ 样本信息 ============
-export interface SampleInfo {
-  sampleId: string;              // 样本UUID
-  internalId: string;            // 内部编号
-  gender: 'Male' | 'Female' | 'Unknown';
-  age?: number;
-  sampleType: string;
-  collectionDate: string;
-  receivedDate: string;
-  reportDate?: string;
-  clinicalDiagnosis?: string;
-  phenotypes?: string[];
-  familyHistory?: string;
-}
-
 // ============ CNV变异(片段级别) ============
 export interface CNVSegment extends VariantReviewStatus {
   id: string;
@@ -227,7 +212,7 @@ export interface SangerValidation {
 }
 
 // ============ 标签页类型 ============
-export type TabType = 'sample-info' | 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'sanger' | 'report';
+export type TabType = 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'sanger' | 'report';
 
 export interface TabConfig {
   id: TabType;
@@ -235,9 +220,8 @@ export interface TabConfig {
 }
 
 export const TAB_CONFIGS: TabConfig[] = [
-  { id: 'sample-info', label: '样本信息' },
   { id: 'qc', label: '质控结果' },
-  { id: 'snv-indel', label: 'SNV/InDel' },
+  { id: 'snv-indel', label: 'SNP/InDel' },
   { id: 'cnv-segment', label: 'CNV(Region)' },
   { id: 'cnv-exon', label: 'CNV(Exon)' },
   { id: 'str', label: '动态突变' },

@@ -1,9 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { getTaskDetail, getSampleInfo } from '../[uuid]/mock-data';
-import type { AnalysisTaskDetail, TabType, AnalysisStatus, SampleInfo } from '../[uuid]/types';
+import { getTaskDetail, getSampleDetailByTaskId } from '../[uuid]/mock-data';
+import type { AnalysisTaskDetail, TabType, AnalysisStatus } from '../[uuid]/types';
+import type { SampleDetail } from '@/app/(main)/samples/types';
 import { TAB_CONFIGS } from '../[uuid]/types';
+import { GENDER_CONFIG } from '@/app/(main)/samples/types';
 import {
   QCResultTab,
   SNVIndelTab,
@@ -31,7 +33,7 @@ const statusConfig: Record<AnalysisStatus, { label: string; variant: 'neutral' |
 
 export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
   const [task, setTask] = React.useState<AnalysisTaskDetail | null>(null);
-  const [sampleInfo, setSampleInfo] = React.useState<SampleInfo | null>(null);
+  const [sample, setSample] = React.useState<SampleDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<TabType>('qc');
 
@@ -56,10 +58,10 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
       setLoading(true);
       const [taskData, sampleData] = await Promise.all([
         getTaskDetail(taskId),
-        getSampleInfo(taskId),
+        getSampleDetailByTaskId(taskId),
       ]);
       setTask(taskData);
-      setSampleInfo(sampleData);
+      setSample(sampleData);
       setLoading(false);
     }
     loadTask();
@@ -151,12 +153,6 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
     }
   };
 
-  const genderLabel: Record<string, string> = {
-    Male: '男',
-    Female: '女',
-    Unknown: '未知',
-  };
-
   return (
     <div className="p-4">
       {/* 任务信息头部 */}
@@ -169,35 +165,60 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
         {/* 基本信息行 */}
         <div className="flex items-center gap-4 text-xs text-fg-muted mb-2">
           <span>样本: {task.sampleId}</span>
-          {sampleInfo && <span>性别: {genderLabel[sampleInfo.gender]}</span>}
-          {sampleInfo?.age && <span>年龄: {sampleInfo.age}岁</span>}
+          {sample && (
+            <>
+              <span>性别: {GENDER_CONFIG[sample.gender].label}</span>
+              {sample.age !== undefined && <span>年龄: {sample.age}岁</span>}
+            </>
+          )}
           <span>流程: {task.pipeline} {task.pipelineVersion}</span>
           <span>创建: {task.createdAt}</span>
         </div>
 
         {/* 临床信息行 */}
-        {sampleInfo && (
+        {sample && (
           <div className="text-xs space-y-1">
-            {sampleInfo.clinicalDiagnosis && (
+            {sample.clinicalDiagnosis?.mainDiagnosis && (
               <div className="flex items-start gap-2">
                 <span className="text-fg-muted shrink-0">临床诊断:</span>
-                <span className="text-fg-default">{sampleInfo.clinicalDiagnosis}</span>
+                <span className="text-fg-default">{sample.clinicalDiagnosis.mainDiagnosis}</span>
               </div>
             )}
-            {sampleInfo.phenotypes && sampleInfo.phenotypes.length > 0 && (
+            {sample.clinicalDiagnosis?.symptoms && sample.clinicalDiagnosis.symptoms.length > 0 && (
               <div className="flex items-start gap-2">
-                <span className="text-fg-muted shrink-0">表型:</span>
+                <span className="text-fg-muted shrink-0">症状:</span>
                 <div className="flex flex-wrap gap-1">
-                  {sampleInfo.phenotypes.map((p, i) => (
-                    <Tag key={i} variant="info" className="text-xs">{p}</Tag>
+                  {sample.clinicalDiagnosis.symptoms.map((s: string, i: number) => (
+                    <Tag key={i} variant="neutral" className="text-xs">{s}</Tag>
                   ))}
                 </div>
               </div>
             )}
-            {sampleInfo.familyHistory && (
+            {sample.clinicalDiagnosis?.hpoTerms && sample.clinicalDiagnosis.hpoTerms.length > 0 && (
+              <div className="flex items-start gap-2">
+                <span className="text-fg-muted shrink-0">HPO:</span>
+                <div className="flex flex-wrap gap-1">
+                  {sample.clinicalDiagnosis.hpoTerms.map((hpo, i) => (
+                    <Tag key={i} variant="info" className="text-xs font-mono" title={hpo.name}>
+                      {hpo.id}
+                    </Tag>
+                  ))}
+                </div>
+              </div>
+            )}
+            {sample.familyHistory?.hasHistory && (
               <div className="flex items-start gap-2">
                 <span className="text-fg-muted shrink-0">家族史:</span>
-                <span className="text-fg-default">{sampleInfo.familyHistory}</span>
+                <span className="text-fg-default">有</span>
+                {sample.familyHistory.affectedMembers && (
+                  <div className="flex flex-wrap gap-1">
+                    {sample.familyHistory.affectedMembers.map((member, i) => (
+                      <Tag key={i} variant="warning" className="text-xs">
+                        {member.relation}: {member.condition}
+                      </Tag>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

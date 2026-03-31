@@ -37,7 +37,9 @@ export function SampleInfoTab({ sample }: SampleInfoTabProps) {
           <InfoItem label="样本编号" value={<span className="font-mono text-xs">{sample.id}</span>} />
           <InfoItem label="内部编号" value={sample.internalId} />
           <InfoItem label="性别" value={<span className={genderInfo.color}>{genderInfo.label}</span>} />
+          <InfoItem label="年龄" value={sample.age !== undefined ? `${sample.age}岁` : '-'} />
           <InfoItem label="样本类型" value={sample.sampleType} />
+          <InfoItem label="批次" value={sample.batch} />
           <InfoItem label="创建时间" value={sample.createdAt} />
           <InfoItem label="更新时间" value={sample.updatedAt} />
         </div>
@@ -96,6 +98,49 @@ export function SampleInfoTab({ sample }: SampleInfoTabProps) {
                   </Tag>
                 }
               />
+            </>
+          )}
+        </div>
+      </InfoCard>
+
+      <InfoCard title="临床诊断">
+        <div className="space-y-3">
+          {sample.clinicalDiagnosis && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <InfoItem label="主要诊断" value={sample.clinicalDiagnosis.mainDiagnosis} />
+                {sample.clinicalDiagnosis.onsetAge && (
+                  <InfoItem label="发病年龄" value={sample.clinicalDiagnosis.onsetAge} />
+                )}
+              </div>
+              {sample.clinicalDiagnosis.symptoms && sample.clinicalDiagnosis.symptoms.length > 0 && (
+                <div>
+                  <span className="text-xs text-fg-muted">症状</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {sample.clinicalDiagnosis.symptoms.map((s, i) => (
+                      <Tag key={i} variant="neutral">{s}</Tag>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {sample.clinicalDiagnosis.hpoTerms && sample.clinicalDiagnosis.hpoTerms.length > 0 && (
+                <div>
+                  <span className="text-xs text-fg-muted">HPO术语</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {sample.clinicalDiagnosis.hpoTerms.map((hpo, i) => (
+                      <Tag key={i} variant="info" className="font-mono" title={hpo.name}>
+                        {hpo.id}
+                      </Tag>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {sample.clinicalDiagnosis.diseaseHistory && (
+                <div>
+                  <span className="text-xs text-fg-muted">病史</span>
+                  <p className="text-sm text-fg-default mt-1">{sample.clinicalDiagnosis.diseaseHistory}</p>
+                </div>
+              )}
             </>
           )}
         </div>

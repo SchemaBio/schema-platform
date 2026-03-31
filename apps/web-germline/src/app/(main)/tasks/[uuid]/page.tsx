@@ -3,13 +3,14 @@
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PageContent } from '@/components/layout';
-import { getTaskDetail } from './mock-data';
+import { getTaskDetail, getSampleDetailByTaskId } from './mock-data';
 import { useTabState } from './hooks/useTabState';
 import type { AnalysisTaskDetail } from './types';
+import type { SampleDetail } from '@/app/(main)/samples/types';
 import {
   TaskHeader,
   ResultTabs,
-  SampleInfoTab,
+  SampleSummaryCard,
   QCResultTab,
   SNVIndelTab,
   CNVSegmentTab,
@@ -23,28 +24,32 @@ import {
 export default function AnalysisDetailPage() {
   const params = useParams();
   const router = useRouter();
-  
+
   const uuid = params.uuid as string;
   const [task, setTask] = React.useState<AnalysisTaskDetail | null>(null);
+  const [sample, setSample] = React.useState<SampleDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [notFound, setNotFound] = React.useState(false);
 
-  // 使用标签页状态管理hook
+  // 使用标签页状态管理hook，默认从质控结果开始
   const { activeTab, setActiveTab, getFilterState, setFilterState } = useTabState(uuid);
 
-  // 加载任务数据
+  // 加载任务数据和样本数据
   React.useEffect(() => {
-    async function loadTask() {
+    async function loadData() {
       setLoading(true);
       const taskData = await getTaskDetail(uuid);
       if (!taskData) {
         setNotFound(true);
       } else {
         setTask(taskData);
+        // 同时加载样本详情
+        const sampleData = await getSampleDetailByTaskId(uuid);
+        setSample(sampleData);
       }
       setLoading(false);
     }
-    loadTask();
+    loadData();
   }, [uuid]);
 
   // 返回任务列表
@@ -88,8 +93,6 @@ export default function AnalysisDetailPage() {
   // 渲染当前标签页内容
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'sample-info':
-        return <SampleInfoTab taskId={uuid} />;
       case 'qc':
         return <QCResultTab taskId={uuid} />;
       case 'snv-indel':
@@ -151,6 +154,9 @@ export default function AnalysisDetailPage() {
     <PageContent>
       {/* 任务信息头部 */}
       <TaskHeader task={task} onBack={handleBack} />
+
+      {/* 样本信息汇总卡片 */}
+      {sample && <SampleSummaryCard sample={sample} />}
 
       {/* 标签面板和内容 */}
       <ResultTabs activeTab={activeTab} onTabChange={setActiveTab}>
