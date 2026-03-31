@@ -2,27 +2,28 @@
 
 import { PageContent } from '@/components/layout';
 import { Button, Input, Tag } from '@schema/ui-kit';
-import { Plus, Search, Pencil, Trash2, X, Upload, Dna } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react';
 import * as React from 'react';
 
 interface GeneList {
   id: string;
   name: string;
-  geneCount: number;
   disease: string;
   description: string;
+  genes: string[];
   createdAt: string;
   updatedAt: string;
   createdBy: string;
 }
 
+// 简化的mock数据
 const initialGeneLists: GeneList[] = [
   {
     id: '1',
     name: '心血管疾病Panel',
-    geneCount: 168,
     disease: '遗传性心肌病',
-    description: '心血管疾病相关基因检测列表，包含HCM、DCM、ARVC等',
+    description: '心血管疾病相关基因检测列表',
+    genes: ['MYH7', 'MYBPC3', 'TNNT2', 'TNNI3', 'TPM1', 'ACTC1', 'MYL2', 'MYL3'],
     createdAt: '2024-06-15',
     updatedAt: '2024-12-01',
     createdBy: '王工',
@@ -30,9 +31,9 @@ const initialGeneLists: GeneList[] = [
   {
     id: '2',
     name: '神经系统疾病Panel',
-    geneCount: 256,
     disease: '遗传性神经病',
     description: '神经系统遗传病基因检测列表',
+    genes: ['SCN1A', 'SCN2A', 'KCNQ2', 'KCNQ3', 'STXBP1', 'CDKL5', 'PCDH19'],
     createdAt: '2024-06-20',
     updatedAt: '2024-11-15',
     createdBy: '李工',
@@ -40,44 +41,27 @@ const initialGeneLists: GeneList[] = [
   {
     id: '3',
     name: '眼科遗传病Panel',
-    geneCount: 324,
     disease: '遗传性眼病',
-    description: '遗传性视网膜病变、青光眼等眼科遗传病基因',
+    description: '遗传性视网膜病变相关基因',
+    genes: ['RHO', 'RDS', 'RPGR', 'RP2', 'USH2A', 'ABCA4', 'RPE65'],
     createdAt: '2024-05-10',
     updatedAt: '2024-11-01',
     createdBy: '张工',
   },
-  {
-    id: '4',
-    name: '耳聋基因Panel',
-    geneCount: 189,
-    disease: '遗传性耳聋',
-    description: '遗传性听力损失相关基因检测列表',
-    createdAt: '2024-07-01',
-    updatedAt: '2024-10-20',
-    createdBy: '李工',
-  },
-  {
-    id: '5',
-    name: '肾脏疾病Panel',
-    geneCount: 142,
-    disease: '遗传性肾病',
-    description: '遗传性肾脏疾病相关基因，包含多囊肾、Alport综合征等',
-    createdAt: '2024-08-15',
-    updatedAt: '2024-11-10',
-    createdBy: '王工',
-  },
 ];
 
 // 删除确认弹窗
-interface DeleteConfirmModalProps {
+function DeleteConfirmModal({
+  isOpen,
+  listName,
+  onClose,
+  onConfirm,
+}: {
   isOpen: boolean;
   listName: string;
   onClose: () => void;
   onConfirm: () => void;
-}
-
-function DeleteConfirmModal({ isOpen, listName, onClose, onConfirm }: DeleteConfirmModalProps) {
+}) {
   if (!isOpen) return null;
 
   return (
@@ -92,7 +76,7 @@ function DeleteConfirmModal({ isOpen, listName, onClose, onConfirm }: DeleteConf
             删除基因列表
           </h3>
           <p className="text-sm text-center text-gray-500">
-            确定要删除 "<span className="font-medium text-gray-700">{listName}</span>" 吗？此操作无法撤销。
+            确定要删除 "{listName}" 吗？此操作无法撤销。
           </p>
         </div>
         <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
@@ -108,74 +92,37 @@ function DeleteConfirmModal({ isOpen, listName, onClose, onConfirm }: DeleteConf
   );
 }
 
-// 基因列表表单数据
-interface GeneListFormData {
-  name: string;
-  disease: string;
-  description: string;
-  genes: string;
-}
-
 // 添加/编辑基因列表弹窗
-interface GeneListModalProps {
+function GeneListModal({
+  isOpen,
+  mode,
+  initialData,
+  onClose,
+  onSubmit,
+}: {
   isOpen: boolean;
   mode: 'add' | 'edit';
-  initialData?: GeneListFormData;
+  initialData?: { name: string; disease: string; description: string; genes: string };
   onClose: () => void;
-  onSubmit: (data: GeneListFormData) => void;
-}
-
-function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneListModalProps) {
-  const [formData, setFormData] = React.useState<GeneListFormData>({
+  onSubmit: (data: { name: string; disease: string; description: string; genes: string }) => void;
+}) {
+  const [formData, setFormData] = React.useState({
     name: '',
     disease: '',
     description: '',
     genes: '',
   });
-  const [dragOver, setDragOver] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (isOpen && initialData) {
       setFormData(initialData);
     } else if (isOpen && !initialData) {
-      setFormData({
-        name: '',
-        disease: '',
-        description: '',
-        genes: '',
-      });
+      setFormData({ name: '', disease: '', description: '', genes: '' });
     }
   }, [isOpen, initialData]);
 
-  const handleChange = (field: keyof GeneListFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        setFormData(prev => ({ ...prev, genes: content }));
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        setFormData(prev => ({ ...prev, genes: content }));
-      };
-      reader.readAsText(file);
-    }
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = () => {
@@ -185,17 +132,12 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
   };
 
   const handleClose = () => {
-    setFormData({
-      name: '',
-      disease: '',
-      description: '',
-      genes: '',
-    });
+    setFormData({ name: '', disease: '', description: '', genes: '' });
     onClose();
   };
 
   const geneCount = formData.genes
-    ? formData.genes.split(/[\n,\s]+/).filter(g => g.trim()).length
+    ? formData.genes.split(/[\n,\s]+/).filter((g) => g.trim()).length
     : 0;
 
   if (!isOpen) return null;
@@ -217,8 +159,8 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="mb-4">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-4">
+          <div>
             <label className="block text-sm font-medium text-fg-default mb-2">列表名称 *</label>
             <Input
               value={formData.name}
@@ -227,7 +169,7 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
             />
           </div>
 
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-fg-default mb-2">关联疾病 *</label>
             <Input
               value={formData.disease}
@@ -236,7 +178,7 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
             />
           </div>
 
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-fg-default mb-2">描述</label>
             <Input
               value={formData.description}
@@ -245,43 +187,18 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
             />
           </div>
 
-          <div className="mb-4">
+          <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-fg-default">基因列表 *</label>
               {geneCount > 0 && (
                 <span className="text-xs text-fg-muted">已识别 {geneCount} 个基因</span>
               )}
             </div>
-
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              onDrop={handleDrop}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              className={`
-                border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors mb-2
-                ${dragOver
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
-                }
-              `}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.csv,.tsv"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-              <p className="text-xs text-gray-500">点击或拖拽上传基因列表文件</p>
-            </div>
-
             <textarea
               value={formData.genes}
               onChange={(e) => handleChange('genes', e.target.value)}
               placeholder="每行一个基因名，或用逗号/空格分隔&#10;例如：&#10;MYH7&#10;MYBPC3&#10;TNNT2"
-              rows={6}
+              rows={8}
               className="w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-fg-default text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-fg-muted mt-1">
@@ -310,10 +227,23 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
 export default function GeneListPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [geneLists, setGeneLists] = React.useState<GeneList[]>(initialGeneLists);
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [modalMode, setModalMode] = React.useState<'add' | 'edit'>('add');
   const [editingList, setEditingList] = React.useState<GeneList | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<GeneList | null>(null);
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const handleOpenAddModal = () => {
     setModalMode('add');
@@ -332,45 +262,43 @@ export default function GeneListPage() {
     setEditingList(null);
   };
 
-  const handleSubmit = (data: GeneListFormData) => {
-    const geneCount = data.genes.split(/[\n,\s]+/).filter(g => g.trim()).length;
+  const handleSubmit = (data: { name: string; disease: string; description: string; genes: string }) => {
+    const genes = data.genes.split(/[\n,\s]+/).filter((g) => g.trim().toUpperCase());
 
     if (modalMode === 'add') {
       const newList: GeneList = {
         id: String(Date.now()),
         name: data.name,
-        geneCount,
         disease: data.disease,
         description: data.description || `${data.name} 基因列表`,
+        genes,
         createdAt: new Date().toISOString().split('T')[0],
         updatedAt: new Date().toISOString().split('T')[0],
         createdBy: '当前用户',
       };
-      setGeneLists(prev => [...prev, newList]);
+      setGeneLists((prev) => [...prev, newList]);
     } else if (editingList) {
-      setGeneLists(prev => prev.map(list => {
-        if (list.id === editingList.id) {
-          return {
-            ...list,
-            name: data.name,
-            geneCount,
-            disease: data.disease,
-            description: data.description || list.description,
-            updatedAt: new Date().toISOString().split('T')[0],
-          };
-        }
-        return list;
-      }));
+      setGeneLists((prev) =>
+        prev.map((list) => {
+          if (list.id === editingList.id) {
+            return {
+              ...list,
+              name: data.name,
+              disease: data.disease,
+              description: data.description || list.description,
+              genes,
+              updatedAt: new Date().toISOString().split('T')[0],
+            };
+          }
+          return list;
+        })
+      );
     }
-  };
-
-  const handleDeleteClick = (list: GeneList) => {
-    setDeleteTarget(list);
   };
 
   const handleConfirmDelete = () => {
     if (deleteTarget) {
-      setGeneLists(prev => prev.filter(l => l.id !== deleteTarget.id));
+      setGeneLists((prev) => prev.filter((l) => l.id !== deleteTarget.id));
       setDeleteTarget(null);
     }
   };
@@ -383,19 +311,14 @@ export default function GeneListPage() {
       (l) =>
         l.name.toLowerCase().includes(query) ||
         l.disease.toLowerCase().includes(query) ||
-        l.description.toLowerCase().includes(query)
+        l.description.toLowerCase().includes(query) ||
+        l.genes.some((g) => g.toLowerCase().includes(query))
     );
   }, [searchQuery, geneLists]);
 
   return (
     <PageContent>
       <h2 className="text-lg font-medium text-fg-default mb-4">基因列表管理</h2>
-
-      <div className="p-4 bg-canvas-subtle rounded-lg border border-border mb-4">
-        <p className="text-sm text-fg-muted">
-          管理遗传病分析的疾病Panel基因列表。每个Panel包含特定疾病相关的检测基因。
-        </p>
-      </div>
 
       <div className="flex items-center justify-between mb-4">
         <div className="w-64">
@@ -406,11 +329,7 @@ export default function GeneListPage() {
             leftElement={<Search className="w-4 h-4" />}
           />
         </div>
-        <Button
-          variant="primary"
-          leftIcon={<Plus className="w-4 h-4" />}
-          onClick={handleOpenAddModal}
-        >
+        <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={handleOpenAddModal}>
           添加基因列表
         </Button>
       </div>
@@ -418,51 +337,75 @@ export default function GeneListPage() {
       {/* 列表展示 */}
       <div className="bg-canvas-default rounded-lg border border-border overflow-hidden">
         <div className="divide-y divide-border">
-          {filteredLists.map(list => (
-            <div
-              key={list.id}
-              className="px-4 py-3 flex items-center justify-between hover:bg-canvas-subtle transition-colors"
-            >
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="flex items-center gap-2 text-fg-muted">
-                  <Dna className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium text-fg-default">{list.name}</span>
-                    <Tag variant="info">{list.disease}</Tag>
-                    <span className="text-xs text-fg-muted">{list.geneCount} 个基因</span>
+          {filteredLists.map((list) => {
+            const isExpanded = expandedIds.has(list.id);
+            return (
+              <div key={list.id}>
+                {/* 主行 */}
+                <div
+                  className="px-4 py-3 flex items-center justify-between hover:bg-canvas-subtle transition-colors cursor-pointer"
+                  onClick={() => toggleExpand(list.id)}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <button className="p-0.5 text-fg-muted">
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium text-fg-default">{list.name}</span>
+                        <Tag variant="info">{list.disease}</Tag>
+                        <span className="text-xs text-fg-muted">{list.genes.length} 个基因</span>
+                      </div>
+                      <p className="text-xs text-fg-muted truncate">{list.description}</p>
+                    </div>
+                    <div className="text-xs text-fg-muted shrink-0">
+                      <span>更新: {list.updatedAt}</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-fg-muted truncate">{list.description}</p>
+                  <div className="flex items-center gap-1 ml-4 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="编辑"
+                      onClick={() => handleOpenEditModal(list)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                      title="删除"
+                      onClick={() => setDeleteTarget(list)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="text-xs text-fg-muted shrink-0">
-                  <span>更新: {list.updatedAt}</span>
-                  <span className="ml-3">创建者: {list.createdBy}</span>
-                </div>
+
+                {/* 展开的基因列表 */}
+                {isExpanded && (
+                  <div className="px-4 py-3 bg-canvas-subtle border-t border-border">
+                    <div className="flex flex-wrap gap-2">
+                      {list.genes.map((gene) => (
+                        <Tag key={gene} variant="neutral">
+                          {gene}
+                        </Tag>
+                      ))}
+                    </div>
+                    {list.genes.length === 0 && (
+                      <p className="text-sm text-fg-muted">暂无基因</p>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-1 ml-4 shrink-0">
-                <button
-                  className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors"
-                  title="编辑"
-                  onClick={() => handleOpenEditModal(list)}
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
-                  title="删除"
-                  onClick={() => handleDeleteClick(list)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {filteredLists.length === 0 && (
           <div className="text-center py-12 text-fg-muted">
-            <Dna className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>暂无基因列表</p>
           </div>
         )}
@@ -471,12 +414,16 @@ export default function GeneListPage() {
       <GeneListModal
         isOpen={isModalOpen}
         mode={modalMode}
-        initialData={editingList ? {
-          name: editingList.name,
-          disease: editingList.disease,
-          description: editingList.description,
-          genes: '',
-        } : undefined}
+        initialData={
+          editingList
+            ? {
+                name: editingList.name,
+                disease: editingList.disease,
+                description: editingList.description,
+                genes: editingList.genes.join('\n'),
+              }
+            : undefined
+        }
         onClose={handleCloseModal}
         onSubmit={handleSubmit}
       />
