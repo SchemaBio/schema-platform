@@ -53,9 +53,6 @@ const pathLabelMap: Record<string, string> = {
   // 报告中心子页面
   review: '待审核',
   released: '已发放',
-  // 知识中心子页面
-  history: '历史检出位点',
-  variants: '位点收录库',
   // 系统设置子页面
   permissions: '权限管理',
   ai: 'AI 设置',

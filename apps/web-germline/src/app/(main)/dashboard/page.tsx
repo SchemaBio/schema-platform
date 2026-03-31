@@ -12,7 +12,7 @@ import {
   TrendingUp,
   ArrowRight,
   ListTodo,
-  BookOpen,
+  History,
   Workflow,
   MessageSquare,
   Send,
@@ -273,11 +273,11 @@ export default function DashboardPage() {
             <span className="text-sm text-fg-default">任务中心</span>
           </Link>
           <Link
-            href="/knowledge"
+            href="/history"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
-            <BookOpen className="w-4 h-4 text-fg-muted" />
-            <span className="text-sm text-fg-default">知识中心</span>
+            <History className="w-4 h-4 text-fg-muted" />
+            <span className="text-sm text-fg-default">历史检出</span>
           </Link>
           <Link
             href="/pipeline"
