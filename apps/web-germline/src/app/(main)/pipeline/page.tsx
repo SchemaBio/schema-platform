@@ -3,7 +3,7 @@
 import { PageContent } from '@/components/layout';
 import { Button, Input, DataTable, Tag, Select } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Plus, Search, Play, Pause, X } from 'lucide-react';
+import { Plus, Search, Play, Pause, X, Pencil, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 // 基础流程类型
@@ -246,10 +246,190 @@ function NewPipelineModal({
   );
 }
 
+// 编辑流程弹窗
+function EditPipelineModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  pipeline,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (id: string, data: NewPipelineFormData) => void;
+  pipeline: Pipeline | null;
+}) {
+  const [formData, setFormData] = React.useState<NewPipelineFormData>({
+    name: '',
+    basePipeline: 'wes_single',
+    description: '',
+    bedFile: 'Agilent_SureSelect_V7.bed',
+    referenceGenome: 'hg38',
+    cnvBaseline: 'none',
+  });
+
+  React.useEffect(() => {
+    if (pipeline) {
+      setFormData({
+        name: pipeline.name,
+        basePipeline: pipeline.basePipeline,
+        description: pipeline.description,
+        bedFile: pipeline.bedFile,
+        referenceGenome: pipeline.referenceGenome,
+        cnvBaseline: pipeline.cnvBaseline || 'none',
+      });
+    }
+  }, [pipeline]);
+
+  const handleChange = (field: keyof NewPipelineFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pipeline) {
+      onSubmit(pipeline.id, formData);
+      onClose();
+    }
+  };
+
+  if (!isOpen || !pipeline) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">编辑分析流程</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">基础流程 *</label>
+            <Select
+              value={formData.basePipeline}
+              onChange={(v) => handleChange('basePipeline', Array.isArray(v) ? v[0] : v)}
+              options={BASE_PIPELINE_OPTIONS}
+            />
+            <p className="text-xs text-gray-500 mt-1">选择要基于的分析流程类型</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">流程名称 *</label>
+            <Input
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              placeholder="请输入流程名称"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">流程描述</label>
+            <Input
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="请输入流程描述"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">参考基因组版本 *</label>
+            <Select
+              value={formData.referenceGenome}
+              onChange={(v) => handleChange('referenceGenome', Array.isArray(v) ? v[0] : v)}
+              options={REFERENCE_GENOME_OPTIONS}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">BED 文件 *</label>
+            <Select
+              value={formData.bedFile}
+              onChange={(v) => handleChange('bedFile', Array.isArray(v) ? v[0] : v)}
+              options={BED_FILE_OPTIONS}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">CNV 基线文件</label>
+            <Select
+              value={formData.cnvBaseline}
+              onChange={(v) => handleChange('cnvBaseline', Array.isArray(v) ? v[0] : v)}
+              options={CNV_BASELINE_OPTIONS}
+            />
+            <p className="text-xs text-gray-500 mt-1">用于拷贝数变异分析的基线文件</p>
+          </div>
+        </form>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <Button variant="secondary" onClick={onClose}>取消</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={!formData.name}>
+            保存修改
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 删除确认弹窗
+function DeleteConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  pipelineName,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  pipelineName: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">确认删除</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <p className="text-sm text-gray-600">
+            确定要删除流程 <span className="font-medium text-gray-900">「{pipelineName}」</span> 吗？
+          </p>
+          <p className="text-sm text-gray-500 mt-2">此操作不可撤销。</p>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <Button variant="secondary" onClick={onClose}>取消</Button>
+          <Button variant="danger" onClick={onConfirm}>删除</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PipelineListPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [pipelines, setPipelines] = React.useState<Pipeline[]>(mockPipelines);
   const [isNewModalOpen, setIsNewModalOpen] = React.useState(false);
+  const [editingPipeline, setEditingPipeline] = React.useState<Pipeline | null>(null);
+  const [deletingPipeline, setDeletingPipeline] = React.useState<Pipeline | null>(null);
 
   const handleToggleStatus = (id: string) => {
     setPipelines(prev => prev.map(p => {
@@ -279,6 +459,29 @@ export default function PipelineListPage() {
       updatedAt: new Date().toISOString().split('T')[0],
     };
     setPipelines(prev => [...prev, newPipeline]);
+  };
+
+  const handleEditPipeline = (id: string, data: NewPipelineFormData) => {
+    setPipelines(prev => prev.map(p => {
+      if (p.id === id) {
+        return {
+          ...p,
+          name: data.name,
+          basePipeline: data.basePipeline,
+          description: data.description,
+          bedFile: data.bedFile,
+          referenceGenome: data.referenceGenome,
+          cnvBaseline: data.cnvBaseline !== 'none' ? data.cnvBaseline : undefined,
+          updatedAt: new Date().toISOString().split('T')[0],
+        };
+      }
+      return p;
+    }));
+  };
+
+  const handleDeletePipeline = (id: string) => {
+    setPipelines(prev => prev.filter(p => p.id !== id));
+    setDeletingPipeline(null);
   };
 
   const filteredPipelines = React.useMemo(() => {
@@ -319,15 +522,31 @@ export default function PipelineListPage() {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <button
-          onClick={() => handleToggleStatus(row.id)}
-          className="p-1.5 rounded text-gray-400 hover:text-accent-fg hover:bg-accent-subtle transition-colors"
-          title={row.status === 'active' ? '停用' : '启用'}
-        >
-          {row.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditingPipeline(row)}
+            className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+            title="编辑"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleToggleStatus(row.id)}
+            className="p-1.5 rounded text-gray-400 hover:text-accent-fg hover:bg-accent-subtle transition-colors"
+            title={row.status === 'active' ? '停用' : '启用'}
+          >
+            {row.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setDeletingPipeline(row)}
+            className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+            title="删除"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       ),
-      width: 70,
+      width: 100,
     },
   ];
 
@@ -361,6 +580,20 @@ export default function PipelineListPage() {
         isOpen={isNewModalOpen}
         onClose={() => setIsNewModalOpen(false)}
         onSubmit={handleCreatePipeline}
+      />
+
+      <EditPipelineModal
+        isOpen={editingPipeline !== null}
+        onClose={() => setEditingPipeline(null)}
+        onSubmit={handleEditPipeline}
+        pipeline={editingPipeline}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deletingPipeline !== null}
+        onClose={() => setDeletingPipeline(null)}
+        onConfirm={() => deletingPipeline && handleDeletePipeline(deletingPipeline.id)}
+        pipelineName={deletingPipeline?.name || ''}
       />
     </PageContent>
   );
