@@ -3,7 +3,8 @@
  */
 
 import type {
-  HistorySNVIndel,
+  GroupedSNVIndel,
+  SNVIndelDetectionRecord,
   HistoryCNVSegment,
   HistoryCNVExon,
   HistorySTR,
@@ -24,164 +25,273 @@ export const ACMG_CONFIG: Record<ACMGClassification, { label: string; variant: '
   Benign: { label: '良性', variant: 'success' },
 };
 
-// ============ Mock SNV/Indel历史检出数据 ============
-const mockHistorySNVIndels: HistorySNVIndel[] = [
+// ============ 原始SNV/Indel检出记录 ============
+interface SNVIndelRawRecord {
+  recordId: string;
+  gene: string;
+  hgvsc: string;
+  hgvsp: string;
+  transcript: string;
+  acmgClassification: ACMGClassification;
+  consequence: string;
+  rsId?: string;
+  clinvarId?: string;
+  gnomadAF?: number;
+  // 来源信息
+  taskId: string;
+  taskName: string;
+  pipeline: string;
+  pipelineVersion: string;
+  sampleId: string;
+  internalId: string;
+  reviewedAt: string;
+  reviewedBy: string;
+}
+
+// 原始检出数据（可能有多条相同变异的记录）
+const mockSNVIndelRawRecords: SNVIndelRawRecord[] = [
+  // BRCA1 c.5266dupC - 检出3次
   {
-    historyId: 'hist-snv-001',
-    taskId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    taskName: 'INT-001 全外显子分析',
-    pipeline: 'WES-Germline-v1',
-    pipelineVersion: 'v1.2.0',
-    sampleId: 's1a2b3c4-d5e6-7890-abcd-ef1234567890',
-    internalId: 'INT-001',
-    reviewedAt: '2024-12-25 10:30',
-    reviewedBy: '王工',
-    firstDetectedAt: '2024-12-20 14:25',
-    lastDetectedAt: '2024-12-25 10:30',
-    detectionCount: 1,
+    recordId: 'rec-snv-001',
     gene: 'BRCA1',
-    chromosome: 'chr17',
-    position: 43094464,
-    ref: 'G',
-    alt: 'A',
-    variantType: 'SNV',
-    zygosity: 'Heterozygous',
-    alleleFrequency: 0.45,
-    depth: 120,
-    acmgClassification: 'Pathogenic',
-    transcript: 'NM_007294.4',
     hgvsc: 'c.5266dupC',
     hgvsp: 'p.Gln1756ProfsTer74',
+    transcript: 'NM_007294.4',
+    acmgClassification: 'Pathogenic',
     consequence: 'frameshift_variant',
     rsId: 'rs80357906',
     clinvarId: 'VCV000017661',
     gnomadAF: 0.00002,
-  },
-  {
-    historyId: 'hist-snv-002',
     taskId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     taskName: 'INT-001 全外显子分析',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     sampleId: 's1a2b3c4-d5e6-7890-abcd-ef1234567890',
     internalId: 'INT-001',
-    reviewedAt: '2024-12-25 11:00',
+    reviewedAt: '2024-12-20 10:30',
     reviewedBy: '王工',
-    firstDetectedAt: '2024-12-20 14:25',
-    lastDetectedAt: '2024-12-25 11:00',
-    detectionCount: 1,
-    gene: 'TP53',
-    chromosome: 'chr17',
-    position: 7577538,
-    ref: 'C',
-    alt: 'T',
-    variantType: 'SNV',
-    zygosity: 'Heterozygous',
-    alleleFrequency: 0.48,
-    depth: 95,
-    acmgClassification: 'Likely_Pathogenic',
-    transcript: 'NM_000546.6',
-    hgvsc: 'c.743G>A',
-    hgvsp: 'p.Arg248Gln',
-    consequence: 'missense_variant',
-    rsId: 'rs28934576',
-    clinvarId: 'VCV000012356',
-    gnomadAF: 0.000008,
   },
   {
-    historyId: 'hist-snv-003',
+    recordId: 'rec-snv-002',
+    gene: 'BRCA1',
+    hgvsc: 'c.5266dupC',
+    hgvsp: 'p.Gln1756ProfsTer74',
+    transcript: 'NM_007294.4',
+    acmgClassification: 'Pathogenic',
+    consequence: 'frameshift_variant',
+    rsId: 'rs80357906',
+    clinvarId: 'VCV000017661',
+    gnomadAF: 0.00002,
     taskId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
     taskName: 'INT-002 全外显子分析',
     pipeline: 'WES-Germline-v1',
     pipelineVersion: 'v1.2.0',
     sampleId: 's2b3c4d5-e6f7-8901-bcde-f12345678901',
     internalId: 'INT-002',
-    reviewedAt: '2024-12-26 09:15',
+    reviewedAt: '2024-12-22 14:00',
     reviewedBy: '李工',
-    firstDetectedAt: '2024-12-22 16:30',
-    lastDetectedAt: '2024-12-26 09:15',
-    detectionCount: 1,
-    gene: 'CFTR',
-    chromosome: 'chr7',
-    position: 117559590,
-    ref: 'CTT',
-    alt: 'C',
-    variantType: 'Deletion',
-    zygosity: 'Heterozygous',
-    alleleFrequency: 0.52,
-    depth: 88,
+  },
+  {
+    recordId: 'rec-snv-003',
+    gene: 'BRCA1',
+    hgvsc: 'c.5266dupC',
+    hgvsp: 'p.Gln1756ProfsTer74',
+    transcript: 'NM_007294.4',
     acmgClassification: 'Pathogenic',
-    transcript: 'NM_000492.4',
+    consequence: 'frameshift_variant',
+    rsId: 'rs80357906',
+    clinvarId: 'VCV000017661',
+    gnomadAF: 0.00002,
+    taskId: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
+    taskName: 'INT-003 全外显子分析',
+    pipeline: 'WES-Germline-v1',
+    pipelineVersion: 'v1.2.0',
+    sampleId: 's3c4d5e6-f7a8-9012-cdef-123456789012',
+    internalId: 'INT-003',
+    reviewedAt: '2024-12-25 09:30',
+    reviewedBy: '王工',
+  },
+  // TP53 c.743G>A - 检出2次
+  {
+    recordId: 'rec-snv-004',
+    gene: 'TP53',
+    hgvsc: 'c.743G>A',
+    hgvsp: 'p.Arg248Gln',
+    transcript: 'NM_000546.6',
+    acmgClassification: 'Likely_Pathogenic',
+    consequence: 'missense_variant',
+    rsId: 'rs28934576',
+    clinvarId: 'VCV000012356',
+    gnomadAF: 0.000008,
+    taskId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    taskName: 'INT-001 全外显子分析',
+    pipeline: 'WES-Germline-v1',
+    pipelineVersion: 'v1.2.0',
+    sampleId: 's1a2b3c4-d5e6-7890-abcd-ef1234567890',
+    internalId: 'INT-001',
+    reviewedAt: '2024-12-20 11:00',
+    reviewedBy: '王工',
+  },
+  {
+    recordId: 'rec-snv-005',
+    gene: 'TP53',
+    hgvsc: 'c.743G>A',
+    hgvsp: 'p.Arg248Gln',
+    transcript: 'NM_000546.6',
+    acmgClassification: 'Likely_Pathogenic',
+    consequence: 'missense_variant',
+    rsId: 'rs28934576',
+    clinvarId: 'VCV000012356',
+    gnomadAF: 0.000008,
+    taskId: 'd4e5f6a7-b8c9-0123-defa-234567890123',
+    taskName: 'INT-004 全外显子分析',
+    pipeline: 'WES-Germline-v1',
+    pipelineVersion: 'v1.2.0',
+    sampleId: 's4d5e6f7-a8b9-0123-defa-234567890123',
+    internalId: 'INT-004',
+    reviewedAt: '2024-12-26 15:00',
+    reviewedBy: '李工',
+  },
+  // CFTR c.1521_1523delCTT - 检出1次
+  {
+    recordId: 'rec-snv-006',
+    gene: 'CFTR',
     hgvsc: 'c.1521_1523delCTT',
     hgvsp: 'p.Phe508del',
+    transcript: 'NM_000492.4',
+    acmgClassification: 'Pathogenic',
     consequence: 'inframe_deletion',
     rsId: 'rs113993960',
     clinvarId: 'VCV000007105',
     gnomadAF: 0.012,
-  },
-  {
-    historyId: 'hist-snv-004',
-    taskId: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
-    taskName: 'INT-003 心血管Panel',
-    pipeline: 'Panel-Cardio',
-    pipelineVersion: 'v2.0.1',
-    sampleId: 's3c4d5e6-f7a8-9012-cdef-123456789012',
-    internalId: 'INT-003',
-    reviewedAt: '2024-12-27 14:30',
+    taskId: 'e5f6a7b8-c9d0-1234-efab-345678901234',
+    taskName: 'INT-005 囊性纤维化Panel',
+    pipeline: 'Panel-CFTR',
+    pipelineVersion: 'v1.0.0',
+    sampleId: 's5e6f7a8-b9c0-1234-efab-345678901234',
+    internalId: 'INT-005',
+    reviewedAt: '2024-12-24 10:00',
     reviewedBy: '王工',
-    firstDetectedAt: '2024-12-24 10:00',
-    lastDetectedAt: '2024-12-27 14:30',
-    detectionCount: 1,
+  },
+  // MYH7 c.1208G>A - 检出1次
+  {
+    recordId: 'rec-snv-007',
     gene: 'MYH7',
-    chromosome: 'chr14',
-    position: 23898270,
-    ref: 'G',
-    alt: 'A',
-    variantType: 'SNV',
-    zygosity: 'Heterozygous',
-    alleleFrequency: 0.38,
-    depth: 145,
-    acmgClassification: 'Pathogenic',
-    transcript: 'NM_000260.4',
     hgvsc: 'c.1208G>A',
     hgvsp: 'p.Arg403Gln',
+    transcript: 'NM_000260.4',
+    acmgClassification: 'Pathogenic',
     consequence: 'missense_variant',
     rsId: 'rs121913603',
     clinvarId: 'VCV000005566',
     gnomadAF: 0.00001,
-  },
-  {
-    historyId: 'hist-snv-005',
-    taskId: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
-    taskName: 'INT-003 心血管Panel',
+    taskId: 'f6a7b8c9-d0e1-2345-fabc-456789012345',
+    taskName: 'INT-006 心血管Panel',
     pipeline: 'Panel-Cardio',
     pipelineVersion: 'v2.0.1',
-    sampleId: 's3c4d5e6-f7a8-9012-cdef-123456789012',
-    internalId: 'INT-003',
-    reviewedAt: '2024-12-27 15:00',
+    sampleId: 's6f7a8b9-c0d1-2345-fabc-456789012345',
+    internalId: 'INT-006',
+    reviewedAt: '2024-12-27 14:30',
     reviewedBy: '李工',
-    firstDetectedAt: '2024-12-24 10:00',
-    lastDetectedAt: '2024-12-27 15:00',
-    detectionCount: 1,
+  },
+  // LMNA c.622C>T - 检出2次
+  {
+    recordId: 'rec-snv-008',
     gene: 'LMNA',
-    chromosome: 'chr1',
-    position: 156134876,
-    ref: 'C',
-    alt: 'T',
-    variantType: 'SNV',
-    zygosity: 'Heterozygous',
-    alleleFrequency: 0.42,
-    depth: 110,
-    acmgClassification: 'Likely_Pathogenic',
-    transcript: 'NM_170707.4',
     hgvsc: 'c.622C>T',
     hgvsp: 'p.Arg208Cys',
+    transcript: 'NM_170707.4',
+    acmgClassification: 'Likely_Pathogenic',
     consequence: 'missense_variant',
     rsId: 'rs137853966',
     clinvarId: 'VCV000002344',
     gnomadAF: 0.00005,
+    taskId: 'f6a7b8c9-d0e1-2345-fabc-456789012345',
+    taskName: 'INT-006 心血管Panel',
+    pipeline: 'Panel-Cardio',
+    pipelineVersion: 'v2.0.1',
+    sampleId: 's6f7a8b9-c0d1-2345-fabc-456789012345',
+    internalId: 'INT-006',
+    reviewedAt: '2024-12-27 15:00',
+    reviewedBy: '王工',
+  },
+  {
+    recordId: 'rec-snv-009',
+    gene: 'LMNA',
+    hgvsc: 'c.622C>T',
+    hgvsp: 'p.Arg208Cys',
+    transcript: 'NM_170707.4',
+    acmgClassification: 'Likely_Pathogenic',
+    consequence: 'missense_variant',
+    rsId: 'rs137853966',
+    clinvarId: 'VCV000002344',
+    gnomadAF: 0.00005,
+    taskId: 'a7b8c9d0-e1f2-3456-abcd-567890123456',
+    taskName: 'INT-007 心血管Panel',
+    pipeline: 'Panel-Cardio',
+    pipelineVersion: 'v2.0.1',
+    sampleId: 's7a8b9c0-d1e2-3456-abcd-567890123456',
+    internalId: 'INT-007',
+    reviewedAt: '2024-12-28 10:00',
+    reviewedBy: '李工',
   },
 ];
+
+// 按 基因-HGVSc-HGVSp 分组聚合
+function groupSNVIndelRecords(records: SNVIndelRawRecord[]): GroupedSNVIndel[] {
+  const groupMap = new Map<string, GroupedSNVIndel>();
+
+  records.forEach(record => {
+    const key = `${record.gene}-${record.hgvsc}-${record.hgvsp}`;
+
+    if (!groupMap.has(key)) {
+      // 创建新分组
+      groupMap.set(key, {
+        groupId: key,
+        gene: record.gene,
+        hgvsc: record.hgvsc,
+        hgvsp: record.hgvsp,
+        transcript: record.transcript,
+        acmgClassification: record.acmgClassification,
+        consequence: record.consequence,
+        rsId: record.rsId,
+        clinvarId: record.clinvarId,
+        gnomadAF: record.gnomadAF,
+        detectionCount: 0,
+        firstDetectedAt: record.reviewedAt,
+        lastDetectedAt: record.reviewedAt,
+        records: [],
+      });
+    }
+
+    const group = groupMap.get(key)!;
+
+    // 添加检出记录
+    const detectionRecord: SNVIndelDetectionRecord = {
+      recordId: record.recordId,
+      taskId: record.taskId,
+      taskName: record.taskName,
+      pipeline: record.pipeline,
+      pipelineVersion: record.pipelineVersion,
+      sampleId: record.sampleId,
+      internalId: record.internalId,
+      reviewedAt: record.reviewedAt,
+      reviewedBy: record.reviewedBy,
+    };
+    group.records.push(detectionRecord);
+    group.detectionCount++;
+
+    // 更新首次/最后检出时间
+    if (record.reviewedAt < group.firstDetectedAt) {
+      group.firstDetectedAt = record.reviewedAt;
+    }
+    if (record.reviewedAt > group.lastDetectedAt) {
+      group.lastDetectedAt = record.reviewedAt;
+    }
+  });
+
+  return Array.from(groupMap.values());
+}
 
 // ============ Mock CNV片段历史检出数据 ============
 const mockHistoryCNVSegments: HistoryCNVSegment[] = [
@@ -533,16 +643,70 @@ function applyFilterAndPagination<T extends { historyId: string }>(
 
 // ============ 数据获取函数 ============
 
-export async function getHistorySNVIndels(
+export async function getGroupedSNVIndels(
   filterState: KnowledgeTableFilterState
-): Promise<PaginatedResult<HistorySNVIndel>> {
+): Promise<PaginatedResult<GroupedSNVIndel>> {
   await new Promise(resolve => setTimeout(resolve, 150));
-  return applyFilterAndPagination(
-    mockHistorySNVIndels,
-    filterState,
-    ['gene', 'chromosome', 'hgvsc', 'hgvsp', 'taskId', 'internalId', 'pipeline'],
-    ['gene', 'chromosome', 'position', 'alleleFrequency', 'depth', 'acmgClassification', 'reviewedAt']
-  );
+
+  // 先分组聚合
+  let groupedData = groupSNVIndelRecords(mockSNVIndelRawRecords);
+
+  // 搜索过滤
+  if (filterState.searchQuery) {
+    const query = filterState.searchQuery.toLowerCase();
+    groupedData = groupedData.filter(item =>
+      item.gene.toLowerCase().includes(query) ||
+      item.hgvsc.toLowerCase().includes(query) ||
+      item.hgvsp.toLowerCase().includes(query) ||
+      item.records.some(r =>
+        r.internalId.toLowerCase().includes(query) ||
+        r.taskName.toLowerCase().includes(query)
+      )
+    );
+  }
+
+  // 排序
+  if (filterState.sortColumn) {
+    const direction = filterState.sortDirection === 'desc' ? -1 : 1;
+    groupedData.sort((a, b) => {
+      let cmp = 0;
+      switch (filterState.sortColumn) {
+        case 'gene':
+          cmp = a.gene.localeCompare(b.gene);
+          break;
+        case 'hgvsc':
+          cmp = a.hgvsc.localeCompare(b.hgvsc);
+          break;
+        case 'acmgClassification':
+          cmp = a.acmgClassification.localeCompare(b.acmgClassification);
+          break;
+        case 'detectionCount':
+          cmp = a.detectionCount - b.detectionCount;
+          break;
+        case 'firstDetectedAt':
+          cmp = a.firstDetectedAt.localeCompare(b.firstDetectedAt);
+          break;
+        case 'lastDetectedAt':
+          cmp = a.lastDetectedAt.localeCompare(b.lastDetectedAt);
+          break;
+        default:
+          break;
+      }
+      return cmp * direction;
+    });
+  }
+
+  // 分页
+  const total = groupedData.length;
+  const start = (filterState.page - 1) * filterState.pageSize;
+  const paged = groupedData.slice(start, start + filterState.pageSize);
+
+  return {
+    data: paged,
+    total,
+    page: filterState.page,
+    pageSize: filterState.pageSize,
+  };
 }
 
 export async function getHistoryCNVSegments(

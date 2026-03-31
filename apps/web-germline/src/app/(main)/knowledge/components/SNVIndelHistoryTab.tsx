@@ -3,23 +3,36 @@
 import * as React from 'react';
 import { DataTable, Tag, Input } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search } from 'lucide-react';
-import type { HistorySNVIndel, KnowledgeTableFilterState, PaginatedResult } from '../types';
+import { Search, ChevronRight, ChevronDown } from 'lucide-react';
+import type { GroupedSNVIndel, KnowledgeTableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_KNOWLEDGE_FILTER_STATE } from '../types';
-import { getHistorySNVIndels, ACMG_CONFIG } from '../mock-data';
+import { getGroupedSNVIndels, ACMG_CONFIG } from '../mock-data';
 
 interface SNVIndelHistoryTabProps {
   filterState?: KnowledgeTableFilterState;
   onFilterChange?: (state: KnowledgeTableFilterState) => void;
 }
 
+// 变异后果中文映射
+const CONSEQUENCE_LABELS: Record<string, string> = {
+  'frameshift_variant': '移码变异',
+  'missense_variant': '错义变异',
+  'inframe_deletion': '框内缺失',
+  'inframe_insertion': '框内插入',
+  'stop_gained': '获得终止密码子',
+  'splice_acceptor_variant': '剪接受体变异',
+  'splice_donor_variant': '剪接供体变异',
+  'synonymous_variant': '同义变异',
+};
+
 export function SNVIndelHistoryTab({
   filterState: externalFilterState,
   onFilterChange
 }: SNVIndelHistoryTabProps) {
   const [internalFilterState, setInternalFilterState] = React.useState<KnowledgeTableFilterState>(DEFAULT_KNOWLEDGE_FILTER_STATE);
-  const [result, setResult] = React.useState<PaginatedResult<HistorySNVIndel> | null>(null);
+  const [result, setResult] = React.useState<PaginatedResult<GroupedSNVIndel> | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [expandedRows, setExpandedRows] = React.useState<Set<string>>(new Set());
 
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
@@ -28,7 +41,7 @@ export function SNVIndelHistoryTab({
   React.useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await getHistorySNVIndels(filterState);
+      const data = await getGroupedSNVIndels(filterState);
       setResult(data);
       setLoading(false);
     }
@@ -49,27 +62,40 @@ export function SNVIndelHistoryTab({
     });
   }, [filterState, setFilterState]);
 
+  // 切换行展开状态
+  const toggleRowExpand = React.useCallback((groupId: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  }, []);
+
   // 列定义
-  const columns: Column<HistorySNVIndel>[] = [
+  const columns: Column<GroupedSNVIndel>[] = [
     {
-      id: 'pipeline',
-      header: '流程',
-      accessor: (row) => `${row.pipeline} ${row.pipelineVersion}`,
-      width: 140,
-      align: 'center',
-    },
-    {
-      id: 'taskId',
-      header: '任务ID',
-      accessor: (row) => row.taskId.slice(0, 8),
-      width: 100,
-      align: 'center',
-    },
-    {
-      id: 'internalId',
-      header: '样本编号',
-      accessor: 'internalId',
-      width: 100,
+      id: 'expand',
+      header: '',
+      accessor: (row) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleRowExpand(row.groupId);
+          }}
+          className="p-1 hover:bg-canvas-inset rounded"
+        >
+          {expandedRows.has(row.groupId) ? (
+            <ChevronDown className="w-4 h-4 text-fg-muted" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-fg-muted" />
+          )}
+        </button>
+      ),
+      width: 40,
       align: 'center',
     },
     {
@@ -81,45 +107,27 @@ export function SNVIndelHistoryTab({
       sortable: true,
     },
     {
-      id: 'position',
-      header: '变异位置',
-      accessor: (row) => `${row.chromosome}:${row.position}`,
-      width: 150,
-      align: 'center',
+      id: 'hgvsc',
+      header: 'HGVSc',
+      accessor: 'hgvsc',
+      width: 180,
+      align: 'left',
       sortable: true,
     },
     {
-      id: 'change',
-      header: 'REF>ALT',
-      accessor: (row) => `${row.ref}>${row.alt}`,
-      width: 100,
-      align: 'center',
-    },
-    {
-      id: 'zygosity',
-      header: '杂合性',
-      accessor: (row) => {
-        const labels = { Heterozygous: '杂合', Homozygous: '纯合', Hemizygous: '半合' };
-        return labels[row.zygosity];
-      },
-      width: 80,
-      align: 'center',
-    },
-    {
-      id: 'alleleFrequency',
-      header: '频率',
-      accessor: (row) => `${(row.alleleFrequency * 100).toFixed(1)}%`,
-      width: 80,
-      align: 'center',
+      id: 'hgvsp',
+      header: 'HGVSp',
+      accessor: 'hgvsp',
+      width: 180,
+      align: 'left',
       sortable: true,
     },
     {
-      id: 'depth',
-      header: '深度',
-      accessor: (row) => `${row.depth}X`,
-      width: 70,
+      id: 'transcript',
+      header: '转录本',
+      accessor: 'transcript',
+      width: 130,
       align: 'center',
-      sortable: true,
     },
     {
       id: 'acmgClassification',
@@ -133,52 +141,100 @@ export function SNVIndelHistoryTab({
       sortable: true,
     },
     {
-      id: 'transcript',
-      header: '转录本',
-      accessor: 'transcript',
-      width: 130,
+      id: 'consequence',
+      header: '变异后果',
+      accessor: (row) => CONSEQUENCE_LABELS[row.consequence] || row.consequence,
+      width: 100,
       align: 'center',
     },
     {
-      id: 'hgvsc',
-      header: 'HGVSc',
-      accessor: 'hgvsc',
-      width: 150,
+      id: 'gnomadAF',
+      header: 'gnomAD频率',
+      accessor: (row) => row.gnomadAF !== undefined ? `${(row.gnomadAF * 100).toFixed(4)}%` : '-',
+      width: 100,
       align: 'center',
     },
     {
-      id: 'hgvsp',
-      header: 'HGVSp',
-      accessor: 'hgvsp',
-      width: 150,
+      id: 'clinvarId',
+      header: 'ClinVar',
+      accessor: (row) => row.clinvarId || '-',
+      width: 120,
       align: 'center',
-    },
-    {
-      id: 'reviewedBy',
-      header: '审核人',
-      accessor: 'reviewedBy',
-      width: 80,
-      align: 'center',
-    },
-    {
-      id: 'reviewedAt',
-      header: '审核时间',
-      accessor: 'reviewedAt',
-      width: 140,
-      align: 'center',
-      sortable: true,
     },
     {
       id: 'detectionCount',
       header: '检出次数',
-      accessor: 'detectionCount',
+      accessor: (row) => (
+        <span className={row.detectionCount > 1 ? 'font-medium text-accent-fg' : ''}>
+          {row.detectionCount}
+        </span>
+      ),
       width: 80,
       align: 'center',
+      sortable: true,
+    },
+    {
+      id: 'firstDetectedAt',
+      header: '首次检出',
+      accessor: 'firstDetectedAt',
+      width: 120,
+      align: 'center',
+      sortable: true,
+    },
+    {
+      id: 'lastDetectedAt',
+      header: '最后检出',
+      accessor: 'lastDetectedAt',
+      width: 120,
+      align: 'center',
+      sortable: true,
     },
   ];
 
   // 分页信息
   const totalPages = result ? Math.ceil(result.total / result.pageSize) : 0;
+
+  // 渲染展开的详情行
+  const renderExpandedRow = (row: GroupedSNVIndel) => {
+    if (!expandedRows.has(row.groupId)) return null;
+
+    return (
+      <tr key={`${row.groupId}-detail`} className="bg-canvas-subtle">
+        <td colSpan={columns.length} className="p-0">
+          <div className="p-4 border-t border-border-default">
+            <div className="text-sm font-medium text-fg-default mb-3">检出记录详情</div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border-default">
+                    <th className="px-3 py-2 text-left text-fg-muted font-medium">任务ID</th>
+                    <th className="px-3 py-2 text-left text-fg-muted font-medium">样本编号</th>
+                    <th className="px-3 py-2 text-left text-fg-muted font-medium">流程名称</th>
+                    <th className="px-3 py-2 text-left text-fg-muted font-medium">审核人</th>
+                    <th className="px-3 py-2 text-left text-fg-muted font-medium">审核时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {row.records.map((record, index) => (
+                    <tr
+                      key={record.recordId}
+                      className={index < row.records.length - 1 ? 'border-b border-border-subtle' : ''}
+                    >
+                      <td className="px-3 py-2 font-mono text-xs">{record.taskId.slice(0, 8)}</td>
+                      <td className="px-3 py-2">{record.internalId}</td>
+                      <td className="px-3 py-2">{record.pipeline} {record.pipelineVersion}</td>
+                      <td className="px-3 py-2">{record.reviewedBy}</td>
+                      <td className="px-3 py-2">{record.reviewedAt}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <div>
@@ -188,7 +244,7 @@ export function SNVIndelHistoryTab({
           {/* 搜索框 */}
           <div className="w-64">
             <Input
-              placeholder="搜索基因、位置、样本..."
+              placeholder="搜索基因、HGVSc、样本..."
               value={filterState.searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               leftElement={<Search className="w-4 h-4" />}
@@ -198,7 +254,12 @@ export function SNVIndelHistoryTab({
 
         {/* 统计信息 */}
         <div className="flex items-center gap-4 text-sm text-fg-muted">
-          <span>共 {result?.total ?? 0} 条历史检出位点</span>
+          <span>共 {result?.total ?? 0} 个独特位点</span>
+          {result && result.data.length > 0 && (
+            <span>
+              （总检出 {result.data.reduce((sum, item) => sum + item.detectionCount, 0)} 次）
+            </span>
+          )}
         </div>
       </div>
 
@@ -209,16 +270,64 @@ export function SNVIndelHistoryTab({
         </div>
       ) : result && result.data.length > 0 ? (
         <>
-          <DataTable
-            data={result.data}
-            columns={columns}
-            rowKey="historyId"
-            striped
-            density="compact"
-            sortColumn={filterState.sortColumn}
-            sortDirection={filterState.sortDirection}
-            onSortChange={handleSortChange}
-          />
+          <div className="border border-border-default rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-canvas-subtle">
+                <tr>
+                  {columns.map((col) => (
+                    <th
+                      key={col.id}
+                      className={`px-3 py-2.5 text-sm font-medium text-fg-muted ${
+                        col.sortable ? 'cursor-pointer hover:bg-canvas-inset' : ''
+                      }`}
+                      style={{ width: col.width, textAlign: col.align }}
+                      onClick={() => {
+                        if (col.sortable) {
+                          const newDirection =
+                            filterState.sortColumn === col.id && filterState.sortDirection === 'asc'
+                              ? 'desc'
+                              : 'asc';
+                          handleSortChange(col.id, newDirection);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        {col.header}
+                        {col.sortable && filterState.sortColumn === col.id && (
+                          <span className="text-xs">
+                            {filterState.sortDirection === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {result.data.map((row) => (
+                  <React.Fragment key={row.groupId}>
+                    <tr
+                      className="border-b border-border-default hover:bg-canvas-subtle cursor-pointer"
+                      onClick={() => toggleRowExpand(row.groupId)}
+                    >
+                      {columns.map((col) => (
+                        <td
+                          key={col.id}
+                          className="px-3 py-2 text-sm"
+                          style={{ textAlign: col.align }}
+                        >
+                          {typeof col.accessor === 'function'
+                            ? col.accessor(row)
+                            : String(row[col.accessor as keyof GroupedSNVIndel] ?? '')}
+                        </td>
+                      ))}
+                    </tr>
+                    {renderExpandedRow(row)}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* 分页 */}
           {totalPages > 1 && (

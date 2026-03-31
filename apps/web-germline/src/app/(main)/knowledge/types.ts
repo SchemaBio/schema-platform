@@ -30,25 +30,35 @@ export type ACMGClassification =
   | 'Likely_Benign'
   | 'Benign';
 
-// ============ SNV/Indel历史检出位点 ============
-export interface HistorySNVIndel extends HistoryVariantBase {
+// ============ SNV/Indel单次检出记录 ============
+export interface SNVIndelDetectionRecord {
+  recordId: string;              // 记录唯一ID
+  taskId: string;                // 任务UUID
+  taskName: string;              // 任务名称
+  pipeline: string;              // 流程名称
+  pipelineVersion: string;       // 流程版本
+  sampleId: string;              // 样本UUID
+  internalId: string;            // 内部编号
+  reviewedAt: string;            // 审核时间
+  reviewedBy: string;            // 审核人
+}
+
+// ============ SNV/Indel分组位点（按基因-HGVSc-HGVSp去重） ============
+export interface GroupedSNVIndel {
+  groupId: string;               // 分组唯一ID（基因-HGVSc-HGVSp）
   gene: string;                  // 基因名
-  chromosome: string;            // 染色体
-  position: number;              // 位置
-  ref: string;                   // 参考碱基
-  alt: string;                   // 变异碱基
-  variantType: 'SNV' | 'Insertion' | 'Deletion' | 'Complex';
-  zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
-  alleleFrequency: number;       // 等位基因频率
-  depth: number;                 // 覆盖深度
-  acmgClassification: ACMGClassification;
-  transcript: string;            // 转录本
   hgvsc: string;                 // cDNA变化
   hgvsp: string;                 // 蛋白质变化
+  transcript: string;            // 转录本
+  acmgClassification: ACMGClassification;
   consequence: string;           // 变异后果
   rsId?: string;                 // dbSNP ID
   clinvarId?: string;            // ClinVar ID
   gnomadAF?: number;             // gnomAD 人群频率
+  detectionCount: number;        // 总检出次数
+  firstDetectedAt: string;       // 首次检出时间
+  lastDetectedAt: string;        // 最后检出时间
+  records: SNVIndelDetectionRecord[];  // 检出记录列表
 }
 
 // ============ CNV历史检出位点(片段级别) ============
