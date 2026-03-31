@@ -16,6 +16,7 @@ import {
   CNVSegmentTab,
   CNVExonTab,
   STRTab,
+  MEITab,
   MTTab,
   UPDTab,
   ReportTab,
@@ -125,6 +126,14 @@ export default function AnalysisDetailPage() {
             taskId={uuid}
             filterState={getFilterState('str')}
             onFilterChange={(state) => setFilterState('str', state)}
+          />
+        );
+      case 'mei':
+        return (
+          <MEITab
+            taskId={uuid}
+            filterState={getFilterState('mei')}
+            onFilterChange={(state) => setFilterState('mei', state)}
           />
         );
       case 'mt':

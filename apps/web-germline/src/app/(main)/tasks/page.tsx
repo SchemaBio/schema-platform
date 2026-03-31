@@ -654,10 +654,10 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full ${statusDotColors[task.status]}`} />
                       <span className={`text-sm ${isActive ? 'text-accent-fg font-medium' : 'text-fg-default'}`}>
-                        {task.sampleId}
+                        {task.internalId}
                       </span>
                     </div>
-                    <div className="text-xs text-fg-muted ml-4">{task.internalId}</div>
+                    <div className="text-xs text-fg-muted ml-4 font-mono">{task.sampleId}</div>
                   </div>
                 );
               })}

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { X, ExternalLink, FileText, Database, Dna, Edit2, Check, Plus, Trash2 } from 'lucide-react';
+import { X, ExternalLink, FileText, Database, Dna, Edit2, Check, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { Tag } from '@schema/ui-kit';
 import type { SNVIndel, ACMGClassification } from '../types';
 import { ACMG_CONFIG } from '../mock-data';
@@ -282,12 +282,14 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
   const [isEditingACMG, setIsEditingACMG] = React.useState(false);
   const [localClassification, setLocalClassification] = React.useState<ACMGClassification | null>(null);
   const [localCriteria, setLocalCriteria] = React.useState<string[] | null>(null);
+  const [interpretation, setInterpretation] = React.useState('');
 
   // 当 variant 变化时重置编辑状态
   React.useEffect(() => {
     setIsEditingACMG(false);
     setLocalClassification(null);
     setLocalCriteria(null);
+    setInterpretation('');
   }, [variant?.id]);
 
   if (!isOpen || !variant) return null;
@@ -448,6 +450,20 @@ export function VariantDetailPanel({ variant, isOpen, onClose, onOpenIGV, onUpda
                 />
               </>
             )}
+          </div>
+
+          {/* 人工解读 */}
+          <SectionTitle icon={MessageSquare} title="人工解读" />
+          <div className="bg-canvas-subtle rounded-lg p-3">
+            <textarea
+              value={interpretation}
+              onChange={(e) => setInterpretation(e.target.value)}
+              placeholder="请输入您对该变异的解读分析..."
+              className="w-full min-h-[120px] px-3 py-2 text-sm border border-border-default rounded-md bg-canvas-default text-fg-default resize-y focus:outline-none focus:ring-2 focus:ring-accent-emphasis focus:border-transparent"
+            />
+            <div className="flex justify-end mt-2">
+              <span className="text-xs text-fg-muted">{interpretation.length} 字</span>
+            </div>
           </div>
 
           {/* 临床意义 */}

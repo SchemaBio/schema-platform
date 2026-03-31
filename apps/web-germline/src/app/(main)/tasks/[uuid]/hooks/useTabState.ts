@@ -10,6 +10,7 @@ interface TabStates {
   'cnv-segment': TableFilterState;
   'cnv-exon': TableFilterState;
   'str': TableFilterState;
+  'mei': TableFilterState;
   'mt': TableFilterState;
   'upd': TableFilterState;
 }
@@ -34,6 +35,7 @@ export function useTabState(uuid: string): UseTabStateReturn {
     'cnv-segment': { ...DEFAULT_FILTER_STATE },
     'cnv-exon': { ...DEFAULT_FILTER_STATE },
     'str': { ...DEFAULT_FILTER_STATE },
+    'mei': { ...DEFAULT_FILTER_STATE },
     'mt': { ...DEFAULT_FILTER_STATE },
     'upd': { ...DEFAULT_FILTER_STATE },
   });

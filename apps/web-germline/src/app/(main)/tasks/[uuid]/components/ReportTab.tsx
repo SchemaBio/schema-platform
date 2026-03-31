@@ -4,8 +4,8 @@ import * as React from 'react';
 import { Button, Select, Tag, FormItem, Modal, ModalHeader, ModalBody, ModalFooter } from '@schema/ui-kit';
 import {
   FileText, Play, Clock, CheckCircle, Loader2, Download,
-  FileSpreadsheet, Database, FileCode, Upload, FileArchive, Trash2, AlertCircle,
-  X, Eye, FileType, Send, CheckCircle2, ArrowLeft
+  FileSpreadsheet, Database, FileCode, Upload, Trash2, AlertCircle,
+  X, Eye, FileType, CheckCircle2, ArrowLeft
 } from 'lucide-react';
 
 // 报告状态类型
@@ -65,7 +65,7 @@ async function getReportRecords(_taskId: string): Promise<ReportRecord[]> {
       type: 'generated',
       templateName: 'wes-germline-report',
       status: 'APPROVED',
-      createdAt: '2024-12-28 14:30',
+      createdAt: '2024-12-28 14:30:45',
       createdBy: '王工',
       reviewedBy: '李医生',
       approvedBy: '张主任',
@@ -77,7 +77,7 @@ async function getReportRecords(_taskId: string): Promise<ReportRecord[]> {
       type: 'uploaded',
       fileName: '患者报告_手动上传.docx',
       status: 'DRAFT',
-      createdAt: '2024-12-27 10:00',
+      createdAt: '2024-12-27 10:00:30',
       createdBy: '王工',
       downloadUrl: '/uploads/UPL001.docx',
     },
@@ -128,12 +128,8 @@ export function ReportTab({ taskId }: ReportTabProps) {
       prev.map((r) => {
         if (r.id === recordId) {
           const updates: Partial<ReportRecord> = { status: newStatus };
-          if (newStatus === 'PENDING_REVIEW') {
-            updates.reviewedBy = '当前用户';
-          } else if (newStatus === 'APPROVED') {
+          if (newStatus === 'APPROVED') {
             updates.approvedBy = '当前用户';
-          } else if (newStatus === 'RELEASED') {
-            updates.releasedBy = '当前用户';
           }
           return { ...r, ...updates };
         }
@@ -158,7 +154,15 @@ export function ReportTab({ taskId }: ReportTabProps) {
         type: 'generated',
         templateName: template.name,
         status: 'DRAFT',
-        createdAt: new Date().toLocaleString('zh-CN'),
+        createdAt: new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).replace(/\//g, '-'),
         createdBy: '当前用户',
         downloadUrl: `/reports/RPT${String(Date.now()).slice(-6)}.pdf`,
       };
@@ -205,17 +209,11 @@ export function ReportTab({ taskId }: ReportTabProps) {
 
     let newStatus: ReportStatus = record.status;
     switch (action) {
-      case 'submit':
-        newStatus = 'PENDING_REVIEW';
-        break;
       case 'approve':
         newStatus = 'APPROVED';
         break;
       case 'reject':
         newStatus = 'DRAFT';
-        break;
-      case 'release':
-        newStatus = 'RELEASED';
         break;
     }
 
@@ -267,6 +265,15 @@ export function ReportTab({ taskId }: ReportTabProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 检查文件大小，限制为20MB
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    if (file.size > maxSize) {
+      setErrorMessage(`文件大小超过限制（最大 20MB），当前文件大小为 ${(file.size / 1024 / 1024).toFixed(2)}MB。`);
+      setErrorModalOpen(true);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setUploading(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -276,7 +283,15 @@ export function ReportTab({ taskId }: ReportTabProps) {
       type: 'uploaded',
       fileName: file.name,
       status: 'DRAFT',
-      createdAt: new Date().toLocaleString('zh-CN'),
+      createdAt: new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).replace(/\//g, '-'),
       createdBy: '当前用户',
       downloadUrl: `/uploads/${file.name}`,
     };
@@ -290,7 +305,7 @@ export function ReportTab({ taskId }: ReportTabProps) {
   const handleDownloadExcel = () => window.open(`/api/tasks/${taskId}/export/excel`, '_blank');
   const handleDownloadParquet = () => window.open(`/api/tasks/${taskId}/export/parquet`, '_blank');
   const handleDownloadVCF = () => window.open(`/api/tasks/${taskId}/export/vcf`, '_blank');
-  const handleDownloadBAM = () => window.open(`/api/tasks/${taskId}/export/bam`, '_blank');
+  const handleDownloadMTVCF = () => window.open(`/api/tasks/${taskId}/export/mt-vcf`, '_blank');
 
   // 获取可执行的操作按钮
   const getActionButtons = (record: ReportRecord) => {
@@ -314,13 +329,6 @@ export function ReportTab({ taskId }: ReportTabProps) {
 
     // 状态流转按钮
     switch (record.status) {
-      case 'DRAFT':
-        buttons.push(
-          <Button key="submit" variant="ghost" size="small" onClick={() => handleStatusChange(record, 'submit')} title="提交审核">
-            <Send className="w-4 h-4 text-warning-fg" />
-          </Button>
-        );
-        break;
       case 'PENDING_REVIEW':
         buttons.push(
           <Button key="approve" variant="ghost" size="small" onClick={() => handleStatusChange(record, 'approve')} title="批准">
@@ -330,13 +338,6 @@ export function ReportTab({ taskId }: ReportTabProps) {
         buttons.push(
           <Button key="reject" variant="ghost" size="small" onClick={() => handleStatusChange(record, 'reject')} title="退回">
             <ArrowLeft className="w-4 h-4 text-danger-fg" />
-          </Button>
-        );
-        break;
-      case 'APPROVED':
-        buttons.push(
-          <Button key="release" variant="ghost" size="small" onClick={() => handleStatusChange(record, 'release')} title="发布">
-            <Send className="w-4 h-4 text-accent-fg" />
           </Button>
         );
         break;
@@ -380,10 +381,10 @@ export function ReportTab({ taskId }: ReportTabProps) {
               Parquet 文件
             </Button>
             <Button variant="secondary" size="small" leftIcon={<FileCode className="w-4 h-4" />} onClick={handleDownloadVCF}>
-              SNV/InDel VCF
+              SNP/InDel VCF
             </Button>
-            <Button variant="secondary" size="small" leftIcon={<FileArchive className="w-4 h-4" />} onClick={handleDownloadBAM}>
-              BAM 比对文件
+            <Button variant="secondary" size="small" leftIcon={<FileCode className="w-4 h-4" />} onClick={handleDownloadMTVCF}>
+              线粒体 VCF
             </Button>
           </div>
         </div>
@@ -531,11 +532,11 @@ export function ReportTab({ taskId }: ReportTabProps) {
         <ModalHeader>上传报告文件</ModalHeader>
         <ModalBody>
           <div className="space-y-4">
-            <p className="text-sm text-fg-muted">请选择要上传的 DOCX 报告文件。上传后可在报告列表中查看和下载。</p>
+            <p className="text-sm text-fg-muted">请选择要上传的 DOCX 报告文件（最大 20MB）。上传后可在报告列表中查看和下载。</p>
             <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-accent-emphasis hover:bg-canvas-subtle transition-colors" onClick={() => fileInputRef.current?.click()}>
               <Upload className="w-8 h-8 mx-auto mb-2 text-fg-muted" />
               <p className="text-sm text-fg-default">点击选择文件</p>
-              <p className="text-xs text-fg-muted mt-1">支持 .docx 格式</p>
+              <p className="text-xs text-fg-muted mt-1">支持 .docx 格式，最大 20MB</p>
             </div>
             <input ref={fileInputRef} type="file" accept=".docx" className="hidden" onChange={handleFileChange} />
           </div>
@@ -579,10 +580,8 @@ export function ReportTab({ taskId }: ReportTabProps) {
         <ModalBody>
           {statusAction && (
             <p className="text-sm text-fg-muted">
-              {statusAction.action === 'submit' && `确定要提交报告 "${statusAction.record.name}" 进行审核吗？`}
               {statusAction.action === 'approve' && `确定要批准报告 "${statusAction.record.name}" 吗？`}
               {statusAction.action === 'reject' && `确定要退回报告 "${statusAction.record.name}" 到草稿状态吗？`}
-              {statusAction.action === 'release' && `确定要发布报告 "${statusAction.record.name}" 吗？发布后将无法修改。`}
             </p>
           )}
         </ModalBody>

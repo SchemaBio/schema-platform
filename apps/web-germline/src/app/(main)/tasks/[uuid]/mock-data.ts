@@ -9,9 +9,9 @@ import type {
   CNVSegment,
   CNVExon,
   STR,
+  MEIVariant,
   MitochondrialVariant,
   UPDRegion,
-  SangerValidation,
   TableFilterState,
   PaginatedResult,
   ACMGClassification,
@@ -487,6 +487,95 @@ const mockSTRs: STR[] = [
   },
 ];
 
+// ============ Mock MEI数据 ============
+const mockMEIs: MEIVariant[] = [
+  {
+    id: 'mei-001',
+    chromosome: 'chr1',
+    position: 123456789,
+    meiType: 'LINE1',
+    insertionType: 'insertion',
+    strand: '+',
+    length: 6025,
+    gene: 'TTN',
+    transcript: 'NM_001267550.2',
+    impact: 'intronic',
+    zygosity: 'Heterozygous',
+    supportingReads: 15,
+    totalReads: 120,
+    frequency: 0.0001,
+    acmgClassification: 'VUS',
+    diseaseAssociation: '扩张型心肌病',
+    reviewed: false,
+    reported: false,
+  },
+  {
+    id: 'mei-002',
+    chromosome: 'chr11',
+    position: 47623456,
+    meiType: 'Alu',
+    insertionType: 'insertion',
+    strand: '-',
+    length: 312,
+    gene: 'LDLR',
+    transcript: 'NM_000527.5',
+    impact: 'exonic',
+    zygosity: 'Heterozygous',
+    supportingReads: 28,
+    totalReads: 85,
+    frequency: undefined,
+    acmgClassification: 'Likely_Pathogenic',
+    clinvarId: 'VCV000123456',
+    diseaseAssociation: '家族性高胆固醇血症',
+    notes: '可能导致基因功能丧失',
+    reviewed: true,
+    reported: true,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 10:30',
+    reportedBy: '李工',
+    reportedAt: '2024-12-25 14:00',
+  },
+  {
+    id: 'mei-003',
+    chromosome: 'chrX',
+    position: 153789012,
+    meiType: 'SVA',
+    insertionType: 'insertion',
+    strand: '+',
+    length: 1850,
+    gene: 'DMD',
+    transcript: 'NM_004006.3',
+    impact: 'exonic',
+    zygosity: 'Hemizygous',
+    supportingReads: 42,
+    totalReads: 95,
+    acmgClassification: 'Pathogenic',
+    diseaseAssociation: '杜氏肌营养不良',
+    reviewed: true,
+    reported: false,
+    reviewedBy: '王工',
+    reviewedAt: '2024-12-25 11:00',
+  },
+  {
+    id: 'mei-004',
+    chromosome: 'chr17',
+    position: 75654321,
+    meiType: 'LINE1',
+    insertionType: 'deletion',
+    strand: '-',
+    length: 6125,
+    gene: 'BRCA1',
+    transcript: 'NM_007294.4',
+    impact: 'intronic',
+    zygosity: 'Heterozygous',
+    supportingReads: 8,
+    totalReads: 110,
+    frequency: 0.0005,
+    reviewed: false,
+    reported: false,
+  },
+];
+
 // ============ Mock线粒体变异数据 ============
 const mockMTVariants: MitochondrialVariant[] = [
   {
@@ -577,84 +666,6 @@ const mockUPDRegions: UPDRegion[] = [
     parentOfOrigin: 'Paternal',
     reviewed: false,
     reported: false,
-  },
-];
-
-// ============ Mock Sanger验证数据 ============
-const mockSangerValidations: SangerValidation[] = [
-  {
-    id: 'sanger-001',
-    variantId: 'snv-001',
-    variantType: 'SNV',
-    gene: 'BRCA1',
-    chromosome: 'chr17',
-    position: 43094464,
-    hgvsc: 'c.5266dupC',
-    hgvsp: 'p.Gln1756ProfsTer74',
-    zygosity: 'Heterozygous',
-    status: 'Completed',
-    result: 'Confirmed',
-    primerForward: 'ATGCTGAGTTTGTGTGTGAAC',
-    primerReverse: 'TCAGCTCAGCTTCTGATGAC',
-    productSize: 385,
-    requestedBy: '王工',
-    requestedAt: '2024-12-21 09:00',
-    completedAt: '2024-12-23 14:30',
-    completedBy: '张工',
-    notes: '验证成功，峰图清晰',
-  },
-  {
-    id: 'sanger-002',
-    variantId: 'snv-002',
-    variantType: 'SNV',
-    gene: 'TP53',
-    chromosome: 'chr17',
-    position: 7577538,
-    hgvsc: 'c.743G>A',
-    hgvsp: 'p.Arg248Gln',
-    zygosity: 'Heterozygous',
-    status: 'Completed',
-    result: 'Confirmed',
-    primerForward: 'CCTGAGGTGTAGACGCCAAC',
-    primerReverse: 'AGTGTGATGATGGTGAGGATG',
-    productSize: 420,
-    requestedBy: '王工',
-    requestedAt: '2024-12-21 09:15',
-    completedAt: '2024-12-23 15:00',
-    completedBy: '张工',
-  },
-  {
-    id: 'sanger-003',
-    variantId: 'snv-003',
-    variantType: 'Indel',
-    gene: 'CFTR',
-    chromosome: 'chr7',
-    position: 117559590,
-    hgvsc: 'c.1521_1523delCTT',
-    hgvsp: 'p.Phe508del',
-    zygosity: 'Heterozygous',
-    status: 'InProgress',
-    result: null,
-    primerForward: 'GCAGAGTACCTGAAACAGGA',
-    primerReverse: 'CATTCACAGTAGCTTACCCA',
-    productSize: 298,
-    requestedBy: '李工',
-    requestedAt: '2024-12-26 10:00',
-  },
-  {
-    id: 'sanger-004',
-    variantId: 'snv-004',
-    variantType: 'SNV',
-    gene: 'MLH1',
-    chromosome: 'chr3',
-    position: 37053568,
-    hgvsc: 'c.655A>G',
-    hgvsp: 'p.Ile219Val',
-    zygosity: 'Homozygous',
-    status: 'Pending',
-    result: null,
-    requestedBy: '李工',
-    requestedAt: '2024-12-27 09:30',
   },
 ];
 
@@ -829,6 +840,30 @@ export async function getSTRs(
   );
 }
 
+export async function getMEIs(
+  _uuid: string,
+  filterState: TableFilterState
+): Promise<PaginatedResult<MEIVariant>> {
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  let data = [...mockMEIs];
+
+  // 基因列表过滤
+  if (filterState.geneListId) {
+    const geneList = getGeneListById(filterState.geneListId);
+    if (geneList) {
+      data = data.filter(item => geneList.genes.includes(item.gene));
+    }
+  }
+
+  return applyFilterAndPagination(
+    data,
+    filterState,
+    ['gene', 'chromosome', 'meiType'],
+    ['gene', 'chromosome', 'position', 'meiType', 'length', 'zygosity']
+  );
+}
+
 export async function getMitochondrialVariants(
   _uuid: string,
   filterState: TableFilterState
@@ -865,19 +900,6 @@ export async function getUPDRegions(
     filterState,
     ['chromosome'],
     ['chromosome', 'startPosition', 'length', 'type']
-  );
-}
-
-export async function getSangerValidations(
-  _uuid: string,
-  filterState: TableFilterState
-): Promise<PaginatedResult<SangerValidation>> {
-  await new Promise(resolve => setTimeout(resolve, 150));
-  return applyFilterAndPagination(
-    mockSangerValidations,
-    filterState,
-    ['gene', 'hgvsc', 'chromosome'],
-    ['gene', 'chromosome', 'position', 'status', 'result']
   );
 }
 

@@ -12,9 +12,9 @@ import {
   CNVSegmentTab,
   CNVExonTab,
   STRTab,
+  MEITab,
   MTTab,
   UPDTab,
-  SangerTab,
   ReportTab,
 } from '../[uuid]/components';
 import { Tag } from '@schema/ui-kit';
@@ -43,9 +43,9 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
     'cnv-segment': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'cnv-exon': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'str': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
+    'mei': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'mt': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
     'upd': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
-    'sanger': { searchQuery: '', filters: {}, page: 1, pageSize: 20 },
   });
 
   const getFilterState = (tab: keyof typeof tabStates) => tabStates[tab];
@@ -122,6 +122,14 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             onFilterChange={(state) => setFilterState('str', state)}
           />
         );
+      case 'mei':
+        return (
+          <MEITab
+            taskId={taskId}
+            filterState={getFilterState('mei')}
+            onFilterChange={(state) => setFilterState('mei', state)}
+          />
+        );
       case 'mt':
         return (
           <MTTab
@@ -136,14 +144,6 @@ export function AnalysisDetailPanel({ taskId }: AnalysisDetailPanelProps) {
             taskId={taskId}
             filterState={getFilterState('upd')}
             onFilterChange={(state) => setFilterState('upd', state)}
-          />
-        );
-      case 'sanger':
-        return (
-          <SangerTab
-            taskId={taskId}
-            filterState={getFilterState('sanger')}
-            onFilterChange={(state) => setFilterState('sanger', state)}
           />
         );
       case 'report':

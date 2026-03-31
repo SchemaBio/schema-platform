@@ -4,64 +4,56 @@ import * as React from 'react';
 import { DataTable, Tag, Input } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, ListFilter } from 'lucide-react';
-import type { SNVIndel, TableFilterState, PaginatedResult, ACMGClassification } from '../types';
+import type { MEIVariant, TableFilterState, PaginatedResult, ACMGClassification } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types';
-import { getSNVIndels, ACMG_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
-import { IGVViewer, PositionLink } from './IGVViewer';
-import { VariantDetailPanel } from './VariantDetailPanel';
+import { getMEIs, ACMG_CONFIG, getGeneLists, type GeneListOption } from '../mock-data';
+import { PositionLink } from './IGVViewer';
 import { ReviewCheckbox, ReportCheckbox, ReviewColumnHeader, ReportColumnHeader } from './ReviewCheckboxes';
 
-interface SNVIndelTabProps {
+interface MEITabProps {
   taskId: string;
   filterState?: TableFilterState;
   onFilterChange?: (state: TableFilterState) => void;
 }
 
-export function SNVIndelTab({ 
-  taskId, 
+// MEI 类型标签
+const MEI_TYPE_LABELS = {
+  LINE1: 'LINE-1',
+  Alu: 'Alu',
+  SVA: 'SVA',
+  Unknown: '未知',
+};
+
+// MEI 类型颜色
+const MEI_TYPE_COLORS = {
+  LINE1: 'bg-purple-100 text-purple-700 border-purple-200',
+  Alu: 'bg-blue-100 text-blue-700 border-blue-200',
+  SVA: 'bg-orange-100 text-orange-700 border-orange-200',
+  Unknown: 'bg-gray-100 text-gray-700 border-gray-200',
+};
+
+// 影响类型标签
+const IMPACT_LABELS = {
+  exonic: '外显子区',
+  intronic: '内含子区',
+  UTR5: "5'UTR",
+  UTR3: "3'UTR",
+  intergenic: '基因间区',
+};
+
+export function MEITab({
+  taskId,
   filterState: externalFilterState,
-  onFilterChange 
-}: SNVIndelTabProps) {
+  onFilterChange
+}: MEITabProps) {
   const [internalFilterState, setInternalFilterState] = React.useState<TableFilterState>(DEFAULT_FILTER_STATE);
-  const [result, setResult] = React.useState<PaginatedResult<SNVIndel> | null>(null);
+  const [result, setResult] = React.useState<PaginatedResult<MEIVariant> | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [geneLists, setGeneLists] = React.useState<GeneListOption[]>([]);
   const [reviewStatus, setReviewStatus] = React.useState<Record<string, { reviewed: boolean; reported: boolean }>>({});
-  
-  // IGV 查看器状态
-  const [igvState, setIgvState] = React.useState<{
-    isOpen: boolean;
-    chromosome: string;
-    position: number;
-  }>({ isOpen: false, chromosome: '', position: 0 });
-
-  // 详情面板状态
-  const [selectedVariant, setSelectedVariant] = React.useState<SNVIndel | null>(null);
-  const [detailPanelOpen, setDetailPanelOpen] = React.useState(false);
 
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
-
-  // 打开 IGV 查看器
-  const handleOpenIGV = React.useCallback((chromosome: string, position: number) => {
-    setIgvState({ isOpen: true, chromosome, position });
-  }, []);
-
-  // 关闭 IGV 查看器
-  const handleCloseIGV = React.useCallback(() => {
-    setIgvState(prev => ({ ...prev, isOpen: false }));
-  }, []);
-
-  // 点击行打开详情面板
-  const handleRowClick = React.useCallback((variant: SNVIndel) => {
-    setSelectedVariant(variant);
-    setDetailPanelOpen(true);
-  }, []);
-
-  // 关闭详情面板
-  const handleCloseDetailPanel = React.useCallback(() => {
-    setDetailPanelOpen(false);
-  }, []);
 
   // 处理审核状态变更
   const handleReviewChange = React.useCallback((id: string, checked: boolean) => {
@@ -80,7 +72,7 @@ export function SNVIndelTab({
   }, []);
 
   // 获取变异的审核状态
-  const getReviewState = React.useCallback((variant: SNVIndel) => {
+  const getReviewState = React.useCallback((variant: MEIVariant) => {
     return reviewStatus[variant.id] ?? { reviewed: variant.reviewed, reported: variant.reported };
   }, [reviewStatus]);
 
@@ -90,11 +82,9 @@ export function SNVIndelTab({
     return [...result.data].sort((a, b) => {
       const stateA = getReviewState(a);
       const stateB = getReviewState(b);
-      // 回报的排最前
       if (stateA.reported !== stateB.reported) {
         return stateA.reported ? -1 : 1;
       }
-      // 审核的排其次
       if (stateA.reviewed !== stateB.reviewed) {
         return stateA.reviewed ? -1 : 1;
       }
@@ -115,7 +105,7 @@ export function SNVIndelTab({
   React.useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await getSNVIndels(taskId, filterState);
+      const data = await getMEIs(taskId, filterState);
       setResult(data);
       setLoading(false);
     }
@@ -127,32 +117,12 @@ export function SNVIndelTab({
     setFilterState({ ...filterState, searchQuery: query, page: 1 });
   }, [filterState, setFilterState]);
 
-  // 处理排序
-  const handleSortChange = React.useCallback((column: string, direction: 'asc' | 'desc' | null) => {
-    setFilterState({
-      ...filterState,
-      sortColumn: direction ? column : undefined,
-      sortDirection: direction ?? undefined,
-    });
-  }, [filterState, setFilterState]);
-
-  // 处理ACMG筛选
-  const handleACMGFilter = React.useCallback((classification: ACMGClassification | '') => {
-    const newFilters = { ...filterState.filters };
-    if (classification) {
-      newFilters.acmgClassification = classification;
-    } else {
-      delete newFilters.acmgClassification;
-    }
-    setFilterState({ ...filterState, filters: newFilters, page: 1 });
-  }, [filterState, setFilterState]);
-
   // 处理基因列表筛选
   const handleGeneListFilter = React.useCallback((geneListId: string) => {
-    setFilterState({ 
-      ...filterState, 
-      geneListId: geneListId || undefined, 
-      page: 1 
+    setFilterState({
+      ...filterState,
+      geneListId: geneListId || undefined,
+      page: 1
     });
   }, [filterState, setFilterState]);
 
@@ -163,7 +133,7 @@ export function SNVIndelTab({
   }, [filterState.geneListId, geneLists]);
 
   // 列定义
-  const columns: Column<SNVIndel>[] = [
+  const columns: Column<MEIVariant>[] = [
     {
       id: 'reviewed',
       header: <ReviewColumnHeader />,
@@ -204,12 +174,12 @@ export function SNVIndelTab({
     },
     {
       id: 'position',
-      header: '变异位置',
+      header: '插入位置',
       accessor: (row) => (
         <PositionLink
           chromosome={row.chromosome}
           position={row.position}
-          onClick={handleOpenIGV}
+          onClick={() => {}}
         />
       ),
       width: 150,
@@ -217,20 +187,46 @@ export function SNVIndelTab({
       sortable: true,
     },
     {
-      id: 'change',
-      header: '参考/变异',
-      accessor: (row) => `${row.ref}>${row.alt}`,
-      width: 100,
+      id: 'meiType',
+      header: 'MEI类型',
+      accessor: (row) => (
+        <span className={`px-2 py-0.5 text-xs rounded border ${MEI_TYPE_COLORS[row.meiType]}`}>
+          {MEI_TYPE_LABELS[row.meiType]}
+        </span>
+      ),
+      width: 80,
       align: 'center',
     },
     {
-      id: 'variantType',
-      header: '变异类型',
+      id: 'insertionType',
+      header: '插入类型',
       accessor: (row) => {
-        const typeLabels = { SNV: 'SNP', Insertion: '插入', Deletion: '缺失', Complex: '复杂' };
-        return typeLabels[row.variantType];
+        const labels = { insertion: '插入', deletion: '缺失', complex: '复杂' };
+        return labels[row.insertionType];
       },
       width: 80,
+      align: 'center',
+    },
+    {
+      id: 'strand',
+      header: '链',
+      accessor: 'strand',
+      width: 50,
+      align: 'center',
+    },
+    {
+      id: 'length',
+      header: '长度',
+      accessor: (row) => `${row.length} bp`,
+      width: 90,
+      align: 'center',
+      sortable: true,
+    },
+    {
+      id: 'impact',
+      header: '影响区域',
+      accessor: (row) => row.impact ? IMPACT_LABELS[row.impact as keyof typeof IMPACT_LABELS] || row.impact : '-',
+      width: 90,
       align: 'center',
     },
     {
@@ -244,18 +240,18 @@ export function SNVIndelTab({
       align: 'center',
     },
     {
-      id: 'alleleFrequency',
-      header: '频率',
-      accessor: (row) => `${(row.alleleFrequency * 100).toFixed(1)}%`,
-      width: 80,
+      id: 'supportingReads',
+      header: '支持读数',
+      accessor: (row) => `${row.supportingReads}/${row.totalReads}`,
+      width: 90,
       align: 'center',
       sortable: true,
     },
     {
-      id: 'depth',
-      header: '深度',
-      accessor: (row) => `${row.depth}X`,
-      width: 70,
+      id: 'frequency',
+      header: '人群频率',
+      accessor: (row) => row.frequency !== undefined ? `${(row.frequency * 100).toFixed(4)}%` : '-',
+      width: 90,
       align: 'center',
       sortable: true,
     },
@@ -263,33 +259,13 @@ export function SNVIndelTab({
       id: 'acmgClassification',
       header: 'ACMG分类',
       accessor: (row) => {
+        if (!row.acmgClassification) return '-';
         const config = ACMG_CONFIG[row.acmgClassification];
         return <Tag variant={config.variant} className="w-20 justify-center">{config.label}</Tag>;
       },
       width: 100,
       align: 'center',
       sortable: true,
-    },
-    {
-      id: 'transcript',
-      header: '转录本',
-      accessor: 'transcript',
-      width: 130,
-      align: 'center',
-    },
-    {
-      id: 'hgvsc',
-      header: 'cDNA变化',
-      accessor: 'hgvsc',
-      width: 150,
-      align: 'center',
-    },
-    {
-      id: 'hgvsp',
-      header: '蛋白质变化',
-      accessor: 'hgvsp',
-      width: 150,
-      align: 'center',
     },
   ];
 
@@ -327,18 +303,6 @@ export function SNVIndelTab({
               ))}
             </select>
           </div>
-
-          {/* ACMG筛选 */}
-          <select
-            value={(filterState.filters.acmgClassification as string) || ''}
-            onChange={(e) => handleACMGFilter(e.target.value as ACMGClassification | '')}
-            className="px-3 py-1.5 text-sm border border-border-default rounded-md bg-canvas-default text-fg-default"
-          >
-            <option value="">全部ACMG分类</option>
-            {Object.entries(ACMG_CONFIG).map(([key, config]) => (
-              <option key={key} value={key}>{config.label}</option>
-            ))}
-          </select>
         </div>
 
         {/* 统计信息 */}
@@ -348,7 +312,7 @@ export function SNVIndelTab({
               已筛选: {selectedGeneList.name}
             </span>
           )}
-          <span>共 {result?.total ?? 0} 条变异</span>
+          <span>共 {result?.total ?? 0} 条 MEI 变异</span>
         </div>
       </div>
 
@@ -367,8 +331,13 @@ export function SNVIndelTab({
             density="compact"
             sortColumn={filterState.sortColumn}
             sortDirection={filterState.sortDirection}
-            onSortChange={handleSortChange}
-            onRowClick={handleRowClick}
+            onSortChange={(column, direction) => {
+              setFilterState({
+                ...filterState,
+                sortColumn: direction ? column : undefined,
+                sortDirection: direction ?? undefined,
+              });
+            }}
           />
 
           {/* 分页 */}
@@ -398,25 +367,9 @@ export function SNVIndelTab({
         </>
       ) : (
         <div className="text-center py-12 text-fg-muted">
-          暂无SNV/Indel变异数据
+          暂无 MEI 变异数据
         </div>
       )}
-
-      {/* IGV 查看器 */}
-      <IGVViewer
-        chromosome={igvState.chromosome}
-        position={igvState.position}
-        isOpen={igvState.isOpen}
-        onClose={handleCloseIGV}
-      />
-
-      {/* 变异详情面板 */}
-      <VariantDetailPanel
-        variant={selectedVariant}
-        isOpen={detailPanelOpen}
-        onClose={handleCloseDetailPanel}
-        onOpenIGV={handleOpenIGV}
-      />
     </div>
   );
 }

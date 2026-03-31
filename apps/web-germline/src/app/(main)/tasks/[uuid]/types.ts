@@ -77,7 +77,7 @@ export interface SNVIndel extends VariantReviewStatus {
   position: number;              // 位置
   ref: string;                   // 参考碱基
   alt: string;                   // 变异碱基
-  variantType: 'SNV' | 'Insertion' | 'Deletion';
+  variantType: 'SNV' | 'Insertion' | 'Deletion' | 'Complex';
   zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
   alleleFrequency: number;       // 等位基因频率
   depth: number;                 // 覆盖深度
@@ -150,6 +150,31 @@ export interface STR extends VariantReviewStatus {
   status: STRStatus;
 }
 
+// ============ MEI (移动元件插入) ============
+export type MEIType = 'LINE1' | 'Alu' | 'SVA' | 'Unknown';
+export type MEIInsertionType = 'insertion' | 'deletion' | 'complex';
+
+export interface MEIVariant extends VariantReviewStatus {
+  id: string;
+  chromosome: string;            // 染色体
+  position: number;              // 插入位置
+  meiType: MEIType;              // MEI类型
+  insertionType: MEIInsertionType; // 插入类型
+  strand: '+' | '-';             // 链方向
+  length: number;                // 插入长度
+  gene: string;                  // 所在基因
+  transcript?: string;           // 转录本
+  impact?: string;               // 影响 (如 exonic, intronic, UTR5, UTR3, intergenic)
+  zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
+  supportingReads: number;       // 支持读数
+  totalReads: number;            // 总读数
+  frequency?: number;            // 人群频率
+  acmgClassification?: ACMGClassification;
+  clinvarId?: string;            // ClinVar ID
+  diseaseAssociation?: string;   // 疾病关联
+  notes?: string;                // 备注
+}
+
 // ============ 线粒体变异 ============
 export type MitochondrialPathogenicity = 
   | 'Pathogenic' 
@@ -185,34 +210,8 @@ export interface UPDRegion extends VariantReviewStatus {
   parentOfOrigin?: ParentOfOrigin;
 }
 
-// ============ Sanger验证 ============
-export type SangerStatus = 'Pending' | 'InProgress' | 'Completed' | 'Failed';
-export type SangerResult = 'Confirmed' | 'NotConfirmed' | 'Inconclusive' | null;
-
-export interface SangerValidation {
-  id: string;
-  variantId: string;             // 关联的变异ID
-  variantType: 'SNV' | 'Indel' | 'CNV';
-  gene: string;
-  chromosome: string;
-  position: number;
-  hgvsc: string;                 // cDNA变化
-  hgvsp?: string;                // 蛋白质变化
-  zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
-  status: SangerStatus;
-  result: SangerResult;
-  primerForward?: string;        // 正向引物
-  primerReverse?: string;        // 反向引物
-  productSize?: number;          // 产物大小(bp)
-  requestedBy: string;           // 申请人
-  requestedAt: string;           // 申请时间
-  completedAt?: string;          // 完成时间
-  completedBy?: string;          // 完成人
-  notes?: string;                // 备注
-}
-
 // ============ 标签页类型 ============
-export type TabType = 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mt' | 'upd' | 'sanger' | 'report';
+export type TabType = 'qc' | 'snv-indel' | 'cnv-segment' | 'cnv-exon' | 'str' | 'mei' | 'mt' | 'upd' | 'report';
 
 export interface TabConfig {
   id: TabType;
@@ -225,9 +224,9 @@ export const TAB_CONFIGS: TabConfig[] = [
   { id: 'cnv-segment', label: 'CNV(Region)' },
   { id: 'cnv-exon', label: 'CNV(Exon)' },
   { id: 'str', label: '动态突变' },
+  { id: 'mei', label: 'MEI' },
   { id: 'mt', label: '线粒体' },
   { id: 'upd', label: 'UPD' },
-  { id: 'sanger', label: 'Sanger验证' },
   { id: 'report', label: '报告生成' },
 ];
 
