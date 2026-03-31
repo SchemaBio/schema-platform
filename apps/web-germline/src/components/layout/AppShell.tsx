@@ -71,7 +71,6 @@ const defaultSubPageMap: Record<string, string> = {
   '/pipeline': '流程列表',
   '/analysis': '任务列表',
   '/reports': '报告列表',
-  '/knowledge': '知识库概览',
   '/settings': '个人设置',
 };
 
