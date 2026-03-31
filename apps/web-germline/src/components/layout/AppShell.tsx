@@ -27,7 +27,7 @@ const pathLabelMap: Record<string, string> = {
   pipeline: '流程中心',
   analysis: '分析中心',
   reports: '报告中心',
-  knowledge: '知识中心',
+  history: '历史检出',
   settings: '系统设置',
   about: '关于',
   privacy: '隐私协议',

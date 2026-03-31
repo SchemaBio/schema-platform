@@ -52,7 +52,7 @@ export interface SidebarNavConfig {
   samples: SidebarNavItem[];
   tasks: SidebarNavItem[];
   pipeline: SidebarNavItem[];
-  knowledge: SidebarNavItem[];
+  history: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
@@ -64,7 +64,7 @@ export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   { label: '样本管理', href: '/samples', icon: Users },
   { label: '任务中心', href: '/tasks', icon: ListTodo },
-  { label: '知识中心', href: '/knowledge', icon: BookOpen },
+  { label: '历史检出', href: '/history', icon: History },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
 ];
 
@@ -90,8 +90,8 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
-  // 知识中心 - 历史检出位点汇总
-  knowledge: [],
+  // 历史检出 - 检出位点统计
+  history: [],
   // 系统设置
   settings: [
     { label: '个人设置', href: '/settings', icon: User },

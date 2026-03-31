@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import { PageContent } from '@/components/layout';
-import type { KnowledgeTabType } from './types';
-import { DEFAULT_KNOWLEDGE_FILTER_STATE } from './types';
+import type { HistoryTabType } from './types';
+import { DEFAULT_HISTORY_FILTER_STATE } from './types';
 import {
-  KnowledgeTabs,
+  HistoryTabs,
   SNVIndelHistoryTab,
   CNVSegmentHistoryTab,
   CNVExonHistoryTab,
@@ -15,14 +15,14 @@ import {
   UPDHistoryTab,
 } from './components';
 
-export default function KnowledgeHistoryPage() {
-  const [activeTab, setActiveTab] = React.useState<KnowledgeTabType>('snv-indel');
-  const [filterState, setFilterState] = React.useState(DEFAULT_KNOWLEDGE_FILTER_STATE);
+export default function HistoryPage() {
+  const [activeTab, setActiveTab] = React.useState<HistoryTabType>('snv-indel');
+  const [filterState, setFilterState] = React.useState(DEFAULT_HISTORY_FILTER_STATE);
 
   // 当切换标签页时重置筛选状态
-  const handleTabChange = React.useCallback((tab: KnowledgeTabType) => {
+  const handleTabChange = React.useCallback((tab: HistoryTabType) => {
     setActiveTab(tab);
-    setFilterState(DEFAULT_KNOWLEDGE_FILTER_STATE);
+    setFilterState(DEFAULT_HISTORY_FILTER_STATE);
   }, []);
 
   // 渲染当前标签页内容
@@ -91,9 +91,9 @@ export default function KnowledgeHistoryPage() {
         </p>
       </div>
 
-      <KnowledgeTabs activeTab={activeTab} onTabChange={handleTabChange}>
+      <HistoryTabs activeTab={activeTab} onTabChange={handleTabChange}>
         {renderTabContent()}
-      </KnowledgeTabs>
+      </HistoryTabs>
     </PageContent>
   );
 }
