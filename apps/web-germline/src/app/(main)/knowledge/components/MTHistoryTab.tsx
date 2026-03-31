@@ -1,20 +1,18 @@
 'use client';
 
 import * as React from 'react';
-import { DataTable, Input, Tag } from '@schema/ui-kit';
-import type { Column } from '@schema/ui-kit';
-import { Search } from 'lucide-react';
-import type { HistoryMTVariant, KnowledgeTableFilterState, PaginatedResult, MitochondrialPathogenicity } from '../types';
+import { Tag } from '@schema/ui-kit';
+import type { GroupedMTVariant, KnowledgeTableFilterState, PaginatedResult } from '../types';
 import { DEFAULT_KNOWLEDGE_FILTER_STATE } from '../types';
-import { getHistoryMTVariants } from '../mock-data';
+import { getGroupedMTVariants, ACMG_CONFIG } from '../mock-data';
+import { ExpandableTable } from './ExpandableTable';
 
 interface MTHistoryTabProps {
   filterState?: KnowledgeTableFilterState;
   onFilterChange?: (state: KnowledgeTableFilterState) => void;
 }
 
-// 线粒体致病性配置
-const MT_PATHOGENICITY_CONFIG: Record<MitochondrialPathogenicity, { label: string; variant: 'danger' | 'warning' | 'neutral' | 'info' | 'success' }> = {
+const MT_PATHOGENICITY_CONFIG: Record<string, { label: string; variant: 'danger' | 'warning' | 'neutral' | 'info' | 'success' }> = {
   Pathogenic: { label: '致病', variant: 'danger' },
   Likely_Pathogenic: { label: '可能致病', variant: 'warning' },
   VUS: { label: '意义未明', variant: 'neutral' },
@@ -27,213 +25,120 @@ export function MTHistoryTab({
   onFilterChange
 }: MTHistoryTabProps) {
   const [internalFilterState, setInternalFilterState] = React.useState<KnowledgeTableFilterState>(DEFAULT_KNOWLEDGE_FILTER_STATE);
-  const [result, setResult] = React.useState<PaginatedResult<HistoryMTVariant> | null>(null);
+  const [result, setResult] = React.useState<PaginatedResult<GroupedMTVariant> | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   const filterState = externalFilterState ?? internalFilterState;
   const setFilterState = onFilterChange ?? setInternalFilterState;
 
-  // 加载数据
   React.useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await getHistoryMTVariants(filterState);
+      const data = await getGroupedMTVariants(filterState);
       setResult(data);
       setLoading(false);
     }
     loadData();
   }, [filterState]);
 
-  // 处理搜索
-  const handleSearch = React.useCallback((query: string) => {
-    setFilterState({ ...filterState, searchQuery: query, page: 1 });
-  }, [filterState, setFilterState]);
-
-  // 处理排序
-  const handleSortChange = React.useCallback((column: string, direction: 'asc' | 'desc' | null) => {
-    setFilterState({
-      ...filterState,
-      sortColumn: direction ? column : undefined,
-      sortDirection: direction ?? undefined,
-    });
-  }, [filterState, setFilterState]);
-
-  // 列定义
-  const columns: Column<HistoryMTVariant>[] = [
-    {
-      id: 'pipeline',
-      header: '流程',
-      accessor: (row) => `${row.pipeline} ${row.pipelineVersion}`,
-      width: 140,
-      align: 'center',
-    },
-    {
-      id: 'taskId',
-      header: '任务ID',
-      accessor: (row) => row.taskId.slice(0, 8),
-      width: 100,
-      align: 'center',
-    },
-    {
-      id: 'internalId',
-      header: '样本编号',
-      accessor: 'internalId',
-      width: 100,
-      align: 'center',
-    },
+  const columns = [
     {
       id: 'position',
       header: '位置',
-      accessor: 'position',
       width: 80,
-      align: 'center',
-      sortable: true,
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => row.position,
     },
     {
       id: 'change',
-      header: 'REF>ALT',
-      accessor: (row) => `${row.ref}>${row.alt}`,
+      header: '变异',
       width: 80,
-      align: 'center',
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => `${row.ref}>${row.alt}`,
     },
     {
       id: 'gene',
       header: '基因',
-      accessor: 'gene',
       width: 100,
-      align: 'center',
-      sortable: true,
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => row.gene,
     },
     {
       id: 'heteroplasmy',
       header: '异质性',
-      accessor: (row) => `${(row.heteroplasmy * 100).toFixed(1)}%`,
-      width: 80,
-      align: 'center',
-      sortable: true,
+      width: 100,
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => {
+        if (row.minHeteroplasmy === row.maxHeteroplasmy) {
+          return `${(row.minHeteroplasmy * 100).toFixed(1)}%`;
+        }
+        return `${(row.minHeteroplasmy * 100).toFixed(1)}% - ${(row.maxHeteroplasmy * 100).toFixed(1)}%`;
+      },
     },
     {
       id: 'pathogenicity',
       header: '致病性',
-      accessor: (row) => {
+      width: 100,
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => {
         const config = MT_PATHOGENICITY_CONFIG[row.pathogenicity];
         return <Tag variant={config.variant} className="w-20 justify-center">{config.label}</Tag>;
       },
-      width: 100,
-      align: 'center',
-      sortable: true,
     },
     {
       id: 'associatedDisease',
       header: '关联疾病',
-      accessor: 'associatedDisease',
       width: 180,
-      align: 'center',
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => row.associatedDisease,
     },
     {
       id: 'haplogroup',
       header: '单倍群',
-      accessor: (row) => row.haplogroup || '-',
       width: 80,
-      align: 'center',
-    },
-    {
-      id: 'reviewedBy',
-      header: '审核人',
-      accessor: 'reviewedBy',
-      width: 80,
-      align: 'center',
-    },
-    {
-      id: 'reviewedAt',
-      header: '审核时间',
-      accessor: 'reviewedAt',
-      width: 140,
-      align: 'center',
-      sortable: true,
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => row.haplogroup || '-',
     },
     {
       id: 'detectionCount',
       header: '检出次数',
-      accessor: 'detectionCount',
       width: 80,
-      align: 'center',
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => (
+        <span className={row.detectionCount > 1 ? 'font-medium text-accent-fg' : ''}>
+          {row.detectionCount}
+        </span>
+      ),
+    },
+    {
+      id: 'firstDetectedAt',
+      header: '首次检出',
+      width: 120,
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => row.firstDetectedAt,
+    },
+    {
+      id: 'lastDetectedAt',
+      header: '最后检出',
+      width: 120,
+      align: 'center' as const,
+      accessor: (row: GroupedMTVariant) => row.lastDetectedAt,
     },
   ];
 
-  // 分页信息
-  const totalPages = result ? Math.ceil(result.total / result.pageSize) : 0;
-
   return (
-    <div>
-      {/* 工具栏 */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          {/* 搜索框 */}
-          <div className="w-64">
-            <Input
-              placeholder="搜索基因、疾病..."
-              value={filterState.searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              leftElement={<Search className="w-4 h-4" />}
-            />
-          </div>
-        </div>
-
-        {/* 统计信息 */}
-        <div className="flex items-center gap-4 text-sm text-fg-muted">
-          <span>共 {result?.total ?? 0} 条历史检出位点</span>
-        </div>
-      </div>
-
-      {/* 数据表格 */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-emphasis" />
-        </div>
-      ) : result && result.data.length > 0 ? (
-        <>
-          <DataTable
-            data={result.data}
-            columns={columns}
-            rowKey="historyId"
-            striped
-            density="compact"
-            sortColumn={filterState.sortColumn}
-            sortDirection={filterState.sortDirection}
-            onSortChange={handleSortChange}
-          />
-
-          {/* 分页 */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-fg-muted">
-                第 {filterState.page} / {totalPages} 页
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setFilterState({ ...filterState, page: filterState.page - 1 })}
-                  disabled={filterState.page <= 1}
-                  className="px-3 py-1 text-sm border border-border-default rounded hover:bg-canvas-subtle disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  上一页
-                </button>
-                <button
-                  onClick={() => setFilterState({ ...filterState, page: filterState.page + 1 })}
-                  disabled={filterState.page >= totalPages}
-                  className="px-3 py-1 text-sm border border-border-default rounded hover:bg-canvas-subtle disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  下一页
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center py-12 text-fg-muted">
-          暂无线粒体变异历史检出位点数据
-        </div>
-      )}
-    </div>
+    <ExpandableTable
+      data={result}
+      loading={loading}
+      filterState={filterState}
+      onSearch={(query) => setFilterState({ ...filterState, searchQuery: query, page: 1 })}
+      onPageChange={(page) => setFilterState({ ...filterState, page })}
+      searchPlaceholder="搜索基因、疾病..."
+      statsLabel="个线粒体变异"
+      columns={columns}
+      getGroupId={(row) => row.groupId}
+      getRecords={(row) => row.records}
+      emptyMessage="暂无线粒体变异历史检出位点数据"
+    />
   );
 }

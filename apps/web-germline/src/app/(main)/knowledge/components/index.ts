@@ -1,4 +1,5 @@
 export { KnowledgeTabs } from './KnowledgeTabs';
+export { ExpandableTable } from './ExpandableTable';
 export { SNVIndelHistoryTab } from './SNVIndelHistoryTab';
 export { CNVSegmentHistoryTab } from './CNVSegmentHistoryTab';
 export { CNVExonHistoryTab } from './CNVExonHistoryTab';

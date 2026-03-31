@@ -2,26 +2,6 @@
  * 知识中心 - 历史检出位点汇总类型定义
  */
 
-// ============ 来源信息接口 ============
-export interface VariantSourceInfo {
-  taskId: string;              // 任务UUID
-  taskName: string;            // 任务名称
-  pipeline: string;            // 流程名称
-  pipelineVersion: string;     // 流程版本
-  sampleId: string;            // 样本UUID
-  internalId: string;          // 内部编号
-  reviewedAt: string;          // 审核时间
-  reviewedBy: string;          // 审核人
-}
-
-// ============ 历史检出位点基础接口 ============
-export interface HistoryVariantBase extends VariantSourceInfo {
-  historyId: string;           // 历史记录唯一ID
-  firstDetectedAt: string;     // 首次检出时间
-  lastDetectedAt: string;      // 最后检出时间
-  detectionCount: number;      // 检出次数
-}
-
 // ============ ACMG分类 ============
 export type ACMGClassification =
   | 'Pathogenic'
@@ -30,8 +10,8 @@ export type ACMGClassification =
   | 'Likely_Benign'
   | 'Benign';
 
-// ============ SNV/Indel单次检出记录 ============
-export interface SNVIndelDetectionRecord {
+// ============ 通用检出记录 ============
+export interface DetectionRecord {
   recordId: string;              // 记录唯一ID
   taskId: string;                // 任务UUID
   taskName: string;              // 任务名称
@@ -43,26 +23,27 @@ export interface SNVIndelDetectionRecord {
   reviewedBy: string;            // 审核人
 }
 
-// ============ SNV/Indel分组位点（按基因-HGVSc-HGVSp去重） ============
+// ============ SNP/Indel分组位点 ============
 export interface GroupedSNVIndel {
-  groupId: string;               // 分组唯一ID（基因-HGVSc-HGVSp）
-  gene: string;                  // 基因名
-  hgvsc: string;                 // cDNA变化
-  hgvsp: string;                 // 蛋白质变化
-  transcript: string;            // 转录本
+  groupId: string;
+  gene: string;
+  hgvsc: string;
+  hgvsp: string;
+  transcript: string;
   acmgClassification: ACMGClassification;
-  consequence: string;           // 变异后果
-  rsId?: string;                 // dbSNP ID
-  clinvarId?: string;            // ClinVar ID
-  gnomadAF?: number;             // gnomAD 人群频率
-  detectionCount: number;        // 总检出次数
-  firstDetectedAt: string;       // 首次检出时间
-  lastDetectedAt: string;        // 最后检出时间
-  records: SNVIndelDetectionRecord[];  // 检出记录列表
+  consequence: string;
+  rsId?: string;
+  clinvarId?: string;
+  gnomadAF?: number;
+  detectionCount: number;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  records: DetectionRecord[];
 }
 
-// ============ CNV历史检出位点(片段级别) ============
-export interface HistoryCNVSegment extends HistoryVariantBase {
+// ============ CNV片段分组位点 ============
+export interface GroupedCNVSegment {
+  groupId: string;
   chromosome: string;
   startPosition: number;
   endPosition: number;
@@ -71,12 +52,17 @@ export interface HistoryCNVSegment extends HistoryVariantBase {
   copyNumber: number;
   genes: string[];
   confidence: number;
+  detectionCount: number;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  records: DetectionRecord[];
 }
 
-// ============ CNV历史检出位点(外显子级别) ============
-export interface HistoryCNVExon extends HistoryVariantBase {
+// ============ CNV外显子分组位点 ============
+export interface GroupedCNVExon {
+  groupId: string;
   gene: string;
-  transcript: string;            // 转录本
+  transcript: string;
   exon: string;
   chromosome: string;
   startPosition: number;
@@ -85,44 +71,52 @@ export interface HistoryCNVExon extends HistoryVariantBase {
   copyNumber: number;
   ratio: number;
   confidence: number;
+  detectionCount: number;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  records: DetectionRecord[];
 }
 
-// ============ 动态突变（STR）历史检出位点 ============
+// ============ STR分组位点 ============
 export type STRStatus = 'Normal' | 'Premutation' | 'FullMutation';
 
-export interface HistorySTR extends HistoryVariantBase {
+export interface GroupedSTR {
+  groupId: string;
   gene: string;
-  transcript: string;            // 转录本
-  locus: string;                 // 位点名称
-  repeatUnit: string;            // 重复单元
-  repeatCount: number;           // 重复次数
-  normalRangeMin: number;        // 正常范围下限
-  normalRangeMax: number;        // 正常范围上限
+  transcript: string;
+  locus: string;
+  repeatUnit: string;
+  normalRangeMin: number;
+  normalRangeMax: number;
   status: STRStatus;
+  minRepeatCount: number;        // 最小重复次数
+  maxRepeatCount: number;        // 最大重复次数
+  detectionCount: number;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  records: DetectionRecord[];
 }
 
-// ============ MEI (移动元件插入) 历史检出位点 ============
+// ============ MEI分组位点 ============
 export type MEIType = 'LINE1' | 'Alu' | 'SVA' | 'Unknown';
-export type MEIInsertionType = 'insertion' | 'deletion' | 'complex';
 
-export interface HistoryMEI extends HistoryVariantBase {
-  chromosome: string;            // 染色体
-  position: number;              // 插入位置
-  meiType: MEIType;              // MEI类型
-  insertionType: MEIInsertionType; // 插入类型
-  strand: '+' | '-';             // 链方向
-  length: number;                // 插入长度
-  gene: string;                  // 所在基因
-  transcript?: string;           // 转录本
-  impact?: string;               // 影响
-  zygosity: 'Heterozygous' | 'Homozygous' | 'Hemizygous';
-  supportingReads: number;       // 支持读数
-  totalReads: number;            // 总读数
-  frequency?: number;            // 人群频率
+export interface GroupedMEI {
+  groupId: string;
+  chromosome: string;
+  position: number;
+  gene: string;
+  meiType: MEIType;
+  strand: '+' | '-';
+  length: number;
+  impact?: string;
   acmgClassification?: ACMGClassification;
+  detectionCount: number;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  records: DetectionRecord[];
 }
 
-// ============ 线粒体变异历史检出位点 ============
+// ============ 线粒体变异分组位点 ============
 export type MitochondrialPathogenicity =
   | 'Pathogenic'
   | 'Likely_Pathogenic'
@@ -130,29 +124,40 @@ export type MitochondrialPathogenicity =
   | 'Likely_Benign'
   | 'Benign';
 
-export interface HistoryMTVariant extends HistoryVariantBase {
+export interface GroupedMTVariant {
+  groupId: string;
   position: number;
   ref: string;
   alt: string;
   gene: string;
-  heteroplasmy: number;          // 异质性比例 (0-1)
   pathogenicity: MitochondrialPathogenicity;
-  associatedDisease: string;     // 关联疾病
-  haplogroup?: string;           // 单倍群
+  associatedDisease: string;
+  haplogroup?: string;
+  minHeteroplasmy: number;       // 最小异质性
+  maxHeteroplasmy: number;       // 最大异质性
+  detectionCount: number;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  records: DetectionRecord[];
 }
 
-// ============ UPD区域历史检出位点 ============
+// ============ UPD分组位点 ============
 export type UPDType = 'Isodisomy' | 'Heterodisomy';
 export type ParentOfOrigin = 'Maternal' | 'Paternal' | 'Unknown';
 
-export interface HistoryUPDRegion extends HistoryVariantBase {
+export interface GroupedUPDRegion {
+  groupId: string;
   chromosome: string;
   startPosition: number;
   endPosition: number;
   length: number;
   type: UPDType;
-  genes: string[];               // 涉及基因
+  genes: string[];
   parentOfOrigin?: ParentOfOrigin;
+  detectionCount: number;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+  records: DetectionRecord[];
 }
 
 // ============ 标签页类型 ============
