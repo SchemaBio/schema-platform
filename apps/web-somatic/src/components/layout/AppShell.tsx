@@ -60,6 +60,7 @@ const pathLabelMap: Record<string, string> = {
   // 系统设置子页面
   permissions: '权限管理',
   ai: 'AI 设置',
+  storage: '管理员设置',
 };
 
 /**

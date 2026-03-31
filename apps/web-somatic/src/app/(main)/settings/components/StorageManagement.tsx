@@ -4,7 +4,6 @@ import * as React from 'react';
 import {
   Button,
   Input,
-  Select,
   FormItem,
   Modal,
   ModalHeader,
@@ -14,408 +13,397 @@ import {
   Tag,
   type Column,
 } from '@schema/ui-kit';
-import { Plus, Pencil, Trash2, HardDrive, Cloud, Server, TestTube2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, FolderOutput, FolderInput, Bot, Save, Eye, EyeOff, TestTube2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
-type StorageProtocol = 'webdav' | 's3' | 'smb';
-type StorageStatus = 'connected' | 'disconnected' | 'error';
-
-interface StorageSource {
+// 组织账户接口
+interface OrganizationAccount {
   id: string;
-  name: string;
-  protocol: StorageProtocol;
-  endpoint: string;
-  basePath: string;
-  username?: string;
-  status: StorageStatus;
+  username: string;
+  displayName: string;
+  role: 'admin' | 'analyst' | 'viewer';
   createdAt: string;
 }
 
-// Mock 数据
-const mockStorageSources: StorageSource[] = [
-  {
-    id: '1',
-    name: 'NAS 存储',
-    protocol: 'webdav',
-    endpoint: 'https://nas.example.com/webdav',
-    basePath: '/sequencing',
-    username: 'admin',
-    status: 'connected',
-    createdAt: '2024-12-01',
-  },
-  {
-    id: '2',
-    name: 'S3 数据桶',
-    protocol: 's3',
-    endpoint: 's3://genomics-data',
-    basePath: '/raw-data',
-    status: 'connected',
-    createdAt: '2024-12-10',
-  },
-  {
-    id: '3',
-    name: '共享文件夹',
-    protocol: 'smb',
-    endpoint: '//fileserver/genomics',
-    basePath: '/incoming',
-    username: 'bioinfo',
-    status: 'disconnected',
-    createdAt: '2024-12-15',
-  },
-];
-
-const protocolOptions = [
-  { value: 'webdav', label: 'WebDAV' },
-  { value: 's3', label: 'Amazon S3 / MinIO' },
-  { value: 'smb', label: 'SMB / CIFS (Windows 共享)' },
-];
-
-const protocolIcons: Record<StorageProtocol, React.ReactNode> = {
-  webdav: <HardDrive className="w-4 h-4" />,
-  s3: <Cloud className="w-4 h-4" />,
-  smb: <Server className="w-4 h-4" />,
-};
-
-const statusConfig: Record<StorageStatus, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
-  connected: { label: '已连接', variant: 'success' },
-  disconnected: { label: '未连接', variant: 'warning' },
-  error: { label: '错误', variant: 'danger' },
-};
-
-interface FormData {
-  name: string;
-  protocol: StorageProtocol;
-  endpoint: string;
-  basePath: string;
-  username: string;
-  password: string;
-  accessKey: string;
-  secretKey: string;
-  region: string;
+// 系统配置接口
+interface SystemConfig {
+  outputBasePath: string;
+  rawDataPath: string;
+  openaiApiEndpoint: string;
+  openaiApiKey: string;
+  openaiModel: string;
 }
 
-const initialFormData: FormData = {
-  name: '',
-  protocol: 'webdav',
-  endpoint: '',
-  basePath: '/',
-  username: '',
-  password: '',
-  accessKey: '',
-  secretKey: '',
-  region: '',
+// Mock 数据
+const mockAccounts: OrganizationAccount[] = [
+  { id: '1', username: 'admin', displayName: '管理员', role: 'admin', createdAt: '2024-01-01' },
+  { id: '2', username: 'analyst1', displayName: '分析师张三', role: 'analyst', createdAt: '2024-06-15' },
+  { id: '3', username: 'viewer1', displayName: '查看员李四', role: 'viewer', createdAt: '2024-08-20' },
+];
+
+const roleOptions = [
+  { value: 'admin', label: '管理员' },
+  { value: 'analyst', label: '分析师' },
+  { value: 'viewer', label: '查看员' },
+];
+
+const roleConfig: Record<OrganizationAccount['role'], { label: string; variant: 'success' | 'info' | 'neutral' }> = {
+  admin: { label: '管理员', variant: 'success' },
+  analyst: { label: '分析师', variant: 'info' },
+  viewer: { label: '查看员', variant: 'neutral' },
 };
 
-export function StorageManagement() {
-  const [sources, setSources] = React.useState<StorageSource[]>(mockStorageSources);
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [formData, setFormData] = React.useState<FormData>(initialFormData);
-  const [testing, setTesting] = React.useState(false);
-  const [testResult, setTestResult] = React.useState<'success' | 'error' | null>(null);
+export function AdminSettings() {
+  // 账户管理状态
+  const [accounts, setAccounts] = React.useState<OrganizationAccount[]>(mockAccounts);
+  const [isAccountModalOpen, setIsAccountModalOpen] = React.useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = React.useState(false);
+  const [editingAccount, setEditingAccount] = React.useState<OrganizationAccount | null>(null);
+  const [accountForm, setAccountForm] = React.useState({
+    username: '',
+    displayName: '',
+    role: 'analyst' as OrganizationAccount['role'],
+    password: '',
+  });
 
-  const handleAdd = () => {
-    setEditingId(null);
-    setFormData(initialFormData);
-    setTestResult(null);
-    setIsModalOpen(true);
+  // 系统配置状态
+  const [config, setConfig] = React.useState<SystemConfig>({
+    outputBasePath: '/data/results',
+    rawDataPath: '/data/raw',
+    openaiApiEndpoint: 'https://api.openai.com/v1',
+    openaiApiKey: '',
+    openaiModel: 'gpt-4',
+  });
+  const [showApiKey, setShowApiKey] = React.useState(false);
+  const [testingApi, setTestingApi] = React.useState(false);
+  const [apiTestResult, setApiTestResult] = React.useState<'success' | 'error' | null>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  // 账户操作
+  const handleAddAccount = () => {
+    setEditingAccount(null);
+    setAccountForm({ username: '', displayName: '', role: 'analyst', password: '' });
+    setIsAccountModalOpen(true);
   };
 
-  const handleEdit = (source: StorageSource) => {
-    setEditingId(source.id);
-    setFormData({
-      name: source.name,
-      protocol: source.protocol,
-      endpoint: source.endpoint,
-      basePath: source.basePath,
-      username: source.username || '',
+  const handleEditAccount = (account: OrganizationAccount) => {
+    setEditingAccount(account);
+    setAccountForm({
+      username: account.username,
+      displayName: account.displayName,
+      role: account.role,
       password: '',
-      accessKey: '',
-      secretKey: '',
-      region: '',
     });
-    setTestResult(null);
-    setIsModalOpen(true);
+    setIsAccountModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('确定要删除此存储源吗？')) {
-      setSources((prev) => prev.filter((s) => s.id !== id));
+  const handleDeleteAccount = (id: string) => {
+    if (confirm('确定要删除此账户吗？')) {
+      setAccounts(prev => prev.filter(a => a.id !== id));
     }
   };
 
-  const handleTestConnection = async () => {
-    setTesting(true);
-    setTestResult(null);
-    // 模拟测试连接
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setTestResult(Math.random() > 0.3 ? 'success' : 'error');
-    setTesting(false);
-  };
+  const handleSubmitAccount = () => {
+    if (!accountForm.username || !accountForm.displayName) return;
 
-  const handleSubmit = () => {
-    if (!formData.name || !formData.endpoint) return;
-
-    if (editingId) {
-      setSources((prev) =>
-        prev.map((s) =>
-          s.id === editingId
-            ? {
-                ...s,
-                name: formData.name,
-                protocol: formData.protocol,
-                endpoint: formData.endpoint,
-                basePath: formData.basePath,
-                username: formData.username || undefined,
-              }
-            : s
-        )
-      );
+    if (editingAccount) {
+      setAccounts(prev => prev.map(a =>
+        a.id === editingAccount.id
+          ? { ...a, username: accountForm.username, displayName: accountForm.displayName, role: accountForm.role }
+          : a
+      ));
     } else {
-      const newSource: StorageSource = {
+      const newAccount: OrganizationAccount = {
         id: String(Date.now()),
-        name: formData.name,
-        protocol: formData.protocol,
-        endpoint: formData.endpoint,
-        basePath: formData.basePath,
-        username: formData.username || undefined,
-        status: 'disconnected',
+        username: accountForm.username,
+        displayName: accountForm.displayName,
+        role: accountForm.role,
         createdAt: new Date().toISOString().slice(0, 10),
       };
-      setSources((prev) => [...prev, newSource]);
+      setAccounts(prev => [...prev, newAccount]);
     }
-
-    setIsModalOpen(false);
+    setIsAccountModalOpen(false);
   };
 
-  const columns: Column<StorageSource>[] = [
+  const handleChangePassword = (account: OrganizationAccount) => {
+    setEditingAccount(account);
+    setAccountForm(prev => ({ ...prev, password: '' }));
+    setIsPasswordModalOpen(true);
+  };
+
+  const handleSubmitPassword = () => {
+    if (!accountForm.password || accountForm.password.length < 6) {
+      alert('密码长度至少6位');
+      return;
+    }
+    // 模拟修改密码
+    alert(`${editingAccount?.username} 的密码已修改`);
+    setIsPasswordModalOpen(false);
+    setAccountForm(prev => ({ ...prev, password: '' }));
+  };
+
+  // OpenAI API 测试
+  const handleTestApi = async () => {
+    if (!config.openaiApiEndpoint) return;
+    setTestingApi(true);
+    setApiTestResult(null);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setApiTestResult(Math.random() > 0.3 ? 'success' : 'error');
+    setTestingApi(false);
+  };
+
+  // 保存配置
+  const handleSaveConfig = async () => {
+    setSaving(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setSaving(false);
+    alert('配置已保存');
+  };
+
+  const accountColumns: Column<OrganizationAccount>[] = [
+    { id: 'username', header: '用户名', accessor: 'username', width: 120, align: 'center' },
+    { id: 'displayName', header: '显示名称', accessor: 'displayName', width: 150, align: 'center' },
     {
-      id: 'name',
-      header: '名称',
-      accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <span className="text-fg-muted">{protocolIcons[row.protocol]}</span>
-          <span className="font-medium text-fg-default">{row.name}</span>
-        </div>
-      ),
-      width: 180,
-    },
-    {
-      id: 'protocol',
-      header: '协议',
-      accessor: (row) => protocolOptions.find((p) => p.value === row.protocol)?.label || row.protocol,
-      width: 120,
-    },
-    {
-      id: 'endpoint',
-      header: '连接地址',
-      accessor: (row) => (
-        <span className="font-mono text-sm text-fg-muted">{row.endpoint}</span>
-      ),
-      width: 250,
-    },
-    {
-      id: 'basePath',
-      header: '基础路径',
-      accessor: (row) => (
-        <span className="font-mono text-sm text-fg-muted">{row.basePath}</span>
-      ),
-      width: 120,
-    },
-    {
-      id: 'status',
-      header: '状态',
+      id: 'role',
+      header: '角色',
       accessor: (row) => {
-        const config = statusConfig[row.status];
-        return <Tag variant={config.variant}>{config.label}</Tag>;
+        const cfg = roleConfig[row.role];
+        return <Tag variant={cfg.variant}>{cfg.label}</Tag>;
       },
       width: 100,
+      align: 'center',
     },
+    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 120, align: 'center' },
     {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="small"
-            iconOnly
-            aria-label="编辑"
-            onClick={() => handleEdit(row)}
+        <div className="flex items-center justify-center gap-1">
+          <button
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
+            title="编辑"
+            onClick={() => handleEditAccount(row)}
           >
             <Pencil className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="small"
-            iconOnly
-            aria-label="删除"
-            onClick={() => handleDelete(row.id)}
+          </button>
+          <button
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors"
+            title="修改密码"
+            onClick={() => handleChangePassword(row)}
           >
-            <Trash2 className="w-4 h-4 text-danger-fg" />
-          </Button>
+            <Users className="w-4 h-4" />
+          </button>
+          <button
+            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
+            title="删除"
+            onClick={() => handleDeleteAccount(row.id)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
-      width: 100,
+      width: 120,
+      align: 'center',
     },
   ];
 
-  // 根据协议显示不同的认证字段
-  const renderAuthFields = () => {
-    if (formData.protocol === 's3') {
-      return (
-        <>
-          <FormItem label="Access Key">
-            <Input
-              value={formData.accessKey}
-              onChange={(e) => setFormData((prev) => ({ ...prev, accessKey: e.target.value }))}
-              placeholder="AWS Access Key ID"
-            />
-          </FormItem>
-          <FormItem label="Secret Key">
-            <Input
-              type="password"
-              value={formData.secretKey}
-              onChange={(e) => setFormData((prev) => ({ ...prev, secretKey: e.target.value }))}
-              placeholder="AWS Secret Access Key"
-            />
-          </FormItem>
-          <FormItem label="Region">
-            <Input
-              value={formData.region}
-              onChange={(e) => setFormData((prev) => ({ ...prev, region: e.target.value }))}
-              placeholder="如 us-east-1（可选）"
-            />
-          </FormItem>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <FormItem label="用户名">
-          <Input
-            value={formData.username}
-            onChange={(e) => setFormData((prev) => ({ ...prev, username: e.target.value }))}
-            placeholder="连接用户名（可选）"
-          />
-        </FormItem>
-        <FormItem label="密码">
-          <Input
-            type="password"
-            value={formData.password}
-            onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-            placeholder="连接密码（可选）"
-          />
-        </FormItem>
-      </>
-    );
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-fg-muted">
-          配置数据存储源，用于在数据管理中浏览和导入测序数据文件。
-        </p>
-        <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={handleAdd}>
-          添加存储源
+    <div className="space-y-8">
+      {/* 组织账户管理 */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-base font-medium text-fg-default flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              组织账户管理
+            </h3>
+            <p className="text-sm text-fg-muted mt-1">管理组织内的用户账户和权限</p>
+          </div>
+          <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={handleAddAccount}>
+            添加账户
+          </Button>
+        </div>
+        <DataTable data={accounts} columns={accountColumns} rowKey="id" density="default" striped />
+      </section>
+
+      {/* 路径配置 */}
+      <section>
+        <h3 className="text-base font-medium text-fg-default flex items-center gap-2 mb-4">
+          <FolderOutput className="w-5 h-5" />
+          路径配置
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+          <FormItem
+            label="结果输出主路径"
+            hint="分析结果文件的存储根目录"
+          >
+            <Input
+              value={config.outputBasePath}
+              onChange={(e) => setConfig(prev => ({ ...prev, outputBasePath: e.target.value }))}
+              placeholder="/data/results"
+              leftElement={<FolderOutput className="w-4 h-4" />}
+            />
+          </FormItem>
+          <FormItem
+            label="原始数据路径"
+            hint="测序原始数据的存储目录"
+          >
+            <Input
+              value={config.rawDataPath}
+              onChange={(e) => setConfig(prev => ({ ...prev, rawDataPath: e.target.value }))}
+              placeholder="/data/raw"
+              leftElement={<FolderInput className="w-4 h-4" />}
+            />
+          </FormItem>
+        </div>
+      </section>
+
+      {/* AI 配置 */}
+      <section>
+        <h3 className="text-base font-medium text-fg-default flex items-center gap-2 mb-4">
+          <Bot className="w-5 h-5" />
+          OpenAI 兼容 API 配置
+        </h3>
+        <div className="space-y-4 max-w-2xl">
+          <FormItem
+            label="API 端点"
+            hint="OpenAI 兼容的 API 服务地址"
+          >
+            <Input
+              value={config.openaiApiEndpoint}
+              onChange={(e) => setConfig(prev => ({ ...prev, openaiApiEndpoint: e.target.value }))}
+              placeholder="https://api.openai.com/v1"
+            />
+          </FormItem>
+          <FormItem
+            label="API Key"
+            hint="用于认证的 API 密钥"
+          >
+            <div className="relative">
+              <Input
+                type={showApiKey ? 'text' : 'password'}
+                value={config.openaiApiKey}
+                onChange={(e) => setConfig(prev => ({ ...prev, openaiApiKey: e.target.value }))}
+                placeholder="sk-..."
+              />
+              <button
+                type="button"
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg-default"
+              >
+                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </FormItem>
+          <FormItem
+            label="模型名称"
+            hint="要使用的模型标识符"
+          >
+            <Input
+              value={config.openaiModel}
+              onChange={(e) => setConfig(prev => ({ ...prev, openaiModel: e.target.value }))}
+              placeholder="gpt-4"
+            />
+          </FormItem>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              size="small"
+              leftIcon={testingApi ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube2 className="w-4 h-4" />}
+              onClick={handleTestApi}
+              disabled={testingApi || !config.openaiApiEndpoint}
+            >
+              {testingApi ? '测试中...' : '测试连接'}
+            </Button>
+            {apiTestResult === 'success' && (
+              <span className="flex items-center gap-1 text-sm text-success-fg">
+                <CheckCircle className="w-4 h-4" />
+                连接成功
+              </span>
+            )}
+            {apiTestResult === 'error' && (
+              <span className="flex items-center gap-1 text-sm text-danger-fg">
+                <XCircle className="w-4 h-4" />
+                连接失败
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 保存按钮 */}
+      <div className="pt-4 border-t border-border">
+        <Button
+          variant="primary"
+          leftIcon={<Save className="w-4 h-4" />}
+          onClick={handleSaveConfig}
+          loading={saving}
+        >
+          保存配置
         </Button>
       </div>
 
-      <DataTable data={sources} columns={columns} rowKey="id" density="default" />
-
-      {/* 添加/编辑弹窗 */}
-      <Modal open={isModalOpen} onOpenChange={setIsModalOpen} size="medium">
-        <ModalHeader>{editingId ? '编辑存储源' : '添加存储源'}</ModalHeader>
+      {/* 添加/编辑账户弹窗 */}
+      <Modal open={isAccountModalOpen} onOpenChange={setIsAccountModalOpen} size="small">
+        <ModalHeader>{editingAccount ? '编辑账户' : '添加账户'}</ModalHeader>
         <ModalBody>
           <div className="space-y-4">
-            <FormItem label="名称" required>
+            <FormItem label="用户名" required>
               <Input
-                value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="存储源显示名称"
+                value={accountForm.username}
+                onChange={(e) => setAccountForm(prev => ({ ...prev, username: e.target.value }))}
+                placeholder="登录用户名"
               />
             </FormItem>
-
-            <FormItem label="协议类型" required>
-              <Select
-                value={formData.protocol}
-                onChange={(value) => {
-                  if (typeof value === 'string') {
-                    setFormData((prev) => ({ ...prev, protocol: value as StorageProtocol }));
-                  }
-                }}
-                options={protocolOptions}
-              />
-            </FormItem>
-
-            <FormItem
-              label="连接地址"
-              required
-              hint={
-                formData.protocol === 'webdav'
-                  ? '如 https://nas.example.com/webdav'
-                  : formData.protocol === 's3'
-                  ? '如 s3://bucket-name 或 https://minio.example.com'
-                  : '如 //server/share'
-              }
-            >
+            <FormItem label="显示名称" required>
               <Input
-                value={formData.endpoint}
-                onChange={(e) => setFormData((prev) => ({ ...prev, endpoint: e.target.value }))}
-                placeholder="输入连接地址"
+                value={accountForm.displayName}
+                onChange={(e) => setAccountForm(prev => ({ ...prev, displayName: e.target.value }))}
+                placeholder="用户显示名称"
               />
             </FormItem>
-
-            <FormItem label="基础路径" hint="浏览时的起始目录">
-              <Input
-                value={formData.basePath}
-                onChange={(e) => setFormData((prev) => ({ ...prev, basePath: e.target.value }))}
-                placeholder="/"
-              />
-            </FormItem>
-
-            <div className="border-t border-border-default pt-4">
-              <h4 className="text-sm font-medium text-fg-default mb-3">认证信息</h4>
-              {renderAuthFields()}
-            </div>
-
-            {/* 测试连接 */}
-            <div className="flex items-center gap-3 pt-2">
-              <Button
-                variant="secondary"
-                size="small"
-                leftIcon={testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube2 className="w-4 h-4" />}
-                onClick={handleTestConnection}
-                disabled={testing || !formData.endpoint}
+            <FormItem label="角色" required>
+              <select
+                value={accountForm.role}
+                onChange={(e) => setAccountForm(prev => ({ ...prev, role: e.target.value as OrganizationAccount['role'] }))}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-fg-default focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {testing ? '测试中...' : '测试连接'}
-              </Button>
-              {testResult === 'success' && (
-                <span className="flex items-center gap-1 text-sm text-success-fg">
-                  <CheckCircle className="w-4 h-4" />
-                  连接成功
-                </span>
-              )}
-              {testResult === 'error' && (
-                <span className="flex items-center gap-1 text-sm text-danger-fg">
-                  <XCircle className="w-4 h-4" />
-                  连接失败
-                </span>
-              )}
-            </div>
+                {roleOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </FormItem>
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-            取消
+          <Button variant="secondary" onClick={() => setIsAccountModalOpen(false)}>取消</Button>
+          <Button variant="primary" onClick={handleSubmitAccount} disabled={!accountForm.username || !accountForm.displayName}>
+            {editingAccount ? '保存' : '添加'}
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={!formData.name || !formData.endpoint}
-          >
-            {editingId ? '保存' : '添加'}
+        </ModalFooter>
+      </Modal>
+
+      {/* 修改密码弹窗 */}
+      <Modal open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen} size="small">
+        <ModalHeader>修改密码</ModalHeader>
+        <ModalBody>
+          <div className="space-y-4">
+            <p className="text-sm text-fg-muted">
+              为用户 <span className="font-medium text-fg-default">{editingAccount?.displayName}</span> 设置新密码
+            </p>
+            <FormItem label="新密码" required>
+              <Input
+                type="password"
+                value={accountForm.password}
+                onChange={(e) => setAccountForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="请输入新密码（至少6位）"
+              />
+            </FormItem>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setIsPasswordModalOpen(false)}>取消</Button>
+          <Button variant="primary" onClick={handleSubmitPassword} disabled={accountForm.password.length < 6}>
+            确认修改
           </Button>
         </ModalFooter>
       </Modal>

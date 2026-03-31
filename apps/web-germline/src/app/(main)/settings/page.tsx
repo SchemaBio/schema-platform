@@ -8,9 +8,7 @@ const mockCurrentUser = {
   id: '1',
   name: '张三',
   email: 'zhangsan@example.com',
-  phone: '138****1234',
   role: 'admin' as const,
-  avatar: '',
 };
 
 export default function SettingsProfilePage() {

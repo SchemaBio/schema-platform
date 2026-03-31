@@ -24,7 +24,7 @@ export default function StorageSettingsPage() {
 
   return (
     <PageContent>
-      <h2 className="text-lg font-medium text-fg-default mb-4">存储管理</h2>
+      <h2 className="text-lg font-medium text-fg-default mb-4">管理员设置</h2>
       <StorageManagement />
     </PageContent>
   );
