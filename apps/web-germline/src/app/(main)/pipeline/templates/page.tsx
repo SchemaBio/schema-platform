@@ -17,7 +17,7 @@ import {
 } from '@schema/ui-kit';
 import { Plus, Search, Pencil, Trash2, FileText, Link, TestTube2, CheckCircle, XCircle, Loader2, Eye, EyeOff, AlertTriangle, Power, PowerOff } from 'lucide-react';
 
-type TemplateStatus = 'active' | 'draft' | 'archived';
+type TemplateStatus = 'active' | 'inactive';
 
 interface ReportTemplate {
   id: string;
@@ -40,8 +40,8 @@ const mockTemplates: ReportTemplate[] = [
     apiToken: 'sk-xxxx****xxxx',
     status: 'active',
     createdBy: '张三',
-    createdAt: '2024-06-15',
-    updatedAt: '2024-12-01',
+    createdAt: '2024-06-15 10:30:00',
+    updatedAt: '2024-12-01 14:25:36',
   },
   {
     id: 'TPL002',
@@ -50,8 +50,8 @@ const mockTemplates: ReportTemplate[] = [
     apiEndpoint: 'https://api.example.com/reports/panel/cardio',
     status: 'active',
     createdBy: '李四',
-    createdAt: '2024-08-20',
-    updatedAt: '2024-11-15',
+    createdAt: '2024-08-20 09:15:22',
+    updatedAt: '2024-11-15 16:40:18',
   },
   {
     id: 'TPL003',
@@ -61,25 +61,24 @@ const mockTemplates: ReportTemplate[] = [
     apiToken: 'token-yyyy****yyyy',
     status: 'active',
     createdBy: '王五',
-    createdAt: '2024-10-01',
-    updatedAt: '2024-10-01',
+    createdAt: '2024-10-01 11:20:45',
+    updatedAt: '2024-10-01 11:20:45',
   },
   {
     id: 'TPL004',
     name: 'wgs-full-report',
     description: '全基因组测序报告（开发中）',
     apiEndpoint: 'https://api.example.com/reports/wgs',
-    status: 'draft',
+    status: 'inactive',
     createdBy: '张三',
-    createdAt: '2024-12-10',
-    updatedAt: '2024-12-10',
+    createdAt: '2024-12-10 08:05:30',
+    updatedAt: '2024-12-10 08:05:30',
   },
 ];
 
-const statusConfig: Record<TemplateStatus, { label: string; variant: 'success' | 'warning' | 'neutral' }> = {
+const statusConfig: Record<TemplateStatus, { label: string; variant: 'success' | 'neutral' }> = {
   active: { label: '启用', variant: 'success' },
-  draft: { label: '草稿', variant: 'warning' },
-  archived: { label: '归档', variant: 'neutral' },
+  inactive: { label: '停用', variant: 'neutral' },
 };
 
 interface FormData {
@@ -172,11 +171,11 @@ export default function ReportTemplatesPage() {
   };
 
   const handleToggleStatus = (template: ReportTemplate) => {
-    const newStatus: TemplateStatus = template.status === 'active' ? 'archived' : 'active';
+    const newStatus: TemplateStatus = template.status === 'active' ? 'inactive' : 'active';
     setTemplates((prev) =>
       prev.map((t) =>
         t.id === template.id
-          ? { ...t, status: newStatus, updatedAt: new Date().toISOString().slice(0, 10) }
+          ? { ...t, status: newStatus, updatedAt: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\//g, '-') }
           : t
       )
     );
@@ -214,7 +213,7 @@ export default function ReportTemplatesPage() {
                 description: formData.description,
                 apiEndpoint: formData.apiEndpoint,
                 apiToken: formData.apiToken || undefined,
-                updatedAt: new Date().toISOString().slice(0, 10),
+                updatedAt: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\//g, '-'),
               }
             : t
         )
@@ -226,10 +225,10 @@ export default function ReportTemplatesPage() {
         description: formData.description,
         apiEndpoint: formData.apiEndpoint,
         apiToken: formData.apiToken || undefined,
-        status: 'draft',
+        status: 'inactive',
         createdBy: '当前用户',
-        createdAt: new Date().toISOString().slice(0, 10),
-        updatedAt: new Date().toISOString().slice(0, 10),
+        createdAt: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\//g, '-'),
+        updatedAt: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\//g, '-'),
       };
       setTemplates((prev) => [newTemplate, ...prev]);
     }
@@ -284,7 +283,7 @@ export default function ReportTemplatesPage() {
       id: 'updatedAt',
       header: '更新时间',
       accessor: 'updatedAt',
-      width: 100,
+      width: 160,
       align: 'center',
     },
     {
@@ -450,7 +449,7 @@ export default function ReportTemplatesPage() {
               <ul className="list-disc list-inside space-y-1">
                 <li>模板名称必须唯一，用于系统内部标识</li>
                 <li>API 端点需要实现报告生成接口规范</li>
-                <li>新建模板默认为草稿状态，测试通过后可启用</li>
+                <li>新建模板默认为停用状态，测试通过后可启用</li>
               </ul>
             </div>
           </div>

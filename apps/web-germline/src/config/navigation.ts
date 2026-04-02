@@ -28,6 +28,7 @@ import {
   TestTube,
   Beaker,
   ListTodo,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -51,6 +52,7 @@ export interface SidebarNavConfig {
   tasks: SidebarNavItem[];
   pipeline: SidebarNavItem[];
   history: SidebarNavItem[];
+  admin: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
@@ -64,6 +66,7 @@ export const mainNavItems: NavItem[] = [
   { label: '任务中心', href: '/tasks', icon: ListTodo },
   { label: '历史检出', href: '/history', icon: History },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
+  { label: '管理中心', href: '/admin', icon: ShieldCheck },
 ];
 
 /**
@@ -89,12 +92,13 @@ export const sidebarNavConfig: SidebarNavConfig = {
   ],
   // 历史检出 - 检出位点统计
   history: [],
+  // 管理中心 - 管理员操作
+  admin: [],
   // 系统设置
   settings: [
     { label: '个人设置', href: '/settings', icon: User },
     { label: 'AI 设置', href: '/settings/ai', icon: Bot },
     { label: '权限管理', href: '/settings/permissions', icon: Shield },
-    { label: '管理员设置', href: '/settings/storage', icon: HardDrive },
   ],
 };
 

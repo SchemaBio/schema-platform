@@ -1,4 +1,3 @@
 export { ProfileSettings } from './ProfileSettings';
-export { PermissionsManagement, PERMISSIONS } from './PermissionsManagement';
-export type { PermissionId } from './PermissionsManagement';
-export { StorageManagement } from './StorageManagement';
+export { PermissionsManagement, ROLES, ASSIGNABLE_PERMISSIONS } from './PermissionsManagement';
+export type { RoleId, AssignablePermissionId } from './PermissionsManagement';

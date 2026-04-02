@@ -5,430 +5,148 @@ import { Button, Input, Select, FormItem, Modal, ModalHeader, ModalBody, ModalFo
 import type { Column } from '@schema/ui-kit';
 import { Plus, Pencil, Trash2, Search, Users, Shield } from 'lucide-react';
 
-// 页面/功能权限定义
-export const PERMISSIONS = [
-  { id: 'samples_view', name: '样本管理-查看', module: '样本管理' },
-  { id: 'samples_create', name: '样本管理-新建', module: '样本管理' },
-  { id: 'samples_edit', name: '样本管理-编辑', module: '样本管理' },
-  { id: 'samples_delete', name: '样本管理-删除', module: '样本管理' },
-  { id: 'data_view', name: '数据管理-查看', module: '数据管理' },
-  { id: 'data_import', name: '数据管理-导入', module: '数据管理' },
-  { id: 'data_export', name: '数据管理-导出', module: '数据管理' },
-  { id: 'data_delete', name: '数据管理-删除', module: '数据管理' },
-  { id: 'analysis_view', name: '分析中心-查看', module: '分析中心' },
-  { id: 'analysis_create', name: '分析中心-新建任务', module: '分析中心' },
-  { id: 'analysis_interpret', name: '分析中心-变异解读', module: '分析中心' },
-  { id: 'analysis_report', name: '分析中心-生成报告', module: '分析中心' },
-  { id: 'analysis_review', name: '分析中心-报告审核', module: '分析中心' },
-  { id: 'settings_view', name: '系统设置-查看', module: '系统设置' },
-  { id: 'settings_permissions', name: '系统设置-权限管理', module: '系统设置' },
+// 角色定义
+export const ROLES = [
+  { id: 'admin', name: '管理员', description: '拥有所有权限，可管理用户和系统配置' },
+  { id: 'interpreter', name: '解读工程师', description: '可对任务结果进行调整和审核' },
+  { id: 'bioinformatics', name: '生信工程师', description: '可对流程中心中的配置进行修改' },
 ] as const;
 
-export type PermissionId = typeof PERMISSIONS[number]['id'];
+export type RoleId = typeof ROLES[number]['id'];
 
-// 分组接口
-interface Group {
-  id: string;
-  name: string;
-  description: string;
-  permissions: PermissionId[];
-  createdAt: string;
-  isSystem?: boolean; // 系统预设分组不可删除
-}
+// 按需分配的权限（可单独授予给用户）
+export const ASSIGNABLE_PERMISSIONS = [
+  { id: 'task_submit', name: '任务投递', category: '任务操作' },
+  { id: 'data_upload', name: '数据上传', category: '数据操作' },
+  { id: 'data_download', name: '数据下载', category: '数据操作' },
+  { id: 'report_generate', name: '生成报告', category: '报告操作' },
+] as const;
+
+export type AssignablePermissionId = typeof ASSIGNABLE_PERMISSIONS[number]['id'];
 
 // 用户接口
 interface User {
   id: string;
   name: string;
   email: string;
-  groupId: string;
+  role: RoleId;
+  additionalPermissions: AssignablePermissionId[]; // 按需分配的额外权限
   createdAt: string;
   status: 'active' | 'inactive';
 }
 
-// 预设分组
-const defaultGroups: Group[] = [
-  {
-    id: 'admin',
-    name: '管理员',
-    description: '拥有所有权限',
-    permissions: PERMISSIONS.map(p => p.id),
-    createdAt: '2024-01-01',
-    isSystem: true,
-  },
-  {
-    id: 'lab_technician',
-    name: '实验员',
-    description: '负责样本管理',
-    permissions: ['samples_view', 'samples_create', 'samples_edit', 'data_view'],
-    createdAt: '2024-01-01',
-    isSystem: true,
-  },
-  {
-    id: 'bioinformatics',
-    name: '生信工程师',
-    description: '负责数据处理和分析',
-    permissions: ['samples_view', 'data_view', 'data_import', 'data_export', 'analysis_view', 'analysis_create'],
-    createdAt: '2024-01-01',
-    isSystem: true,
-  },
-  {
-    id: 'interpreter',
-    name: '解读工程师',
-    description: '负责变异解读',
-    permissions: ['samples_view', 'data_view', 'analysis_view', 'analysis_interpret', 'analysis_report'],
-    createdAt: '2024-01-01',
-    isSystem: true,
-  },
-  {
-    id: 'reviewer',
-    name: '报告审核',
-    description: '负责报告审核',
-    permissions: ['samples_view', 'data_view', 'analysis_view', 'analysis_review'],
-    createdAt: '2024-01-01',
-    isSystem: true,
-  },
-];
+// 角色权限说明
+const rolePermissionDescriptions: Record<RoleId, string[]> = {
+  admin: [
+    '所有页面的完整访问权限',
+    '用户管理：创建、编辑、删除用户',
+    '系统设置：所有配置项的修改权限',
+    '流程中心：所有配置的修改权限',
+    '任务结果：调整和审核权限',
+    '所有按需分配权限默认开启',
+  ],
+  interpreter: [
+    '所有页面的查看权限',
+    '任务结果：可进行调整和审核',
+    '报告：可生成和审核报告',
+    '流程中心：仅查看，不可修改',
+  ],
+  bioinformatics: [
+    '所有页面的查看权限',
+    '流程中心：可修改配置',
+    '任务结果：仅查看，不可调整和审核',
+    '任务投递权限默认开启',
+  ],
+};
 
 // 模拟用户数据
 const mockUsers: User[] = [
-  { id: '1', name: '张三', email: 'zhangsan@example.com', groupId: 'admin', createdAt: '2024-01-01', status: 'active' },
-  { id: '2', name: '李四', email: 'lisi@example.com', groupId: 'lab_technician', createdAt: '2024-02-15', status: 'active' },
-  { id: '3', name: '王五', email: 'wangwu@example.com', groupId: 'bioinformatics', createdAt: '2024-03-20', status: 'active' },
-  { id: '4', name: '赵六', email: 'zhaoliu@example.com', groupId: 'interpreter', createdAt: '2024-04-10', status: 'inactive' },
-  { id: '5', name: '钱七', email: 'qianqi@example.com', groupId: 'reviewer', createdAt: '2024-05-05', status: 'active' },
+  {
+    id: '1',
+    name: '张三',
+    email: 'zhangsan@example.com',
+    role: 'admin',
+    additionalPermissions: [],
+    createdAt: '2024-01-01 09:00:00',
+    status: 'active',
+  },
+  {
+    id: '2',
+    name: '李四',
+    email: 'lisi@example.com',
+    role: 'interpreter',
+    additionalPermissions: ['task_submit', 'data_upload'],
+    createdAt: '2024-02-15 10:30:00',
+    status: 'active',
+  },
+  {
+    id: '3',
+    name: '王五',
+    email: 'wangwu@example.com',
+    role: 'bioinformatics',
+    additionalPermissions: ['data_upload', 'data_download'],
+    createdAt: '2024-03-20 14:15:00',
+    status: 'active',
+  },
+  {
+    id: '4',
+    name: '赵六',
+    email: 'zhaoliu@example.com',
+    role: 'interpreter',
+    additionalPermissions: [],
+    createdAt: '2024-04-10 08:45:00',
+    status: 'inactive',
+  },
+  {
+    id: '5',
+    name: '钱七',
+    email: 'qianqi@example.com',
+    role: 'bioinformatics',
+    additionalPermissions: ['report_generate'],
+    createdAt: '2024-05-05 16:20:00',
+    status: 'active',
+  },
 ];
 
-type TabType = 'groups' | 'users';
-
 export function PermissionsManagement() {
-  const [activeTab, setActiveTab] = React.useState<TabType>('groups');
-  const [groups, setGroups] = React.useState<Group[]>(defaultGroups);
   const [users, setUsers] = React.useState<User[]>(mockUsers);
 
   return (
-    <div className="space-y-4">
-      {/* Tab 切换 */}
-      <div className="flex border-b border-border">
-        <button
-          onClick={() => setActiveTab('groups')}
-          className={`
-            flex items-center gap-2 px-4 py-2 text-sm font-medium
-            border-b-2 -mb-px transition-colors
-            ${activeTab === 'groups'
-              ? 'border-accent-emphasis text-accent-fg'
-              : 'border-transparent text-fg-muted hover:text-fg-default'
-            }
-          `}
-        >
-          <Shield className="w-4 h-4" />
-          分组管理
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`
-            flex items-center gap-2 px-4 py-2 text-sm font-medium
-            border-b-2 -mb-px transition-colors
-            ${activeTab === 'users'
-              ? 'border-accent-emphasis text-accent-fg'
-              : 'border-transparent text-fg-muted hover:text-fg-default'
-            }
-          `}
-        >
-          <Users className="w-4 h-4" />
-          用户管理
-        </button>
-      </div>
-
-      {activeTab === 'groups' && (
-        <GroupManagement groups={groups} setGroups={setGroups} />
-      )}
-      {activeTab === 'users' && (
-        <UserManagement users={users} setUsers={setUsers} groups={groups} />
-      )}
-    </div>
-  );
-}
-
-// 分组管理组件
-interface GroupManagementProps {
-  groups: Group[];
-  setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
-}
-
-function GroupManagement({ groups, setGroups }: GroupManagementProps) {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
-  const [editingGroup, setEditingGroup] = React.useState<Group | null>(null);
-  const [groupToDelete, setGroupToDelete] = React.useState<Group | null>(null);
-  const [groupForm, setGroupForm] = React.useState({
-    name: '',
-    description: '',
-    permissions: [] as PermissionId[],
-  });
-
-  const handleAddGroup = () => {
-    setEditingGroup(null);
-    setGroupForm({ name: '', description: '', permissions: [] });
-    setIsModalOpen(true);
-  };
-
-  const handleEditGroup = (group: Group) => {
-    setEditingGroup(group);
-    setGroupForm({
-      name: group.name,
-      description: group.description,
-      permissions: [...group.permissions],
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteClick = (group: Group) => {
-    setGroupToDelete(group);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleSaveGroup = () => {
-    if (!groupForm.name) {
-      alert('请填写分组名称');
-      return;
-    }
-
-    if (editingGroup) {
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.id === editingGroup.id
-            ? { ...g, name: groupForm.name, description: groupForm.description, permissions: groupForm.permissions }
-            : g
-        )
-      );
-    } else {
-      const newGroup: Group = {
-        id: String(Date.now()),
-        name: groupForm.name,
-        description: groupForm.description,
-        permissions: groupForm.permissions,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setGroups((prev) => [...prev, newGroup]);
-    }
-    setIsModalOpen(false);
-  };
-
-  const handleDeleteGroup = () => {
-    if (groupToDelete) {
-      setGroups((prev) => prev.filter((g) => g.id !== groupToDelete.id));
-      setIsDeleteModalOpen(false);
-      setGroupToDelete(null);
-    }
-  };
-
-  const handlePermissionToggle = (permissionId: PermissionId) => {
-    setGroupForm((prev) => ({
-      ...prev,
-      permissions: prev.permissions.includes(permissionId)
-        ? prev.permissions.filter((p) => p !== permissionId)
-        : [...prev.permissions, permissionId],
-    }));
-  };
-
-  const handleModuleToggle = (module: string) => {
-    const modulePermissions = PERMISSIONS.filter((p) => p.module === module).map((p) => p.id);
-    const allSelected = modulePermissions.every((p) => groupForm.permissions.includes(p));
-
-    setGroupForm((prev) => ({
-      ...prev,
-      permissions: allSelected
-        ? prev.permissions.filter((p) => !modulePermissions.includes(p))
-        : Array.from(new Set([...prev.permissions, ...modulePermissions])),
-    }));
-  };
-
-  // 按模块分组权限
-  const permissionsByModule = React.useMemo(() => {
-    const modules: Record<string, typeof PERMISSIONS[number][]> = {};
-    PERMISSIONS.forEach((p) => {
-      if (!modules[p.module]) modules[p.module] = [];
-      modules[p.module].push(p);
-    });
-    return modules;
-  }, []);
-
-  const columns: Column<Group>[] = [
-    { id: 'name', header: '分组名称', accessor: 'name', width: 120 },
-    { id: 'description', header: '描述', accessor: 'description', width: 200 },
-    {
-      id: 'permissions',
-      header: '权限数量',
-      accessor: (row) => (
-        <Tag variant="info">{row.permissions.length} 项权限</Tag>
-      ),
-      width: 100,
-    },
-    {
-      id: 'isSystem',
-      header: '类型',
-      accessor: (row) => (
-        <Tag variant={row.isSystem ? 'warning' : 'neutral'}>
-          {row.isSystem ? '系统预设' : '自定义'}
-        </Tag>
-      ),
-      width: 100,
-    },
-    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 120 },
-    {
-      id: 'actions',
-      header: '操作',
-      accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="small"
-            iconOnly
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditGroup(row);
-            }}
-            aria-label="编辑"
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
-          {!row.isSystem && (
-            <Button
-              variant="ghost"
-              size="small"
-              iconOnly
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteClick(row);
-              }}
-              aria-label="删除"
-            >
-              <Trash2 className="w-4 h-4 text-danger-fg" />
-            </Button>
-          )}
+    <div className="space-y-6">
+      {/* 权限规则说明 */}
+      <div className="bg-canvas-subtle rounded-lg p-4 border border-border">
+        <h3 className="text-sm font-medium text-fg-default mb-3">权限规则说明</h3>
+        <div className="space-y-2 text-xs text-fg-muted">
+          <p><strong className="text-fg-default">基础权限：</strong>所有角色都可以查看所有页面</p>
+          <p><strong className="text-fg-default">解读工程师：</strong>可对任务结果进行调整和审核</p>
+          <p><strong className="text-fg-default">生信工程师：</strong>可对流程中心中的配置进行修改</p>
+          <p><strong className="text-fg-default">按需分配：</strong>任务投递、数据上传等权限可单独授予给用户</p>
         </div>
-      ),
-      width: 100,
-    },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-fg-muted">管理用户分组及其权限配置</p>
-        <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={handleAddGroup}>
-          新增分组
-        </Button>
       </div>
 
-      <DataTable data={groups} columns={columns} rowKey="id" density="default" striped />
-
-      {/* 新增/编辑分组弹窗 */}
-      <Modal open={isModalOpen} onOpenChange={setIsModalOpen} size="large">
-        <ModalHeader>{editingGroup ? '编辑分组' : '新增分组'}</ModalHeader>
-        <ModalBody className="max-h-[70vh]">
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <FormItem label="分组名称" required>
-                <Input
-                  value={groupForm.name}
-                  onChange={(e) => setGroupForm((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="请输入分组名称"
-                  disabled={editingGroup?.isSystem}
-                />
-              </FormItem>
-              <FormItem label="描述">
-                <Input
-                  value={groupForm.description}
-                  onChange={(e) => setGroupForm((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="请输入分组描述"
-                />
-              </FormItem>
+      {/* 角色说明卡片 */}
+      <div className="grid grid-cols-3 gap-4">
+        {ROLES.map((role) => (
+          <div key={role.id} className="bg-canvas-default rounded-lg border border-border p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="w-4 h-4 text-accent-fg" />
+              <h4 className="text-sm font-medium text-fg-default">{role.name}</h4>
             </div>
-
-            {/* 权限勾选表 */}
-            <div>
-              <h4 className="text-sm font-medium text-fg-default mb-3">权限配置</h4>
-              <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-canvas-subtle">
-                      <th className="px-4 py-2 text-left text-sm font-medium text-fg-default border-b border-border w-40">
-                        功能模块
-                      </th>
-                      <th className="px-4 py-2 text-left text-sm font-medium text-fg-default border-b border-border">
-                        权限项
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(permissionsByModule).map(([module, permissions]) => {
-                      const modulePermissionIds = permissions.map((p) => p.id);
-                      const allSelected = modulePermissionIds.every((p) => groupForm.permissions.includes(p));
-                      const someSelected = modulePermissionIds.some((p) => groupForm.permissions.includes(p));
-
-                      return (
-                        <tr key={module} className="border-b border-border last:border-b-0">
-                          <td className="px-4 py-3 align-top">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <Checkbox
-                                checked={allSelected}
-                                indeterminate={someSelected && !allSelected}
-                                onChange={() => handleModuleToggle(module)}
-                              />
-                              <span className="text-sm font-medium text-fg-default">{module}</span>
-                            </label>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-wrap gap-x-6 gap-y-2">
-                              {permissions.map((permission) => (
-                                <label key={permission.id} className="flex items-center gap-2 cursor-pointer">
-                                  <Checkbox
-                                    checked={groupForm.permissions.includes(permission.id)}
-                                    onChange={() => handlePermissionToggle(permission.id)}
-                                  />
-                                  <span className="text-sm text-fg-default">
-                                    {permission.name.split('-')[1]}
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+            <p className="text-xs text-fg-muted mb-3">{role.description}</p>
+            <div className="space-y-1">
+              {rolePermissionDescriptions[role.id].map((desc, idx) => (
+                <div key={idx} className="text-xs text-fg-muted flex items-start gap-1">
+                  <span className="text-success-fg mt-0.5">•</span>
+                  <span>{desc}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-            取消
-          </Button>
-          <Button variant="primary" onClick={handleSaveGroup}>
-            {editingGroup ? '保存' : '创建'}
-          </Button>
-        </ModalFooter>
-      </Modal>
+        ))}
+      </div>
 
-      {/* 删除确认弹窗 */}
-      <Modal open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen} size="small">
-        <ModalHeader>确认删除</ModalHeader>
-        <ModalBody>
-          <p>确定要删除分组 <strong>{groupToDelete?.name}</strong> 吗？此操作不可撤销。</p>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>
-            取消
-          </Button>
-          <Button variant="danger" onClick={handleDeleteGroup}>
-            删除
-          </Button>
-        </ModalFooter>
-      </Modal>
+      {/* 用户管理 */}
+      <UserManagement users={users} setUsers={setUsers} />
     </div>
   );
 }
@@ -437,10 +155,9 @@ function GroupManagement({ groups, setGroups }: GroupManagementProps) {
 interface UserManagementProps {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  groups: Group[];
 }
 
-function UserManagement({ users, setUsers, groups }: UserManagementProps) {
+function UserManagement({ users, setUsers }: UserManagementProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
@@ -449,7 +166,8 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
   const [userForm, setUserForm] = React.useState({
     name: '',
     email: '',
-    groupId: '',
+    role: 'interpreter' as RoleId,
+    additionalPermissions: [] as AssignablePermissionId[],
     password: '',
   });
 
@@ -459,19 +177,32 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
     return users.filter(
       (user) =>
         user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query)
+        user.email.toLowerCase().includes(query) ||
+        ROLES.find(r => r.id === user.role)?.name.toLowerCase().includes(query)
     );
   }, [users, searchQuery]);
 
   const handleAddUser = () => {
     setEditingUser(null);
-    setUserForm({ name: '', email: '', groupId: groups[0]?.id || '', password: '' });
+    setUserForm({
+      name: '',
+      email: '',
+      role: 'interpreter',
+      additionalPermissions: [],
+      password: '',
+    });
     setIsModalOpen(true);
   };
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
-    setUserForm({ name: user.name, email: user.email, groupId: user.groupId, password: '' });
+    setUserForm({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      additionalPermissions: [...user.additionalPermissions],
+      password: '',
+    });
     setIsModalOpen(true);
   };
 
@@ -481,7 +212,7 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
   };
 
   const handleSaveUser = () => {
-    if (!userForm.name || !userForm.email || !userForm.groupId) {
+    if (!userForm.name || !userForm.email || !userForm.role) {
       alert('请填写必填项');
       return;
     }
@@ -494,7 +225,13 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
       setUsers((prev) =>
         prev.map((u) =>
           u.id === editingUser.id
-            ? { ...u, name: userForm.name, email: userForm.email, groupId: userForm.groupId }
+            ? {
+                ...u,
+                name: userForm.name,
+                email: userForm.email,
+                role: userForm.role,
+                additionalPermissions: userForm.additionalPermissions,
+              }
             : u
         )
       );
@@ -503,8 +240,17 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
         id: String(Date.now()),
         name: userForm.name,
         email: userForm.email,
-        groupId: userForm.groupId,
-        createdAt: new Date().toISOString().split('T')[0],
+        role: userForm.role,
+        additionalPermissions: userForm.additionalPermissions,
+        createdAt: new Date().toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }).replace(/\//g, '-'),
         status: 'active',
       };
       setUsers((prev) => [...prev, newUser]);
@@ -520,18 +266,58 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
     }
   };
 
-  const getGroupName = (groupId: string) => {
-    return groups.find((g) => g.id === groupId)?.name || groupId;
+  const handlePermissionToggle = (permissionId: AssignablePermissionId) => {
+    setUserForm((prev) => ({
+      ...prev,
+      additionalPermissions: prev.additionalPermissions.includes(permissionId)
+        ? prev.additionalPermissions.filter((p) => p !== permissionId)
+        : [...prev.additionalPermissions, permissionId],
+    }));
+  };
+
+  const getRoleName = (roleId: RoleId) => {
+    return ROLES.find((r) => r.id === roleId)?.name || roleId;
   };
 
   const columns: Column<User>[] = [
-    { id: 'name', header: '姓名', accessor: 'name', width: 120 },
-    { id: 'email', header: '邮箱', accessor: 'email', width: 200 },
+    { id: 'name', header: '姓名', accessor: 'name', width: 100, align: 'center' },
+    { id: 'email', header: '邮箱', accessor: 'email', width: 180, align: 'center' },
     {
-      id: 'group',
-      header: '所属分组',
-      accessor: (row) => <Tag variant="info">{getGroupName(row.groupId)}</Tag>,
+      id: 'role',
+      header: '角色',
+      accessor: (row) => {
+        const roleConfig = ROLES.find(r => r.id === row.role);
+        const variant = row.role === 'admin' ? 'warning' : row.role === 'interpreter' ? 'success' : 'info';
+        return <Tag variant={variant}>{roleConfig?.name || row.role}</Tag>;
+      },
       width: 120,
+      align: 'center',
+    },
+    {
+      id: 'additionalPermissions',
+      header: '附加权限',
+      accessor: (row) => {
+        if (row.role === 'admin') {
+          return <span className="text-xs text-fg-muted">全部权限</span>;
+        }
+        if (row.additionalPermissions.length === 0) {
+          return <span className="text-xs text-fg-muted">无</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1 justify-center">
+            {row.additionalPermissions.map((p) => {
+              const perm = ASSIGNABLE_PERMISSIONS.find(ap => ap.id === p);
+              return (
+                <Tag key={p} variant="neutral" className="text-xs">
+                  {perm?.name || p}
+                </Tag>
+              );
+            })}
+          </div>
+        );
+      },
+      width: 180,
+      align: 'center',
     },
     {
       id: 'status',
@@ -542,40 +328,38 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
         </Tag>
       ),
       width: 80,
+      align: 'center',
     },
-    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 120 },
+    {
+      id: 'createdAt',
+      header: '创建时间',
+      accessor: 'createdAt',
+      width: 160,
+      align: 'center',
+    },
     {
       id: 'actions',
       header: '操作',
       accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="small"
-            iconOnly
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditUser(row);
-            }}
-            aria-label="编辑"
+        <div className="flex items-center justify-center gap-1">
+          <button
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
+            title="编辑"
+            onClick={() => handleEditUser(row)}
           >
             <Pencil className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="small"
-            iconOnly
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteClick(row);
-            }}
-            aria-label="删除"
+          </button>
+          <button
+            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
+            title="删除"
+            onClick={() => handleDeleteClick(row)}
           >
-            <Trash2 className="w-4 h-4 text-danger-fg" />
-          </Button>
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       ),
-      width: 100,
+      width: 80,
+      align: 'center',
     },
   ];
 
@@ -598,7 +382,7 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
       <DataTable data={filteredUsers} columns={columns} rowKey="id" density="default" striped />
 
       {/* 新增/编辑用户弹窗 */}
-      <Modal open={isModalOpen} onOpenChange={setIsModalOpen} size="small">
+      <Modal open={isModalOpen} onOpenChange={setIsModalOpen} size="medium">
         <ModalHeader>{editingUser ? '编辑用户' : '新增用户'}</ModalHeader>
         <ModalBody>
           <div className="space-y-4">
@@ -617,14 +401,39 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
                 placeholder="请输入邮箱"
               />
             </FormItem>
-            <FormItem label="所属分组" required>
+            <FormItem label="角色" required hint="角色决定了用户的基础权限范围">
               <Select
-                options={groups.map((g) => ({ value: g.id, label: g.name }))}
-                value={userForm.groupId}
-                onChange={(value) => setUserForm((prev) => ({ ...prev, groupId: value as string }))}
-                placeholder="请选择分组"
+                options={ROLES.map((r) => ({ value: r.id, label: r.name }))}
+                value={userForm.role}
+                onChange={(value) => setUserForm((prev) => ({ ...prev, role: value as RoleId }))}
+                placeholder="请选择角色"
               />
             </FormItem>
+
+            {/* 按需分配权限 */}
+            {userForm.role !== 'admin' && (
+              <FormItem label="附加权限" hint="任务投递、数据上传等按需分配的权限">
+                <div className="grid grid-cols-2 gap-2">
+                  {ASSIGNABLE_PERMISSIONS.map((permission) => (
+                    <label key={permission.id} className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={userForm.additionalPermissions.includes(permission.id)}
+                        onChange={() => handlePermissionToggle(permission.id)}
+                      />
+                      <span className="text-sm text-fg-default">{permission.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormItem>
+            )}
+
+            {/* 管理员自动拥有所有权限 */}
+            {userForm.role === 'admin' && (
+              <div className="bg-canvas-subtle rounded-md p-3 text-xs text-fg-muted">
+                <p>管理员自动拥有所有权限，无需额外配置附加权限</p>
+              </div>
+            )}
+
             {!editingUser && (
               <FormItem label="初始密码" required>
                 <Input
@@ -651,7 +460,18 @@ function UserManagement({ users, setUsers, groups }: UserManagementProps) {
       <Modal open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen} size="small">
         <ModalHeader>确认删除</ModalHeader>
         <ModalBody>
-          <p>确定要删除用户 <strong>{userToDelete?.name}</strong> 吗？此操作不可撤销。</p>
+          <div className="flex flex-col items-center text-center py-4">
+            <div className="w-12 h-12 rounded-full bg-danger-subtle flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6 text-danger-fg" />
+            </div>
+            <p className="text-fg-default mb-2">确定要删除此用户吗？</p>
+            {userToDelete && (
+              <p className="text-sm text-fg-muted">
+                {userToDelete.name} ({getRoleName(userToDelete.role)})
+              </p>
+            )}
+            <p className="text-xs text-fg-muted mt-3">此操作不可撤销</p>
+          </div>
         </ModalBody>
         <ModalFooter>
           <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>
