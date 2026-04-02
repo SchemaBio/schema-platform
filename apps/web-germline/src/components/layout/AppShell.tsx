@@ -9,6 +9,7 @@ import { SidebarNav } from './SidebarNav';
 import { useSidebarState } from '@/hooks/useSidebarState';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobileNav } from './MobileNav';
+import { AssistantButton } from '@/components/assistant';
 import { mainNavItems, sidebarNavConfig } from '@/config/navigation';
 
 interface AppShellProps {
@@ -177,6 +178,8 @@ export function AppShell({ children }: AppShellProps) {
           />
         )}
         <main className="flex-1 overflow-auto">{children}</main>
+        {/* AI Assistant */}
+        <AssistantButton />
       </div>
     );
   }
@@ -229,6 +232,9 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </div>
+
+      {/* AI Assistant */}
+      <AssistantButton />
     </div>
   );
 }

@@ -18,7 +18,6 @@ import {
   Settings,
   User,
   Shield,
-  Bot,
   Workflow,
   FileCode,
   TrendingUp,
@@ -97,7 +96,6 @@ export const sidebarNavConfig: SidebarNavConfig = {
   // 系统设置
   settings: [
     { label: '个人设置', href: '/settings', icon: User },
-    { label: 'AI 设置', href: '/settings/ai', icon: Bot },
     { label: '权限管理', href: '/settings/permissions', icon: Shield },
   ],
 };

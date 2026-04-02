@@ -16,6 +16,7 @@ import {
   type Column,
 } from '@schema/ui-kit';
 import { Plus, Pencil, Trash2, Users, FolderOutput, FolderInput, Bot, Save, Eye, EyeOff, TestTube2, CheckCircle, XCircle, Loader2, KeyRound } from 'lucide-react';
+import { useAI } from '@/components/providers/AIProvider';
 
 // 角色定义
 const ROLES = [
@@ -46,14 +47,10 @@ interface OrganizationAccount {
   createdAt: string;
 }
 
-// 系统配置接口
-interface SystemConfig {
+// 系统路径配置接口（非 AI 配置）
+interface PathConfig {
   outputBasePath: string;
   rawDataPath: string;
-  openaiApiEndpoint: string;
-  openaiApiKey: string;
-  openaiModel: string;
-  aiAssistantEnabled: boolean;
 }
 
 // Mock 数据
@@ -91,6 +88,9 @@ const roleConfig: Record<RoleId, { label: string; variant: 'warning' | 'success'
 };
 
 export default function AdminPage() {
+  // 使用全局 AI 配置上下文
+  const { config: aiConfig, setConfig: setAIConfig } = useAI();
+
   // 账户管理状态
   const [accounts, setAccounts] = React.useState<OrganizationAccount[]>(mockAccounts);
   const [isAccountModalOpen, setIsAccountModalOpen] = React.useState(false);
@@ -104,14 +104,10 @@ export default function AdminPage() {
     password: '',
   });
 
-  // 系统配置状态
-  const [config, setConfig] = React.useState<SystemConfig>({
+  // 路径配置状态（非 AI 配置，保持本地状态）
+  const [pathConfig, setPathConfig] = React.useState<PathConfig>({
     outputBasePath: '/data/results',
     rawDataPath: '/data/raw',
-    openaiApiEndpoint: 'https://api.openai.com/v1',
-    openaiApiKey: '',
-    openaiModel: 'gpt-4',
-    aiAssistantEnabled: true,
   });
   const [showApiKey, setShowApiKey] = React.useState(false);
   const [testingApi, setTestingApi] = React.useState(false);
@@ -211,7 +207,7 @@ export default function AdminPage() {
 
   // OpenAI API 测试
   const handleTestApi = async () => {
-    if (!config.openaiApiEndpoint) return;
+    if (!aiConfig.openaiApiEndpoint) return;
     setTestingApi(true);
     setApiTestResult(null);
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -359,8 +355,8 @@ export default function AdminPage() {
               <div>
                 <label className="block text-sm font-medium text-fg-default mb-1.5">结果输出主路径</label>
                 <Input
-                  value={config.outputBasePath}
-                  onChange={(e) => setConfig(prev => ({ ...prev, outputBasePath: e.target.value }))}
+                  value={pathConfig.outputBasePath}
+                  onChange={(e) => setPathConfig(prev => ({ ...prev, outputBasePath: e.target.value }))}
                   placeholder="/data/results"
                   leftElement={<FolderOutput className="w-4 h-4" />}
                   className="w-full"
@@ -370,8 +366,8 @@ export default function AdminPage() {
               <div>
                 <label className="block text-sm font-medium text-fg-default mb-1.5">原始数据路径</label>
                 <Input
-                  value={config.rawDataPath}
-                  onChange={(e) => setConfig(prev => ({ ...prev, rawDataPath: e.target.value }))}
+                  value={pathConfig.rawDataPath}
+                  onChange={(e) => setPathConfig(prev => ({ ...prev, rawDataPath: e.target.value }))}
                   placeholder="/data/raw"
                   leftElement={<FolderInput className="w-4 h-4" />}
                   className="w-full"
@@ -397,20 +393,20 @@ export default function AdminPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setConfig(prev => ({ ...prev, aiAssistantEnabled: !prev.aiAssistantEnabled }))}
+                onClick={() => setAIConfig({ aiAssistantEnabled: !aiConfig.aiAssistantEnabled })}
                 className={`
                   relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent
                   transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent-emphasis focus:ring-offset-2
-                  ${config.aiAssistantEnabled ? 'bg-accent-emphasis' : 'bg-neutral-emphasis'}
+                  ${aiConfig.aiAssistantEnabled ? 'bg-accent-emphasis' : 'bg-neutral-emphasis'}
                 `}
                 role="switch"
-                aria-checked={config.aiAssistantEnabled}
+                aria-checked={aiConfig.aiAssistantEnabled}
               >
                 <span
                   className={`
                     pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0
                     transition duration-200 ease-in-out
-                    ${config.aiAssistantEnabled ? 'translate-x-5' : 'translate-x-0'}
+                    ${aiConfig.aiAssistantEnabled ? 'translate-x-5' : 'translate-x-0'}
                   `}
                 />
               </button>
@@ -420,11 +416,11 @@ export default function AdminPage() {
               <div>
                 <label className="block text-sm font-medium text-fg-default mb-1.5">API 端点</label>
                 <Input
-                  value={config.openaiApiEndpoint}
-                  onChange={(e) => setConfig(prev => ({ ...prev, openaiApiEndpoint: e.target.value }))}
+                  value={aiConfig.openaiApiEndpoint}
+                  onChange={(e) => setAIConfig({ openaiApiEndpoint: e.target.value })}
                   placeholder="https://api.openai.com/v1"
                   className="w-full"
-                  disabled={!config.aiAssistantEnabled}
+                  disabled={!aiConfig.aiAssistantEnabled}
                 />
               </div>
               <div>
@@ -432,11 +428,11 @@ export default function AdminPage() {
                 <div className="relative">
                   <Input
                     type={showApiKey ? 'text' : 'password'}
-                    value={config.openaiApiKey}
-                    onChange={(e) => setConfig(prev => ({ ...prev, openaiApiKey: e.target.value }))}
+                    value={aiConfig.openaiApiKey}
+                    onChange={(e) => setAIConfig({ openaiApiKey: e.target.value })}
                     placeholder="sk-..."
                     className="w-full"
-                    disabled={!config.aiAssistantEnabled}
+                    disabled={!aiConfig.aiAssistantEnabled}
                   />
                   <button
                     type="button"
@@ -450,11 +446,11 @@ export default function AdminPage() {
               <div>
                 <label className="block text-sm font-medium text-fg-default mb-1.5">模型名称</label>
                 <Input
-                  value={config.openaiModel}
-                  onChange={(e) => setConfig(prev => ({ ...prev, openaiModel: e.target.value }))}
+                  value={aiConfig.openaiModel}
+                  onChange={(e) => setAIConfig({ openaiModel: e.target.value })}
                   placeholder="gpt-4"
                   className="w-full"
-                  disabled={!config.aiAssistantEnabled}
+                  disabled={!aiConfig.aiAssistantEnabled}
                 />
               </div>
             </div>
@@ -464,7 +460,7 @@ export default function AdminPage() {
                 size="small"
                 leftIcon={testingApi ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube2 className="w-4 h-4" />}
                 onClick={handleTestApi}
-                disabled={testingApi || !config.openaiApiEndpoint || !config.aiAssistantEnabled}
+                disabled={testingApi || !aiConfig.openaiApiEndpoint || !aiConfig.aiAssistantEnabled}
               >
                 {testingApi ? '测试中...' : '测试连接'}
               </Button>

@@ -31,6 +31,9 @@ importers:
       next:
         specifier: ^14.2.25
         version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      page-agent:
+        specifier: ^1.7.0
+        version: 1.7.0(zod@4.3.6)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -690,6 +693,22 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
+  '@page-agent/core@1.7.0':
+    resolution: {integrity: sha512-toZrga9Qjw+EbdFK7MN7mynXw+ltUw2W73hgklIkx4rC/nFi939eU+6Ybh8z0irEU1ne7Vx7PFb8sJEAEt+ALQ==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+
+  '@page-agent/llms@1.7.0':
+    resolution: {integrity: sha512-/irDlMHNaGrtTBwhiiCbE18u9XVx++1Z77bMCkPpF6Ne8pLWvoY5cdzmIbmc7UKfLBLexUoAIDNVxXJKvVIhUw==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+
+  '@page-agent/page-controller@1.7.0':
+    resolution: {integrity: sha512-WV05aAo1t6xD7PkbVKgMBOKuLWla0cF6RLgdz0JcO0ZSO8EfdEY10309fq1PKn8671juN/+g3Pe6vs8i7fyHcA==}
+
+  '@page-agent/ui@1.7.0':
+    resolution: {integrity: sha512-Kb+PEsim9WiAhJtIySY7UH4Vcwha5KxeVPl9l+ar2gMxnqiCUFUiodOdL3SFPhdXMGkBC6tOLtqpqtMULzAkZg==}
+
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
@@ -1315,6 +1334,7 @@ packages:
   '@xmldom/xmldom@0.8.11':
     resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -1333,6 +1353,9 @@ packages:
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
+
+  ai-motion@0.4.8:
+    resolution: {integrity: sha512-9nQVjf8lrYQWSW0sZdb9bES4x8Ei1w9C0S62po2KvRbMjslmjm0WMeszyW771SEauDnu4YGWqurLZ/gCkCTosQ==}
 
   ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
@@ -1523,6 +1546,10 @@ packages:
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
+
+  chalk@5.6.2:
+    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   check-error@1.0.3:
     resolution: {integrity: sha512-iKEoDYaRmd1mxM90a2OEfWhjsjPpYPuQ+lMYsoxB126+t8fw7ySEO48nmDg5COTjxDI65/Y2OWpeEHk3ZOe8zg==}
@@ -2458,6 +2485,11 @@ packages:
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
 
+  page-agent@1.7.0:
+    resolution: {integrity: sha512-VIfWHvNi0jKVeHWfJNOBltCggYzwAZj0cTM557Uy26Wb7ofbi4shpTAkY+Yc7uzBqRG8vySgGpQy4ugfceA82w==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
 
@@ -3150,6 +3182,7 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -3237,6 +3270,9 @@ packages:
   yocto-queue@1.2.2:
     resolution: {integrity: sha512-4LCcse/U2MHZ63HAJVE+v71o7yOdIe4cZ70Wpf8D/IyjDKYQLV5GD46B+hSTjJsvV5PztjvHoU580EftxjDZFQ==}
     engines: {node: '>=12.20'}
+
+  zod@4.3.6:
+    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
 snapshots:
 
@@ -3588,6 +3624,24 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
+
+  '@page-agent/core@1.7.0(zod@4.3.6)':
+    dependencies:
+      '@page-agent/llms': 1.7.0(zod@4.3.6)
+      '@page-agent/page-controller': 1.7.0
+      chalk: 5.6.2
+      zod: 4.3.6
+
+  '@page-agent/llms@1.7.0(zod@4.3.6)':
+    dependencies:
+      chalk: 5.6.2
+      zod: 4.3.6
+
+  '@page-agent/page-controller@1.7.0':
+    dependencies:
+      ai-motion: 0.4.8
+
+  '@page-agent/ui@1.7.0': {}
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -4246,6 +4300,8 @@ snapshots:
 
   agent-base@7.1.4: {}
 
+  ai-motion@0.4.8: {}
+
   ajv@6.12.6:
     dependencies:
       fast-deep-equal: 3.1.3
@@ -4462,6 +4518,8 @@ snapshots:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
+
+  chalk@5.6.2: {}
 
   check-error@1.0.3:
     dependencies:
@@ -5605,6 +5663,15 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
+  page-agent@1.7.0(zod@4.3.6):
+    dependencies:
+      '@page-agent/core': 1.7.0(zod@4.3.6)
+      '@page-agent/llms': 1.7.0(zod@4.3.6)
+      '@page-agent/page-controller': 1.7.0
+      '@page-agent/ui': 1.7.0
+      chalk: 5.6.2
+      zod: 4.3.6
+
   pako@1.0.11: {}
 
   parent-module@1.0.1:
@@ -6435,3 +6502,5 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yocto-queue@1.2.2: {}
+
+  zod@4.3.6: {}
