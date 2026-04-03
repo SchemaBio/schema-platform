@@ -86,7 +86,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '流程列表', href: '/pipeline', icon: List },
     { label: '基因列表', href: '/pipeline/gene-list', icon: Library },
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
-    { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
+    { label: '基线管理', href: '/pipeline/baseline', icon: TrendingUp },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
   // 历史检出 - 检出位点统计
