@@ -2,7 +2,7 @@
 
 import { PageContent } from '@/components/layout';
 import { Button, Input, Tag } from '@schema/ui-kit';
-import { Plus, Search, Pencil, Trash2, X, Upload, FileText, Dna, Copy, GitBranch, Layers } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, X, Upload, FileText, Dna, Copy, GitBranch, Layers, Folder, ChevronDown, ChevronRight } from 'lucide-react';
 import * as React from 'react';
 
 type GeneListType = 'snv_indel' | 'cnv' | 'chrom' | 'fusion';
@@ -46,7 +46,7 @@ const initialGeneLists: GeneList[] = [
     createdBy: '王工',
   },
   {
-    id: '2',
+    id: '1',
     name: '肺癌168基因_CNV',
     type: 'cnv',
     geneCount: 45,
@@ -117,12 +117,13 @@ const initialGeneLists: GeneList[] = [
 // 删除确认弹窗
 interface DeleteConfirmModalProps {
   isOpen: boolean;
-  listName: string;
+  title: string;
+  message: string;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-function DeleteConfirmModal({ isOpen, listName, onClose, onConfirm }: DeleteConfirmModalProps) {
+function DeleteConfirmModal({ isOpen, title, message, onClose, onConfirm }: DeleteConfirmModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -134,10 +135,10 @@ function DeleteConfirmModal({ isOpen, listName, onClose, onConfirm }: DeleteConf
             <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
           </div>
           <h3 className="text-lg font-medium text-center text-gray-900 dark:text-gray-100 mb-2">
-            删除基因列表
+            {title}
           </h3>
           <p className="text-sm text-center text-gray-500 dark:text-gray-400">
-            确定要删除 "<span className="font-medium text-gray-700 dark:text-gray-300">{listName}</span>" 吗？此操作无法撤销。
+            {message}
           </p>
         </div>
         <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -146,6 +147,63 @@ function DeleteConfirmModal({ isOpen, listName, onClose, onConfirm }: DeleteConf
           </Button>
           <Button variant="danger" onClick={onConfirm} className="flex-1">
             删除
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 编辑项目名称弹窗
+interface EditProjectModalProps {
+  isOpen: boolean;
+  projectName: string;
+  onClose: () => void;
+  onSubmit: (newName: string) => void;
+}
+
+function EditProjectModal({ isOpen, projectName, onClose, onSubmit }: EditProjectModalProps) {
+  const [name, setName] = React.useState(projectName);
+
+  React.useEffect(() => {
+    setName(projectName);
+  }, [projectName]);
+
+  const handleSubmit = () => {
+    if (!name.trim()) return;
+    onSubmit(name.trim());
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative z-10 bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-sm overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">编辑项目名称</h2>
+          <button
+            onClick={onClose}
+            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-6">
+          <label className="block text-sm font-medium text-fg-default mb-2">项目名称</label>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="请输入项目名称"
+          />
+        </div>
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <Button variant="secondary" onClick={onClose}>
+            取消
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={!name.trim()}>
+            保存
           </Button>
         </div>
       </div>
@@ -166,12 +224,13 @@ interface GeneListFormData {
 interface GeneListModalProps {
   isOpen: boolean;
   mode: 'add' | 'edit';
+  projects: string[];
   initialData?: GeneListFormData;
   onClose: () => void;
   onSubmit: (data: GeneListFormData) => void;
 }
 
-function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneListModalProps) {
+function GeneListModal({ isOpen, mode, projects, initialData, onClose, onSubmit }: GeneListModalProps) {
   const [formData, setFormData] = React.useState<GeneListFormData>({
     name: '',
     type: 'snv_indel',
@@ -252,7 +311,7 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-      
+
       <div className="relative z-10 bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
@@ -298,7 +357,14 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
               value={formData.project}
               onChange={(e) => handleChange('project', e.target.value)}
               placeholder="如：肺癌168基因检测"
+              list="project-list"
             />
+            <datalist id="project-list">
+              {projects.map(p => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
+            <p className="text-xs text-fg-muted mt-1">可输入新项目或选择已有项目</p>
           </div>
 
           {/* 描述 */}
@@ -319,7 +385,7 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
                 <span className="text-xs text-fg-muted">已识别 {geneCount} 个基因</span>
               )}
             </div>
-            
+
             {/* 文件上传区域 */}
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -328,8 +394,8 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
               onDragLeave={() => setDragOver(false)}
               className={`
                 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors mb-2
-                ${dragOver 
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                ${dragOver
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                   : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }
               `}
@@ -363,8 +429,8 @@ function GeneListModal({ isOpen, mode, initialData, onClose, onSubmit }: GeneLis
           <Button variant="secondary" onClick={handleClose}>
             取消
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={!formData.name || !formData.project || !formData.genes}
           >
@@ -385,6 +451,9 @@ export default function GeneListPage() {
   const [modalMode, setModalMode] = React.useState<'add' | 'edit'>('add');
   const [editingList, setEditingList] = React.useState<GeneList | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<GeneList | null>(null);
+  const [editingProject, setEditingProject] = React.useState<string | null>(null);
+  const [deletingProject, setDeletingProject] = React.useState<string | null>(null);
+  const [expandedProjects, setExpandedProjects] = React.useState<Set<string>>(new Set());
 
   const handleOpenAddModal = () => {
     setModalMode('add');
@@ -405,7 +474,7 @@ export default function GeneListPage() {
 
   const handleSubmit = (data: GeneListFormData) => {
     const geneCount = data.genes.split(/[\n,\s]+/).filter(g => g.trim()).length;
-    
+
     if (modalMode === 'add') {
       const newList: GeneList = {
         id: String(Date.now()),
@@ -448,13 +517,52 @@ export default function GeneListPage() {
     }
   };
 
+  // 项目操作
+  const handleEditProject = (project: string) => {
+    setEditingProject(project);
+  };
+
+  const handleSaveProjectName = (newName: string) => {
+    if (editingProject && newName !== editingProject) {
+      setGeneLists(prev => prev.map(list =>
+        list.project === editingProject
+          ? { ...list, project: newName }
+          : list
+      ));
+    }
+    setEditingProject(null);
+  };
+
+  const handleDeleteProject = (project: string) => {
+    setDeletingProject(project);
+  };
+
+  const handleConfirmDeleteProject = () => {
+    if (deletingProject) {
+      setGeneLists(prev => prev.filter(l => l.project !== deletingProject));
+      setDeletingProject(null);
+    }
+  };
+
+  const toggleProjectExpand = (project: string) => {
+    setExpandedProjects(prev => {
+      const next = new Set(prev);
+      if (next.has(project)) {
+        next.delete(project);
+      } else {
+        next.add(project);
+      }
+      return next;
+    });
+  };
+
   const filteredLists = React.useMemo(() => {
     let result = geneLists;
-    
+
     if (filterType !== 'all') {
       result = result.filter(l => l.type === filterType);
     }
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -464,9 +572,14 @@ export default function GeneListPage() {
           l.description.toLowerCase().includes(query)
       );
     }
-    
+
     return result;
   }, [searchQuery, filterType, geneLists]);
+
+  // 获取所有项目名称（用于下拉选择）
+  const allProjects = React.useMemo(() => {
+    return Array.from(new Set(geneLists.map(l => l.project)));
+  }, [geneLists]);
 
   // 按项目分组
   const groupedByProject = React.useMemo(() => {
@@ -511,8 +624,8 @@ export default function GeneListPage() {
             ))}
           </select>
         </div>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           leftIcon={<Plus className="w-4 h-4" />}
           onClick={handleOpenAddModal}
         >
@@ -521,59 +634,99 @@ export default function GeneListPage() {
       </div>
 
       {/* 按项目分组展示 */}
-      <div className="space-y-6">
-        {Object.entries(groupedByProject).map(([project, lists]) => (
-          <div key={project} className="bg-canvas-default rounded-lg border border-border overflow-hidden">
-            <div className="px-4 py-3 bg-canvas-subtle border-b border-border">
-              <h3 className="text-sm font-medium text-fg-default">{project}</h3>
-            </div>
-            <div className="divide-y divide-border">
-              {lists.map(list => {
-                const typeConfig = TYPE_CONFIG[list.type];
-                return (
-                  <div
-                    key={list.id}
-                    className="px-4 py-3 flex items-center justify-between hover:bg-canvas-subtle transition-colors"
+      <div className="space-y-4">
+        {Object.entries(groupedByProject).map(([project, lists]) => {
+          const isExpanded = expandedProjects.has(project);
+          const totalGenes = lists.reduce((sum, l) => sum + l.geneCount, 0);
+
+          return (
+            <div key={project} className="bg-canvas-default rounded-lg border border-border overflow-hidden">
+              {/* 项目头部 - 可点击展开/收起 */}
+              <div
+                className="px-4 py-3 bg-canvas-subtle border-b border-border flex items-center justify-between cursor-pointer hover:bg-canvas-inset transition-colors"
+                onClick={() => toggleProjectExpand(project)}
+              >
+                <div className="flex items-center gap-3">
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4 text-fg-muted" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-fg-muted" />
+                  )}
+                  <Folder className="w-4 h-4 text-accent-fg" />
+                  <h3 className="text-sm font-medium text-fg-default">{project}</h3>
+                  <span className="text-xs text-fg-muted">
+                    {lists.length} 个列表 · 共 {totalGenes} 个基因
+                  </span>
+                </div>
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
+                    title="编辑项目名称"
+                    onClick={() => handleEditProject(project)}
                   >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-fg-muted">
-                        {typeConfig.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-fg-default">{list.name}</span>
-                          <Tag variant={typeConfig.variant}>{typeConfig.label}</Tag>
-                          <span className="text-xs text-fg-muted">{list.geneCount} 个基因</span>
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
+                    title="删除项目"
+                    onClick={() => handleDeleteProject(project)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 项目内容 - 展开时显示 */}
+              {isExpanded && (
+                <div className="divide-y divide-border">
+                  {lists.map(list => {
+                    const typeConfig = TYPE_CONFIG[list.type];
+                    return (
+                      <div
+                        key={list.id}
+                        className="px-4 py-3 pl-12 flex items-center justify-between hover:bg-canvas-subtle transition-colors"
+                      >
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                          <div className="flex items-center gap-2 text-fg-muted">
+                            {typeConfig.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium text-fg-default">{list.name}</span>
+                              <Tag variant={typeConfig.variant}>{typeConfig.label}</Tag>
+                              <span className="text-xs text-fg-muted">{list.geneCount} 个基因</span>
+                            </div>
+                            <p className="text-xs text-fg-muted truncate">{list.description}</p>
+                          </div>
+                          <div className="text-xs text-fg-muted shrink-0">
+                            <span>更新: {list.updatedAt}</span>
+                            <span className="ml-3">创建者: {list.createdBy}</span>
+                          </div>
                         </div>
-                        <p className="text-xs text-fg-muted truncate">{list.description}</p>
+                        <div className="flex items-center gap-1 ml-4 shrink-0">
+                          <button
+                            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
+                            title="编辑"
+                            onClick={() => handleOpenEditModal(list)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
+                            title="删除"
+                            onClick={() => handleDeleteClick(list)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="text-xs text-fg-muted shrink-0">
-                        <span>更新: {list.updatedAt}</span>
-                        <span className="ml-3">创建者: {list.createdBy}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 ml-4 shrink-0">
-                      <button
-                        className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
-                        title="编辑"
-                        onClick={() => handleOpenEditModal(list)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
-                        title="删除"
-                        onClick={() => handleDeleteClick(list)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {Object.keys(groupedByProject).length === 0 && (
           <div className="text-center py-12 text-fg-muted">
@@ -586,6 +739,7 @@ export default function GeneListPage() {
       <GeneListModal
         isOpen={isModalOpen}
         mode={modalMode}
+        projects={allProjects}
         initialData={editingList ? {
           name: editingList.name,
           type: editingList.type,
@@ -599,9 +753,25 @@ export default function GeneListPage() {
 
       <DeleteConfirmModal
         isOpen={!!deleteTarget}
-        listName={deleteTarget?.name || ''}
+        title="删除基因列表"
+        message={`确定要删除 "${deleteTarget?.name}" 吗？此操作无法撤销。`}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
+      />
+
+      <EditProjectModal
+        isOpen={!!editingProject}
+        projectName={editingProject || ''}
+        onClose={() => setEditingProject(null)}
+        onSubmit={handleSaveProjectName}
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!deletingProject}
+        title="删除项目"
+        message={`确定要删除项目 "${deletingProject}" 吗？该项目的所有基因列表都将被删除，此操作无法撤销。`}
+        onClose={() => setDeletingProject(null)}
+        onConfirm={handleConfirmDeleteProject}
       />
     </PageContent>
   );

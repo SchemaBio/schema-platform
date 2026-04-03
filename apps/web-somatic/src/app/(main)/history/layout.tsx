@@ -1,4 +1,4 @@
-export default function KnowledgeLayout({
+export default function HistoryLayout({
   children,
 }: {
   children: React.ReactNode;

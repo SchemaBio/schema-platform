@@ -1,13 +1,7 @@
 import {
   Users,
-  Plus,
   List,
-  Upload,
-  Database,
   HardDrive,
-  FlaskConical,
-  Clock,
-  CheckCircle,
   FileText,
   Settings,
   User,
@@ -17,11 +11,11 @@ import {
   FileCode,
   Server,
   TrendingUp,
-  BookOpen,
   Library,
   LayoutDashboard,
   Activity,
   ListTodo,
+  History,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -44,20 +38,20 @@ export interface SidebarNavConfig {
   samples: SidebarNavItem[];
   analysis: SidebarNavItem[];
   pipeline: SidebarNavItem[];
-  knowledge: SidebarNavItem[];
+  history: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
 /**
  * Main navigation items displayed in the sidebar.
- * 业务流程：概览 → 样本管理 → 任务中心 → 流程中心 → 知识中心
+ * 业务流程：概览 → 样本管理 → 任务中心 → 历史检出 → 流程中心
  */
 export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   { label: '样本管理', href: '/samples', icon: Users },
   { label: '任务中心', href: '/analysis', icon: ListTodo },
+  { label: '历史检出', href: '/history', icon: History },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
-  { label: '知识中心', href: '/knowledge', icon: BookOpen },
 ];
 
 /**
@@ -70,13 +64,8 @@ export const sidebarNavConfig: SidebarNavConfig = {
   samples: [
     { label: '样本列表', href: '/samples', icon: List },
   ],
-  // 任务中心（合并报告中心）
-  analysis: [
-    { label: '任务列表', href: '/analysis', icon: List },
-    { label: '进行中', href: '/analysis/running', icon: Clock },
-    { label: '待解读', href: '/analysis/pending', icon: FlaskConical },
-    { label: '已完成', href: '/analysis/completed', icon: CheckCircle },
-  ],
+  // 任务中心（合并报告中心）- 无子菜单
+  analysis: [],
   // 流程中心
   pipeline: [
     { label: '流程列表', href: '/pipeline', icon: List },
@@ -87,11 +76,8 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: 'MSI 基线', href: '/pipeline/msi-baseline', icon: Activity },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
-  // 知识中心
-  knowledge: [
-    { label: '知识库概览', href: '/knowledge', icon: List },
-    { label: '位点收录库', href: '/knowledge/variants', icon: Library },
-  ],
+  // 历史检出 - 无子菜单
+  history: [],
   // 系统设置
   settings: [
     { label: '个人设置', href: '/settings', icon: User },
