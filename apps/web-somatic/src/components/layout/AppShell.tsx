@@ -10,6 +10,7 @@ import { useSidebarState } from '@/hooks/useSidebarState';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobileNav } from './MobileNav';
 import { mainNavItems, sidebarNavConfig } from '@/config/navigation';
+import { AssistantButton } from '@/components/assistant';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -181,6 +182,7 @@ export function AppShell({ children }: AppShellProps) {
           />
         )}
         <main className="flex-1 overflow-auto">{children}</main>
+        <AssistantButton />
       </div>
     );
   }
@@ -233,6 +235,8 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </div>
+
+      <AssistantButton />
     </div>
   );
 }

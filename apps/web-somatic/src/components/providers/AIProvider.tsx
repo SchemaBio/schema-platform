@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { AIConfig, ConversationMessage } from '@/types/ai';
 import { DEFAULT_AI_CONFIG, AI_STORAGE_KEYS, MAX_HISTORY_MESSAGES } from '@/types/ai';
+import { createPageAgent, PageAgentWrapper } from '@/lib/pageAgent';
 
 interface AIContextType {
   /** AI 配置 */
@@ -19,8 +20,12 @@ interface AIContextType {
   addMessage: (message: ConversationMessage) => void;
   /** 清空对话历史 */
   clearHistory: () => void;
+  /** 执行自然语言指令 */
+  executeCommand: (command: string) => Promise<void>;
   /** 是否正在执行指令 */
   isExecuting: boolean;
+  /** page-agent 实例 */
+  agent: PageAgentWrapper | null;
 }
 
 const AIContext = createContext<AIContextType | undefined>(undefined);
@@ -36,6 +41,7 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfigState] = useState<AIConfig>(DEFAULT_AI_CONFIG);
   const [history, setHistory] = useState<ConversationMessage[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
+  const agentRef = useRef<PageAgentWrapper | null>(null);
 
   // 计算派生状态
   const isConfigured = Boolean(
@@ -88,6 +94,15 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     }
   }, [history]);
 
+  // 当配置完整且启用时，创建 page-agent 实例
+  useEffect(() => {
+    if (isEnabled) {
+      agentRef.current = createPageAgent(config);
+    } else {
+      agentRef.current = null;
+    }
+  }, [config, isEnabled]);
+
   // 更新配置（部分更新）
   const setConfig = useCallback((partialConfig: Partial<AIConfig>) => {
     setConfigState(prev => ({ ...prev, ...partialConfig }));
@@ -108,6 +123,66 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(AI_STORAGE_KEYS.HISTORY);
   }, []);
 
+  // 执行自然语言指令
+  const executeCommand = useCallback(async (command: string) => {
+    if (!agentRef.current || isExecuting) {
+      return;
+    }
+
+    // 添加用户消息
+    const userMessage: ConversationMessage = {
+      id: generateId(),
+      role: 'user',
+      content: command,
+      timestamp: Date.now(),
+    };
+    addMessage(userMessage);
+
+    // 添加助手消息（执行中状态）
+    const assistantMessage: ConversationMessage = {
+      id: generateId(),
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      status: 'executing',
+    };
+    addMessage(assistantMessage);
+
+    setIsExecuting(true);
+
+    try {
+      // 执行指令
+      const result = await agentRef.current.execute(command);
+
+      // 更新助手消息
+      setHistory(prev => prev.map(msg => {
+        if (msg.id === assistantMessage.id) {
+          return {
+            ...msg,
+            content: result.success ? `已执行: ${command}` : `执行失败: ${result.error}`,
+            status: result.success ? 'completed' : 'error',
+            actionResult: result.result,
+          };
+        }
+        return msg;
+      }));
+    } catch (error) {
+      // 更新助手消息为错误状态
+      setHistory(prev => prev.map(msg => {
+        if (msg.id === assistantMessage.id) {
+          return {
+            ...msg,
+            content: `执行出错: ${error instanceof Error ? error.message : '未知错误'}`,
+            status: 'error',
+          };
+        }
+        return msg;
+      }));
+    } finally {
+      setIsExecuting(false);
+    }
+  }, [isExecuting, addMessage]);
+
   const value: AIContextType = {
     config,
     setConfig,
@@ -116,7 +191,9 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
     history,
     addMessage,
     clearHistory,
+    executeCommand,
     isExecuting,
+    agent: agentRef.current,
   };
 
   return (
