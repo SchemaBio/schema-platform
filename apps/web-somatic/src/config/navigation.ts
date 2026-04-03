@@ -4,6 +4,7 @@ import {
   FileText,
   User,
   Shield,
+  ShieldCheck,
   Bot,
   Workflow,
   FileCode,
@@ -12,7 +13,6 @@ import {
   LayoutDashboard,
   ListTodo,
   History,
-  Settings2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -50,7 +50,7 @@ export const mainNavItems: NavItem[] = [
   { label: '任务中心', href: '/analysis', icon: ListTodo },
   { label: '历史检出', href: '/history', icon: History },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
-  { label: '管理中心', href: '/admin', icon: Settings2 },
+  { label: '管理中心', href: '/admin', icon: ShieldCheck },
 ];
 
 /**
