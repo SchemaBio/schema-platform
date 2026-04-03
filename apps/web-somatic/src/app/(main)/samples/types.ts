@@ -34,7 +34,8 @@ export interface Sample {
   id: string;
   // 内部编号（用户自定义）
   internalId: string;
-  name: string;
+  // 批次
+  batch: string;
   gender: Gender;
   age: number;
   birthDate: string;
@@ -45,14 +46,20 @@ export interface Sample {
   tumorType: string;
   // 配对样本编号（如有）
   pairedSampleId?: string;
+  // 匹配数据结构（双端测序数据）
+  matchedPair: MatchedPair | null;
   dataCount: number;
   status: SampleStatus;
   createdAt: string;
   updatedAt: string;
-  // 送检单位
-  hospital: string;
-  // 送检项目
-  testItems: string;
+  // 备注
+  remark: string;
+}
+
+// 匹配数据结构（双端测序数据）
+export interface MatchedPair {
+  r1Path: string;  // R1文件路径
+  r2Path: string;  // R2文件路径
 }
 
 export interface SampleDetail extends Sample {

@@ -3,100 +3,112 @@ import type { Sample, SampleDetail } from './types';
 // Mock 样本列表数据
 export const mockSamples: Sample[] = [
   {
-    id: 'S2024120001',
+    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
     internalId: 'XH-2024-001',
-    name: '张三',
+    batch: 'BATCH-2024-001',
     gender: 'male',
     age: 58,
     birthDate: '1966-05-15',
     sampleType: 'FFPE',
     nucleicAcidType: 'DNA',
     tumorType: '肺癌',
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-001_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-001_R2.fastq.gz',
+    },
     dataCount: 2,
     status: 'completed',
     createdAt: '2024-12-20',
     updatedAt: '2024-12-25',
-    hospital: '北京协和医院',
-    testItems: '肺癌168基因Panel',
+    remark: '一线化疗后进展',
   },
   {
-    id: 'S2024120002',
+    id: 'b2c3d4e5-f678-90ab-cdef-123456789012',
     internalId: 'XH-2024-002',
-    name: '李四',
+    batch: 'BATCH-2024-001',
     gender: 'female',
     age: 45,
     birthDate: '1979-08-22',
     sampleType: '新鲜组织',
     nucleicAcidType: 'DNA',
     tumorType: '乳腺癌',
-    pairedSampleId: 'S2024120002-N',
+    pairedSampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012-N',
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-002_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-002_R2.fastq.gz',
+    },
     dataCount: 1,
     status: 'analyzing',
     createdAt: '2024-12-21',
     updatedAt: '2024-12-21',
-    hospital: '上海肿瘤医院',
-    testItems: '乳腺癌56基因Panel',
+    remark: '',
   },
   {
-    id: 'S2024120003',
+    id: 'c3d4e5f6-7890-abcd-ef12-345678901234',
     internalId: 'GZ-2024-088',
-    name: '王五',
+    batch: 'BATCH-2024-002',
     gender: 'male',
     age: 62,
     birthDate: '1962-03-10',
     sampleType: 'cfDNA',
     nucleicAcidType: 'DNA',
     tumorType: '结直肠癌',
+    matchedPair: null,
     dataCount: 0,
     status: 'pending',
     createdAt: '2024-12-22',
     updatedAt: '2024-12-22',
-    hospital: '广州中山医院',
-    testItems: '结直肠癌Panel',
+    remark: '待补充临床信息',
   },
   {
-    id: 'S2024120004',
+    id: 'd4e5f678-90ab-cdef-1234-567890123456',
     internalId: 'ZJ-2024-156',
-    name: '赵六',
+    batch: 'BATCH-2024-002',
     gender: 'female',
     age: 52,
     birthDate: '1972-11-30',
     sampleType: 'FFPE',
     nucleicAcidType: 'RNA',
     tumorType: '卵巢癌',
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-004_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-004_R2.fastq.gz',
+    },
     dataCount: 3,
     status: 'matched',
     createdAt: '2024-12-23',
     updatedAt: '2024-12-24',
-    hospital: '浙江省肿瘤医院',
-    testItems: '妇科肿瘤Panel',
+    remark: 'BRCA检测',
   },
   {
-    id: 'S2024120005',
+    id: 'e5f67890-abcd-ef12-3456-789012345678',
     internalId: 'SC-2024-203',
-    name: '孙七',
+    batch: 'BATCH-2024-003',
     gender: 'male',
     age: 48,
     birthDate: '1976-07-08',
     sampleType: '新鲜组织',
     nucleicAcidType: 'DNA',
     tumorType: '胃癌',
-    pairedSampleId: 'S2024120005-N',
+    pairedSampleId: 'e5f67890-abcd-ef12-3456-789012345678-N',
+    matchedPair: {
+      r1Path: '/data/sequencing/2024/SEQ-005_R1.fastq.gz',
+      r2Path: '/data/sequencing/2024/SEQ-005_R2.fastq.gz',
+    },
     dataCount: 1,
     status: 'completed',
     createdAt: '2024-12-24',
     updatedAt: '2024-12-28',
-    hospital: '四川华西医院',
-    testItems: '消化道肿瘤Panel',
+    remark: '',
   },
 ];
 
 // Mock 样本详情数据
 const mockSampleDetails: Record<string, SampleDetail> = {
-  'S2024120001': {
+  'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
     ...mockSamples[0],
     idCard: '110101198605151234',
-    patientCode: '110101198605151234',  // 使用身份证号作为患者编号
+    patientCode: '110101198605151234',
     phone: '138****5678',
     tumorInfo: {
       tumorType: '肺癌',
@@ -144,7 +156,7 @@ const mockSampleDetails: Record<string, SampleDetail> = {
       priority: 'urgent',
     },
     analysisTasks: [
-      { id: 'a1b2c3d4', name: 'S2024120001', status: 'completed', createdAt: '2024-12-20' },
+      { id: 'a1b2c3d4', name: 'WES分析', status: 'completed', createdAt: '2024-12-20' },
     ],
     heImages: [
       {
@@ -154,35 +166,10 @@ const mockSampleDetails: Record<string, SampleDetail> = {
         description: '肺腺癌 HE 染色 10x',
         uploadedAt: '2024-12-20',
       },
-      {
-        id: 'he-002',
-        url: 'https://placehold.co/800x600/d5e8e8/333?text=HE+Lung+40x',
-        thumbnail: 'https://placehold.co/200x150/d5e8e8/333?text=HE+40x',
-        description: '肺腺癌 HE 染色 40x',
-        uploadedAt: '2024-12-20',
-      },
     ],
-    // 该患者的其他样本（用于演示关联样本功能）
-    relatedSamples: [
-      {
-        id: 'S2024110008',
-        internalId: 'XH-2023-156',
-        sampleType: '全血',
-        tumorType: '肺癌',
-        createdAt: '2023-11-15',
-        status: 'completed',
-      },
-      {
-        id: 'S2024090012',
-        internalId: 'XH-2023-089',
-        sampleType: 'FFPE',
-        tumorType: '肺癌',
-        createdAt: '2023-09-20',
-        status: 'completed',
-      },
-    ],
+    relatedSamples: [],
   },
-  'S2024120002': {
+  'b2c3d4e5-f678-90ab-cdef-123456789012': {
     ...mockSamples[1],
     tumorInfo: {
       tumorType: '乳腺癌',
@@ -195,7 +182,7 @@ const mockSampleDetails: Record<string, SampleDetail> = {
       sampleSource: 'primary',
       samplingMethod: 'surgery',
       isPaired: true,
-      pairedSampleId: 'S2024120002-N',
+      pairedSampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012-N',
       samplingDate: '2024-12-19',
       samplingLocation: '左乳外上象限',
     },
@@ -227,17 +214,9 @@ const mockSampleDetails: Record<string, SampleDetail> = {
       priority: 'normal',
     },
     analysisTasks: [
-      { id: 'c3d4e5f6', name: 'S2024120002', status: 'running', createdAt: '2024-12-21' },
+      { id: 'c3d4e5f6', name: 'WES分析', status: 'running', createdAt: '2024-12-21' },
     ],
-    heImages: [
-      {
-        id: 'he-003',
-        url: 'https://placehold.co/800x600/e8e8d5/333?text=HE+Breast',
-        thumbnail: 'https://placehold.co/200x150/e8e8d5/333?text=HE+Breast',
-        description: '乳腺浸润性导管癌 HE 染色',
-        uploadedAt: '2024-12-21',
-      },
-    ],
+    heImages: [],
   },
 };
 
@@ -245,15 +224,15 @@ const mockSampleDetails: Record<string, SampleDetail> = {
 export async function getSampleDetail(sampleId: string): Promise<SampleDetail | null> {
   // 模拟网络延迟
   await new Promise(resolve => setTimeout(resolve, 300));
-  
+
   // 如果有详细数据则返回
   if (mockSampleDetails[sampleId]) {
     return mockSampleDetails[sampleId];
   }
-  
+
   const sample = mockSamples.find(s => s.id === sampleId);
   if (!sample) return null;
-  
+
   // 生成默认详情
   return {
     ...sample,

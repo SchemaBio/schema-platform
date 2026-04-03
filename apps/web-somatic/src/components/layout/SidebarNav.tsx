@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation';
 import { Tooltip } from '@schema/ui-kit';
 import { ChevronLeft } from 'lucide-react';
 import { UserMenu } from './UserMenu';
+import { OrganizationSwitcher } from './OrganizationSwitcher';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { mainNavItems, sidebarNavConfig, isNavItemActive, type SidebarNavItem, type NavItem } from '@/config/navigation';
 
 interface SidebarNavProps {
@@ -14,19 +16,17 @@ interface SidebarNavProps {
   onCollapsedChange: (collapsed: boolean) => void;
 }
 
-// 模拟当前用户 - 实际应从认证上下文获取
-const mockCurrentUser = {
-  role: 'admin' as const,
-};
-
 /**
  * SidebarNav displays main navigation and contextual sub-navigation.
  * Supports collapsed mode with icon-only display and tooltips.
  */
 export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
   const pathname = usePathname();
-  const isAdmin = mockCurrentUser.role === 'admin';
-  
+  const { hasAnyOrgRole, isSuperAdmin } = useAuth();
+
+  // Check if user is org admin or higher
+  const isOrgAdmin = isSuperAdmin() || hasAnyOrgRole('OWNER', 'ADMIN');
+
   // Determine current section from pathname
   const currentSection = React.useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
@@ -36,16 +36,16 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
   // 获取子导航项，并根据权限过滤
   const subItems = React.useMemo(() => {
     const items = sidebarNavConfig[currentSection as keyof typeof sidebarNavConfig] || [];
-    
+
     // 对于设置页面，非管理员隐藏权限管理和AI设置
-    if (currentSection === 'settings' && !isAdmin) {
-      return items.filter(item => 
+    if (currentSection === 'settings' && !isOrgAdmin) {
+      return items.filter(item =>
         item.href !== '/settings/permissions' && item.href !== '/settings/ai'
       );
     }
-    
+
     return items;
-  }, [currentSection, isAdmin]);
+  }, [currentSection, isOrgAdmin]);
 
   return (
     <aside
@@ -104,6 +104,11 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
             <ChevronLeft className="w-4 h-4" />
           </button>
         )}
+      </div>
+
+      {/* Organization Switcher */}
+      <div className="border-b border-border px-2">
+        <OrganizationSwitcher collapsed={collapsed} />
       </div>
 
       {/* Main Navigation */}

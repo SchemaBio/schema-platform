@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { ThemeProvider } from '@schema/ui-kit';
+import { AuthProvider } from './AuthProvider';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -9,12 +10,14 @@ interface AppProvidersProps {
 
 /**
  * AppProviders wraps the application with all necessary providers.
- * Currently includes ThemeProvider for theme management.
+ * Currently includes ThemeProvider for theme management and AuthProvider for authentication.
  */
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider defaultTheme="light" storageKey="somatic-theme">
-      {children}
+      <AuthProvider>
+        {children}
+      </AuthProvider>
     </ThemeProvider>
   );
 }

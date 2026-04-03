@@ -6,3 +6,4 @@ export { UserMenu } from './UserMenu';
 export { MobileNav } from './MobileNav';
 export { PageHeader } from './PageHeader';
 export { PageContent } from './PageContent';
+export { OrganizationSwitcher } from './OrganizationSwitcher';
