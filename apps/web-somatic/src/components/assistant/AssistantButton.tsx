@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bot, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAI } from '@/components/providers/AIProvider';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { AssistantDialog } from './AssistantDialog';
@@ -38,24 +38,23 @@ export function AssistantButton() {
         className={`
           ${positionStyle}
           flex items-center justify-center
-          w-12 h-12 rounded-full
-          shadow-lg
-          border-2 border-white
+          w-32 h-32
           transition-all duration-200
-          hover:scale-105
-          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-          ${isConfigured
-            ? 'bg-blue-600 hover:bg-blue-700'
-            : 'bg-gray-500 hover:bg-gray-600'
-          }
+          hover:drop-shadow-lg
+          focus:outline-none
+          ${isExecuting ? 'animate-spin' : ''}
         `}
         aria-label="AI 助手"
         title={isConfigured ? 'AI 助手' : '请先配置 AI 服务'}
       >
         {isExecuting ? (
-          <Loader2 className="w-6 h-6 text-white animate-spin" />
+          <Loader2 className="w-20 h-20 text-blue-600" />
         ) : (
-          <Bot className="w-6 h-6 text-white" />
+          <img
+            src="/mascot.png"
+            alt="AI 助手"
+            className="w-32 h-32 object-contain"
+          />
         )}
       </button>
 

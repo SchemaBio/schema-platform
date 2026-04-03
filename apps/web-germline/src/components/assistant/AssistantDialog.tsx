@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { X, Bot, Settings, Trash2, AlertCircle } from 'lucide-react';
+import { X, Settings, Trash2, AlertCircle } from 'lucide-react';
 import { useAI } from '@/components/providers/AIProvider';
 import { AssistantChat } from './AssistantChat';
 import Link from 'next/link';
@@ -77,8 +77,8 @@ export function AssistantDialog({ onClose, isMobile }: AssistantDialogProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
-          <Bot className="w-5 h-5 text-accent-emphasis" />
-          <span className="font-medium text-fg-default">AI 助手</span>
+          <img src="/mascot.png" alt="小墨" className="w-5 h-5 object-contain" />
+          <span className="font-medium text-fg-default">小墨</span>
         </div>
         <button
           onClick={onClose}
@@ -110,9 +110,9 @@ export function AssistantDialog({ onClose, isMobile }: AssistantDialogProps) {
         ) : !isEnabled ? (
           // 已禁用提示
           <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-            <Bot className="w-8 h-8 text-fg-muted mb-2" />
+            <img src="/mascot.png" alt="小墨" className="w-8 h-8 object-contain mb-2" />
             <p className="text-sm text-fg-muted mb-4">
-              AI 助手已禁用
+              小墨已禁用
             </p>
             <Link
               href="/admin"
