@@ -1,9 +1,7 @@
 'use client';
 
-import { PageContent } from '@/components/layout';
-import { Button, Input, DataTable, Tag } from '@schema/ui-kit';
-import type { Column } from '@schema/ui-kit';
-import { Plus, Search, Download, Trash2, X, Upload, FileText } from 'lucide-react';
+import { Button, Input, Tag } from '@schema/ui-kit';
+import { Plus, Search, Trash2, ChevronDown, ChevronRight, ChevronLeft, X, Upload, Play, Square, RotateCcw, BookOpen, List } from 'lucide-react';
 import * as React from 'react';
 
 interface BaselineFile {
@@ -12,67 +10,167 @@ interface BaselineFile {
   sampleCount: number;
   bedFile: string;
   description: string;
+  sampleIds: string[];
   createdAt: string;
   createdBy: string;
+  status: 'pending' | 'building' | 'completed' | 'failed';
+  progress: number;
 }
 
-const initialBaselines: BaselineFile[] = [
+type BaselineStatus = BaselineFile['status'];
+
+const statusConfig: Record<BaselineStatus, { label: string; variant: 'neutral' | 'info' | 'success' | 'danger' }> = {
+  pending: { label: '待构建', variant: 'neutral' },
+  building: { label: '构建中', variant: 'info' },
+  completed: { label: '已完成', variant: 'success' },
+  failed: { label: '失败', variant: 'danger' },
+};
+
+const statusDotColors: Record<BaselineStatus, string> = {
+  pending: 'bg-neutral-emphasis',
+  building: 'bg-accent-emphasis',
+  completed: 'bg-success-emphasis',
+  failed: 'bg-danger-emphasis',
+};
+
+const mockBaselines: BaselineFile[] = [
   {
     id: '1',
-    name: 'WES_V7_CNV_Baseline_100',
-    sampleCount: 100,
-    bedFile: 'Agilent_SureSelect_V7.bed',
-    description: 'WES V7 CNV检测基线（100样本）',
-    createdAt: '2024-10-15',
+    name: '肺癌168基因_CNV_Baseline',
+    sampleCount: 15,
+    bedFile: '肺癌168基因_Panel.bed',
+    description: '肺癌168基因Panel CNV检测基线（15样本）',
+    sampleIds: [
+      'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+      'c3d4e5f6-a7b8-9012-cdef-123456789012',
+      'd4e5f6a7-b8c9-0123-defa-234567890123',
+      'e5f6a7b8-c9d0-1234-efab-345678901234',
+      'f6a7b8c9-d0e1-2345-fabc-456789012345',
+      'a7b8c9d0-e1f2-3456-abcd-567890123456',
+      'b8c9d0e1-f2a3-4567-bcde-678901234567',
+      'c9d0e1f2-a3b4-5678-cdef-789012345678',
+      'd0e1f2a3-b4c5-6789-defa-890123456789',
+      'e1f2a3b4-c5d6-7890-efab-123456789abc',
+      'f2a3b4c5-d6e7-8901-fabc-234567890def',
+      'a3b4c5d6-e7f8-9012-abcd-345678901efa',
+      'b4c5d6e7-f8a9-0123-bcde-456789012fab',
+      'c5d6e7f8-a9b0-1234-cdef-567890123abc',
+    ],
+    createdAt: '2024-10-15 14:30:00',
     createdBy: '王工',
+    status: 'completed',
+    progress: 100,
   },
   {
     id: '2',
-    name: 'WES_V7_CNV_Baseline_200',
-    sampleCount: 200,
-    bedFile: 'Agilent_SureSelect_V7.bed',
-    description: 'WES V7 CNV检测基线（200样本）',
-    createdAt: '2024-11-01',
+    name: '实体瘤520基因_CNV_Baseline',
+    sampleCount: 18,
+    bedFile: '实体瘤520基因_Panel.bed',
+    description: '实体瘤520基因Panel CNV检测基线（18样本）',
+    sampleIds: [
+      'f6a7b8c9-d0e1-2345-fabc-456789012345',
+      'a7b8c9d0-e1f2-3456-abcd-567890123456',
+      'b8c9d0e1-f2a3-4567-bcde-678901234567',
+      'c9d0e1f2-a3b4-5678-cdef-789012345678',
+      'd0e1f2a3-b4c5-6789-defa-890123456789',
+      'e1f2a3b4-c5d6-7890-efab-123456789abc',
+      'f2a3b4c5-d6e7-8901-fabc-234567890def',
+      'a3b4c5d6-e7f8-9012-abcd-345678901efa',
+      'b4c5d6e7-f8a9-0123-bcde-456789012fab',
+      'c5d6e7f8-a9b0-1234-cdef-567890123abc',
+      'd6e7f8a9-b0c1-2345-defa-678901234bcd',
+      'e7f8a9b0-c1d2-3456-efab-789012345cde',
+      'f8a9b0c1-d2e3-4567-fabc-890123456def',
+      'a9b0c1d2-e3f4-5678-abcd-901234567efa',
+      'b0c1d2e3-f4a5-6789-bcde-012345678fab',
+      'c1d2e3f4-a5b6-7890-cdef-123456789abc',
+      'd2e3f4a5-b6c7-8901-defa-234567890bcd',
+      'e3f4a5b6-c7d8-9012-efab-345678901cde',
+    ],
+    createdAt: '2024-11-01 09:15:30',
     createdBy: '李工',
+    status: 'building',
+    progress: 65,
   },
   {
     id: '3',
-    name: 'IDT_xGen_CNV_Baseline',
-    sampleCount: 80,
-    bedFile: 'IDT_xGen_Exome_v2.bed',
-    description: 'IDT xGen Exome CNV检测基线',
-    createdAt: '2024-09-20',
+    name: '泛癌种Panel_CNV_Baseline',
+    sampleCount: 12,
+    bedFile: '泛癌种Panel.bed',
+    description: '泛癌种Panel CNV检测基线',
+    sampleIds: [
+      'c9d0e1f2-a3b4-5678-cdef-789012345678',
+      'd0e1f2a3-b4c5-6789-defa-890123456789',
+      'e1f2a3b4-c5d6-7890-efab-123456789abc',
+      'f2a3b4c5-d6e7-8901-fabc-234567890def',
+      'a3b4c5d6-e7f8-9012-abcd-345678901efa',
+      'b4c5d6e7-f8a9-0123-bcde-456789012fab',
+      'c5d6e7f8-a9b0-1234-cdef-567890123abc',
+      'd6e7f8a9-b0c1-2345-defa-678901234bcd',
+      'e7f8a9b0-c1d2-3456-efab-789012345cde',
+      'f8a9b0c1-d2e3-4567-fabc-890123456def',
+      'a9b0c1d2-e3f4-5678-abcd-901234567efa',
+      'b0c1d2e3-f4a5-6789-bcde-012345678fab',
+    ],
+    createdAt: '2024-09-20 16:45:12',
     createdBy: '王工',
+    status: 'pending',
+    progress: 0,
+  },
+  {
+    id: '4',
+    name: 'ctDNA_Panel_CNV_Baseline',
+    sampleCount: 8,
+    bedFile: 'ctDNA_Panel_500.bed',
+    description: 'ctDNA Panel CNV检测基线',
+    sampleIds: [
+      'e1f2a3b4-c5d6-7890-efab-123456789abc',
+      'f2a3b4c5-d6e7-8901-fabc-234567890def',
+      'a3b4c5d6-e7f8-9012-abcd-345678901efa',
+      'b4c5d6e7-f8a9-0123-bcde-456789012fab',
+      'c5d6e7f8-a9b0-1234-cdef-567890123abc',
+      'd6e7f8a9-b0c1-2345-defa-678901234bcd',
+      'e7f8a9b0-c1d2-3456-efab-789012345cde',
+      'f8a9b0c1-d2e3-4567-fabc-890123456def',
+    ],
+    createdAt: '2024-12-01 11:20:45',
+    createdBy: '张工',
+    status: 'failed',
+    progress: 30,
   },
 ];
 
 // 删除确认弹窗
-interface DeleteConfirmModalProps {
+function DeleteConfirmModal({
+  isOpen,
+  baselineName,
+  onClose,
+  onConfirm,
+}: {
   isOpen: boolean;
   baselineName: string;
   onClose: () => void;
   onConfirm: () => void;
-}
-
-function DeleteConfirmModal({ isOpen, baselineName, onClose, onConfirm }: DeleteConfirmModalProps) {
+}) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-10 bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-sm overflow-hidden">
+      <div className="relative z-10 bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden">
         <div className="p-6">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30">
-            <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-100">
+            <Trash2 className="w-6 h-6 text-red-600" />
           </div>
-          <h3 className="text-lg font-medium text-center text-gray-900 dark:text-gray-100 mb-2">
-            删除 CNV 基线
+          <h3 className="text-lg font-medium text-center text-gray-900 mb-2">
+            删除基线文件
           </h3>
-          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
-            确定要删除基线 "<span className="font-medium text-gray-700 dark:text-gray-300">{baselineName}</span>" 吗？此操作无法撤销。
+          <p className="text-sm text-center text-gray-500">
+            确定要删除 "{baselineName}" 吗？此操作无法撤销。
           </p>
         </div>
-        <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
           <Button variant="secondary" onClick={onClose} className="flex-1">
             取消
           </Button>
@@ -85,64 +183,176 @@ function DeleteConfirmModal({ isOpen, baselineName, onClose, onConfirm }: Delete
   );
 }
 
+// 动态按钮组件：根据状态自动切换
+function BaselineActionsCell({
+  baseline,
+  onStart,
+  onStop,
+  onView,
+  onDelete,
+}: {
+  baseline: BaselineFile;
+  onStart: (id: string) => void;
+  onStop: (id: string) => void;
+  onView: (baseline: BaselineFile) => void;
+  onDelete: (baseline: BaselineFile) => void;
+}) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const deleteConfirmRef = React.useRef<HTMLDivElement>(null);
 
-// 创建基线弹窗
-interface CreateBaselineModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: { name: string; bedFile: string; description: string; file: File }) => void;
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (deleteConfirmRef.current && !deleteConfirmRef.current.contains(event.target as Node)) {
+        setShowDeleteConfirm(false);
+      }
+    };
+    if (showDeleteConfirm) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDeleteConfirm]);
+
+  const getPrimaryAction = () => {
+    switch (baseline.status) {
+      case 'pending':
+        return {
+          label: '启动',
+          icon: Play,
+          onClick: () => onStart(baseline.id),
+          className: 'text-green-600 hover:bg-green-50 border-green-200 hover:border-green-300',
+        };
+      case 'building':
+        return {
+          label: '停止',
+          icon: Square,
+          onClick: () => onStop(baseline.id),
+          className: 'text-orange-600 hover:bg-orange-50 border-orange-200 hover:border-orange-300',
+        };
+      case 'completed':
+        return {
+          label: '查看',
+          icon: BookOpen,
+          onClick: () => onView(baseline),
+          className: 'text-blue-600 hover:bg-blue-50 border-blue-200 hover:border-blue-300',
+        };
+      case 'failed':
+        return {
+          label: '重试',
+          icon: RotateCcw,
+          onClick: () => onStart(baseline.id),
+          className: 'text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300',
+        };
+      default:
+        return null;
+    }
+  };
+
+  const primaryAction = getPrimaryAction();
+  const canDelete = baseline.status !== 'building';
+
+  return (
+    <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+      {primaryAction && (
+        <button
+          onClick={primaryAction.onClick}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded transition-colors ${primaryAction.className}`}
+        >
+          <primaryAction.icon className="w-3.5 h-3.5" />
+          {primaryAction.label}
+        </button>
+      )}
+
+      <div className="relative" ref={deleteConfirmRef}>
+        <button
+          className={`p-1.5 rounded transition-colors ${
+            canDelete ? 'text-gray-400 hover:text-red-600 hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
+          }`}
+          onClick={() => {
+            if (canDelete) setShowDeleteConfirm(true);
+          }}
+          disabled={!canDelete}
+          aria-label="删除"
+          title={canDelete ? '删除' : '构建中不可删除'}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+
+        {showDeleteConfirm && (
+          <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-md shadow-lg z-20 p-2">
+            <div className="text-xs text-gray-600 mb-2 text-center">确认删除此基线？</div>
+            <div className="flex gap-1">
+              <button
+                className="flex-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                取消
+              </button>
+              <button
+                className="flex-1 px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+                onClick={() => {
+                  onDelete(baseline);
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-function CreateBaselineModal({ isOpen, onClose, onSubmit }: CreateBaselineModalProps) {
-  const [name, setName] = React.useState('');
-  const [bedFile, setBedFile] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+// 创建基线弹窗
+function CreateBaselineModal({
+  isOpen,
+  onClose,
+  onSubmit,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: { name: string; bedFile: string; description: string; sampleIds: string[] }) => void;
+}) {
+  const [formData, setFormData] = React.useState({
+    name: '',
+    bedFile: '肺癌168基因_Panel.bed',
+    description: '',
+    sampleIdsText: '',
+  });
   const [dragOver, setDragOver] = React.useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const BED_FILE_OPTIONS = [
-    'Agilent_SureSelect_V7.bed',
-    'IDT_xGen_Exome_v2.bed',
-    'Twist_Exome_V2.bed',
-    'ctDNA_Panel_168.bed',
-    'Custom_Panel.bed',
+  const bedFileOptions = [
+    { value: '肺癌168基因_Panel.bed', label: '肺癌168基因 Panel' },
+    { value: '实体瘤520基因_Panel.bed', label: '实体瘤520基因 Panel' },
+    { value: '泛癌种Panel.bed', label: '泛癌种 Panel' },
+    { value: 'ctDNA_Panel_500.bed', label: 'ctDNA Panel' },
   ];
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
+  const parsedSampleIds = React.useMemo(() => {
+    return formData.sampleIdsText
+      .split(/[\n,\s]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  }, [formData.sampleIdsText]);
 
   const handleSubmit = () => {
-    if (!name || !bedFile || !selectedFile) return;
-    onSubmit({ name, bedFile, description, file: selectedFile });
-    handleClose();
-  };
-
-  const handleClose = () => {
-    setName('');
-    setBedFile('');
-    setDescription('');
-    setSelectedFile(null);
+    if (!formData.name || parsedSampleIds.length === 0 || parsedSampleIds.length > 20) return;
+    onSubmit({
+      name: formData.name,
+      bedFile: formData.bedFile,
+      description: formData.description,
+      sampleIds: parsedSampleIds,
+    });
+    setFormData({ name: '', bedFile: '肺癌168基因_Panel.bed', description: '', sampleIdsText: '' });
     onClose();
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const handleClose = () => {
+    setFormData({ name: '', bedFile: '肺癌168基因_Panel.bed', description: '', sampleIdsText: '' });
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -150,118 +360,99 @@ function CreateBaselineModal({ isOpen, onClose, onSubmit }: CreateBaselineModalP
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-      
-      <div className="relative z-10 bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">创建 CNV 基线</h2>
+
+      <div className="relative z-10 bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">创建 CNV 基线</h2>
           <button
             onClick={handleClose}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          {/* 基线名称 */}
-          <div className="mb-4">
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div>
             <label className="block text-sm font-medium text-fg-default mb-2">基线名称 *</label>
             <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="如：WES_V7_CNV_Baseline_150"
+              value={formData.name}
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+              placeholder="如：肺癌168基因_CNV_Baseline"
             />
           </div>
 
-          {/* 关联 BED 文件 */}
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-fg-default mb-2">关联 BED 文件 *</label>
             <select
-              value={bedFile}
-              onChange={(e) => setBedFile(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-fg-default focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.bedFile}
+              onChange={(e) => setFormData((prev) => ({ ...prev, bedFile: e.target.value }))}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-fg-default text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">请选择 BED 文件</option>
-              {BED_FILE_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
+              {bedFileOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
               ))}
             </select>
-            <p className="text-xs text-fg-muted mt-1">选择与样本捕获试剂盒对应的 BED 文件</p>
           </div>
 
-          {/* 描述 */}
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-fg-default mb-2">描述</label>
             <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={formData.description}
+              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="基线用途说明"
             />
           </div>
 
-          {/* 文件上传区域 */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-fg-default mb-2">基线文件 *</label>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-fg-default">样本UUID列表 *</label>
+              {parsedSampleIds.length > 0 && (
+                <span className={`text-xs ${parsedSampleIds.length > 20 ? 'text-danger-fg' : 'text-fg-muted'}`}>
+                  已输入 {parsedSampleIds.length} 个样本{parsedSampleIds.length > 20 ? '（超出限制）' : ''}
+                </span>
+              )}
+            </div>
             <div
-              onClick={() => fileInputRef.current?.click()}
-              onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               className={`
-                border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-                ${dragOver 
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors mb-2
+                ${dragOver
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
                 }
               `}
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.tsv"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              {selectedFile ? (
-                <div className="flex items-center justify-center gap-3">
-                  <FileText className="w-8 h-8 text-blue-500" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-fg-default">{selectedFile.name}</p>
-                    <p className="text-xs text-fg-muted">{formatFileSize(selectedFile.size)}</p>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedFile(null);
-                    }}
-                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                  >
-                    <X className="w-4 h-4 text-gray-500" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">点击或拖拽上传 CNV 基线文件</p>
-                  <p className="text-xs text-gray-400 mt-1">支持 .txt、.tsv 格式</p>
-                </>
-              )}
+              <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+              <p className="text-xs text-gray-500">拖拽上传样本列表文件</p>
             </div>
+            <textarea
+              value={formData.sampleIdsText}
+              onChange={(e) => setFormData((prev) => ({ ...prev, sampleIdsText: e.target.value }))}
+              placeholder="每行一个样本UUID，或用逗号/空格分隔"
+              rows={6}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-fg-default text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             <p className="text-xs text-fg-muted mt-1">
-              基线文件应包含正常样本的覆盖度信息，用于 CNV 检测
+              支持每行一个UUID，或用逗号、空格分隔
+            </p>
+          </div>
+
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-600">
+              提示：基线构建需要一定时间，创建后需点击"启动"开始构建。建议使用相同捕获试剂盒、相同测序平台的样本，最多支持 20 个样本。
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
           <Button variant="secondary" onClick={handleClose}>
             取消
           </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleSubmit}
-            disabled={!name || !bedFile || !selectedFile}
-          >
+          <Button variant="primary" onClick={handleSubmit} disabled={!formData.name || parsedSampleIds.length === 0 || parsedSampleIds.length > 20}>
             创建
           </Button>
         </div>
@@ -270,36 +461,232 @@ function CreateBaselineModal({ isOpen, onClose, onSubmit }: CreateBaselineModalP
   );
 }
 
+// 样本UUID显示组件
+function SampleIdCell({ id }: { id: string }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <span
+      className={`font-mono text-xs cursor-pointer ${copied ? 'text-green-500' : 'text-accent-fg hover:underline'}`}
+      onClick={handleClick}
+      title={id}
+    >
+      {id.substring(0, 8)}
+    </span>
+  );
+}
+
+// 基线详情面板
+function BaselineDetailPanel({ baselineId }: { baselineId: string }) {
+  const [baseline, setBaseline] = React.useState<BaselineFile | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      const found = mockBaselines.find(b => b.id === baselineId);
+      setBaseline(found || null);
+      setLoading(false);
+    }, 100);
+  }, [baselineId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-emphasis" />
+      </div>
+    );
+  }
+
+  if (!baseline) {
+    return (
+      <div className="flex items-center justify-center py-16 text-fg-muted">
+        未找到该基线
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4">
+      {/* 基线信息头部 */}
+      <div className="mb-4 pb-3 border-b border-border-default">
+        <div className="flex items-center gap-3 mb-2">
+          <div className={`w-2 h-2 rounded-full ${statusDotColors[baseline.status]}`} />
+          <h3 className="text-base font-medium text-fg-default">{baseline.name}</h3>
+        </div>
+
+        <div className="flex items-center gap-4 text-xs text-fg-muted mb-2">
+          <span>BED: {baseline.bedFile}</span>
+          <span>样本数: {baseline.sampleCount}</span>
+          <span>创建: {baseline.createdAt}</span>
+          <span>创建者: {baseline.createdBy}</span>
+        </div>
+
+        <div className="text-xs text-fg-muted">
+          {baseline.description}
+        </div>
+
+        {/* 进度条 */}
+        {baseline.status === 'building' && (
+          <div className="mt-3">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 bg-canvas-inset rounded-full overflow-hidden max-w-[200px]">
+                <div
+                  className="h-full bg-accent-emphasis rounded-full transition-all"
+                  style={{ width: `${baseline.progress}%` }}
+                />
+              </div>
+              <span className="text-xs text-fg-muted">{baseline.progress}%</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 样本列表 */}
+      <div className="mb-4">
+        <div className="text-sm font-medium text-fg-default mb-2">样本 UUID 列表 ({baseline.sampleIds.length} 个)</div>
+        <div className="bg-canvas-subtle rounded-lg p-3 max-h-[300px] overflow-auto">
+          <div className="flex flex-wrap gap-2">
+            {baseline.sampleIds.map((sampleId) => (
+              <SampleIdCell key={sampleId} id={sampleId} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 构建参数 */}
+      <div>
+        <div className="text-sm font-medium text-fg-default mb-2">构建参数</div>
+        <div className="bg-canvas-subtle rounded-lg p-3 text-xs space-y-1">
+          <div className="flex gap-2">
+            <span className="text-fg-muted">BED 文件:</span>
+            <span className="text-fg-default">{baseline.bedFile}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="text-fg-muted">样本数量:</span>
+            <span className="text-fg-default">{baseline.sampleCount}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="text-fg-muted">算法版本:</span>
+            <span className="text-fg-default">CNVkit v0.9.9</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 标签页接口
+interface OpenTab {
+  id: string;
+  baselineId: string;
+  name: string;
+}
 
 export default function CNVBaselinePage() {
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [baselines, setBaselines] = React.useState<BaselineFile[]>(initialBaselines);
+  const [baselines, setBaselines] = React.useState<BaselineFile[]>(mockBaselines);
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<BaselineFile | null>(null);
+  const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
+  const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
 
-  const handleCreate = (data: { name: string; bedFile: string; description: string; file: File }) => {
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleCreateBaseline = (data: { name: string; bedFile: string; description: string; sampleIds: string[] }) => {
     const newBaseline: BaselineFile = {
       id: String(Date.now()),
       name: data.name,
-      sampleCount: Math.floor(Math.random() * 150) + 50, // 模拟样本数
+      sampleCount: data.sampleIds.length,
       bedFile: data.bedFile,
-      description: data.description || `${data.name} CNV 检测基线`,
-      createdAt: new Date().toISOString().split('T')[0],
+      description: data.description || `${data.name} CNV基线`,
+      sampleIds: data.sampleIds,
+      createdAt: new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).replace(/\//g, '-'),
       createdBy: '当前用户',
+      status: 'pending',
+      progress: 0,
     };
-    setBaselines(prev => [...prev, newBaseline]);
+    setBaselines((prev) => [newBaseline, ...prev]);
   };
 
-  const handleDelete = (baseline: BaselineFile) => {
-    setDeleteTarget(baseline);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deleteTarget) {
-      setBaselines(prev => prev.filter(b => b.id !== deleteTarget.id));
-      setDeleteTarget(null);
+  const handleDeleteBaseline = (baseline: BaselineFile) => {
+    setBaselines((prev) => prev.filter((b) => b.id !== baseline.id));
+    setOpenTabs((prev) => prev.filter((t) => t.baselineId !== baseline.id));
+    if (activeTabId && openTabs.find((t) => t.id === activeTabId)?.baselineId === baseline.id) {
+      const remaining = openTabs.filter((t) => t.baselineId !== baseline.id);
+      setActiveTabId(remaining.length > 0 ? remaining[remaining.length - 1].id : null);
     }
   };
+
+  const handleStartBaseline = (baselineId: string) => {
+    setBaselines((prev) => prev.map((b) => {
+      if (b.id !== baselineId) return b;
+      return { ...b, status: 'building', progress: 0 };
+    }));
+  };
+
+  const handleStopBaseline = (baselineId: string) => {
+    setBaselines((prev) => prev.map((b) => {
+      if (b.id !== baselineId) return b;
+      return { ...b, status: 'pending', progress: 0 };
+    }));
+  };
+
+  const handleOpenTab = React.useCallback((baseline: BaselineFile) => {
+    const existingTab = openTabs.find((t) => t.baselineId === baseline.id);
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      return;
+    }
+
+    const newTab: OpenTab = {
+      id: `tab-${Date.now()}`,
+      baselineId: baseline.id,
+      name: baseline.name,
+    };
+    setOpenTabs((prev) => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+  }, [openTabs]);
+
+  const handleCloseTab = React.useCallback((tabId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setOpenTabs((prev) => {
+      const newTabs = prev.filter((t) => t.id !== tabId);
+      if (activeTabId === tabId && newTabs.length > 0) {
+        setActiveTabId(newTabs[newTabs.length - 1].id);
+      } else if (newTabs.length === 0) {
+        setActiveTabId(null);
+      }
+      return newTabs;
+    });
+  }, [activeTabId]);
 
   const filteredFiles = React.useMemo(() => {
     if (!searchQuery) return baselines;
@@ -311,91 +698,266 @@ export default function CNVBaselinePage() {
     );
   }, [searchQuery, baselines]);
 
-  const columns: Column<BaselineFile>[] = [
-    { id: 'name', header: '基线名称', accessor: 'name', width: 250 },
-    {
-      id: 'sampleCount',
-      header: '样本数',
-      accessor: (row) => `${row.sampleCount} 个`,
-      width: 100,
-    },
-    { id: 'bedFile', header: '关联 BED', accessor: 'bedFile', width: 200 },
-    { id: 'description', header: '描述', accessor: 'description', width: 220 },
-    { id: 'createdAt', header: '创建时间', accessor: 'createdAt', width: 120 },
-    { id: 'createdBy', header: '创建者', accessor: 'createdBy', width: 80 },
-    {
-      id: 'actions',
-      header: '操作',
-      accessor: (row) => (
-        <div className="flex items-center gap-1">
-          <button
-            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
-            title="下载"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button
-            className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-600 transition-colors"
-            title="删除"
-            onClick={() => handleDelete(row)}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
-      width: 100,
-    },
-  ];
+  const activeTab = openTabs.find((t) => t.id === activeTabId);
+  const hasOpenTabs = openTabs.length > 0;
 
   return (
-    <PageContent>
-      <h2 className="text-lg font-medium text-fg-default mb-4">CNV 基线管理</h2>
+    <div className="flex h-full">
+      {/* 左侧基线列表 */}
+      {hasOpenTabs ? (
+        sidebarCollapsed ? (
+          <div className="w-10 flex-shrink-0 border-r border-border-default bg-canvas-subtle flex flex-col items-center py-2">
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="p-2 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default transition-colors"
+              title="展开基线列表"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="mt-2 text-xs text-fg-muted writing-mode-vertical">
+              基线
+            </div>
+            <div className="mt-auto mb-2 w-5 h-5 rounded-full bg-accent-emphasis text-white text-xs flex items-center justify-center">
+              {openTabs.length}
+            </div>
+          </div>
+        ) : (
+          <div className="w-56 flex-shrink-0 border-r border-border-default bg-canvas-subtle flex flex-col">
+            <div className="px-3 py-2 border-b border-border-default flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <List className="w-4 h-4 text-fg-muted" />
+                <span className="text-sm font-medium text-fg-default">基线列表</span>
+              </div>
+              <button
+                onClick={() => setSidebarCollapsed(true)}
+                className="p-1 rounded hover:bg-canvas-inset text-fg-muted hover:text-fg-default transition-colors"
+                title="收起"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
 
-      <div className="p-4 bg-canvas-subtle rounded-lg border border-border mb-4">
-        <p className="text-sm text-fg-muted">
-          CNV 基线用于拷贝数变异检测，通过对比样本与基线的覆盖度差异识别 CNV。
-          建议使用相同捕获试剂盒、相同测序平台的样本构建基线，样本数量越多检测越准确（推荐 ≥50 个样本）。
-        </p>
-      </div>
+            <div className="p-2 border-b border-border-default">
+              <Input
+                placeholder="搜索..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                leftElement={<Search className="w-3.5 h-3.5" />}
+                className="text-xs"
+              />
+            </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-64">
-          <Input
-            placeholder="搜索基线..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            leftElement={<Search className="w-4 h-4" />}
-          />
+            <div className="flex-1 overflow-auto">
+              {filteredFiles.map((baseline) => {
+                const isOpen = openTabs.some((t) => t.baselineId === baseline.id);
+                const isActive = activeTab?.baselineId === baseline.id;
+                return (
+                  <div
+                    key={baseline.id}
+                    onClick={() => handleOpenTab(baseline)}
+                    className={`
+                      px-3 py-2 cursor-pointer border-b border-border-muted transition-colors
+                      ${isActive
+                        ? 'bg-accent-subtle border-l-2 border-l-accent-emphasis'
+                        : isOpen
+                          ? 'bg-canvas-inset'
+                          : 'hover:bg-canvas-inset'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${statusDotColors[baseline.status]}`} />
+                      <span className={`text-sm truncate ${isActive ? 'text-accent-fg font-medium' : 'text-fg-default'}`}>
+                        {baseline.name}
+                      </span>
+                    </div>
+                    <div className="text-xs text-fg-muted ml-4">{baseline.sampleCount} 样本</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="flex-1">
+          <div className="p-6 h-full overflow-auto">
+            <h2 className="text-lg font-medium text-fg-default mb-4">CNV 基线管理</h2>
+
+            <div className="p-4 bg-canvas-subtle rounded-lg border border-border mb-4">
+              <p className="text-sm text-fg-muted">
+                CNV 基线用于拷贝数变异检测，通过对比样本与基线的覆盖度差异识别 CNV。
+                建议使用相同捕获试剂盒、相同测序平台的样本构建基线，最多支持 20 个样本。
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-64">
+                <Input
+                  placeholder="搜索基线..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  leftElement={<Search className="w-4 h-4" />}
+                />
+              </div>
+              <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => setIsCreateModalOpen(true)}>
+                创建基线
+              </Button>
+            </div>
+
+            {/* 列表展示 */}
+            <div className="bg-canvas-default rounded-lg border border-border overflow-hidden">
+              <div className="divide-y divide-border">
+                {filteredFiles.map((baseline) => {
+                  const isExpanded = expandedIds.has(baseline.id);
+                  const statusInfo = statusConfig[baseline.status];
+
+                  return (
+                    <div key={baseline.id}>
+                      {/* 主行 */}
+                      <div
+                        className="px-4 py-3 flex items-center justify-between hover:bg-canvas-subtle transition-colors cursor-pointer"
+                        onClick={() => toggleExpand(baseline.id)}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <button className="p-0.5 text-fg-muted">
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4" />
+                            )}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className={`w-2 h-2 rounded-full ${statusDotColors[baseline.status]}`} />
+                              <span className="text-sm font-medium text-fg-default">{baseline.name}</span>
+                              <Tag variant={statusInfo.variant}>{statusInfo.label}</Tag>
+                              <span className="text-xs text-fg-muted">{baseline.sampleCount} 个样本</span>
+                            </div>
+                            <p className="text-xs text-fg-muted truncate mb-1">{baseline.description}</p>
+                            {/* 进度条 */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-canvas-inset rounded-full overflow-hidden max-w-[120px]">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    baseline.status === 'failed' ? 'bg-danger-emphasis' : 'bg-accent-emphasis'
+                                  }`}
+                                  style={{ width: `${baseline.progress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-fg-muted">{baseline.progress}%</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-fg-muted shrink-0">
+                            {baseline.createdAt}
+                          </div>
+                        </div>
+                        {/* 动态按钮 */}
+                        <div className="ml-4 shrink-0">
+                          <BaselineActionsCell
+                            baseline={baseline}
+                            onStart={handleStartBaseline}
+                            onStop={handleStopBaseline}
+                            onView={handleOpenTab}
+                            onDelete={(b) => setDeleteTarget(b)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 展开的样本列表 */}
+                      {isExpanded && (
+                        <div className="px-4 py-3 bg-canvas-subtle border-t border-border">
+                          <div className="text-xs text-fg-muted mb-2">
+                            关联 BED: {baseline.bedFile} · 创建者: {baseline.createdBy}
+                          </div>
+                          {baseline.status === 'building' && (
+                            <div className="mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 bg-canvas-inset rounded-full overflow-hidden max-w-[200px]">
+                                  <div
+                                    className="h-full bg-accent-emphasis rounded-full transition-all"
+                                    style={{ width: `${baseline.progress}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs text-fg-muted">{baseline.progress}%</span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="text-xs font-medium text-fg-default mb-2">样本 UUID 列表 ({baseline.sampleIds.length} 个)</div>
+                          <div className="flex flex-wrap gap-2">
+                            {baseline.sampleIds.map((sampleId) => (
+                              <SampleIdCell key={sampleId} id={sampleId} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredFiles.length === 0 && (
+                <div className="text-center py-12 text-fg-muted">
+                  暂无基线文件
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <Button 
-          variant="primary" 
-          leftIcon={<Plus className="w-4 h-4" />}
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          创建基线
-        </Button>
-      </div>
+      )}
 
-      <DataTable
-        data={filteredFiles}
-        columns={columns}
-        rowKey="id"
-        density="default"
-        striped
-      />
+      {/* 右侧详情面板 */}
+      {hasOpenTabs && (
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* 标签栏 */}
+          <div className="flex items-center border-b border-border-default bg-canvas-subtle overflow-x-auto flex-shrink-0">
+            {openTabs.map((tab) => (
+              <div
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 cursor-pointer border-r border-border-muted
+                  text-sm whitespace-nowrap transition-colors
+                  ${activeTabId === tab.id
+                    ? 'bg-canvas-default text-fg-default border-b-2 border-b-accent-emphasis -mb-px'
+                    : 'text-fg-muted hover:bg-canvas-inset hover:text-fg-default'
+                  }
+                `}
+              >
+                <span>{tab.name}</span>
+                <button
+                  onClick={(e) => handleCloseTab(tab.id, e)}
+                  className="p-0.5 rounded hover:bg-canvas-inset"
+                  aria-label="关闭标签"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* 详情内容 */}
+          <div className="flex-1 overflow-auto">
+            {activeTab && (
+              <BaselineDetailPanel key={activeTab.baselineId} baselineId={activeTab.baselineId} />
+            )}
+          </div>
+        </div>
+      )}
 
       <CreateBaselineModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreate}
+        onSubmit={handleCreateBaseline}
       />
 
       <DeleteConfirmModal
-        isOpen={!!deleteTarget}
+        isOpen={deleteTarget !== null}
         baselineName={deleteTarget?.name || ''}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={() => {
+          if (deleteTarget) handleDeleteBaseline(deleteTarget);
+        }}
       />
-    </PageContent>
+    </div>
   );
 }
