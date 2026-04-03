@@ -143,7 +143,7 @@ export default function AboutPage() {
           <div className="w-20 h-20 rounded-xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
             <Image
               src="/logo.png"
-              alt="Schema Somatic"
+              alt="知几"
               width={80}
               height={80}
               className="object-contain"
@@ -157,7 +157,7 @@ export default function AboutPage() {
         <div className="mb-6 p-4 bg-canvas-subtle rounded-lg border border-border">
           <h2 className="text-sm font-medium text-fg-default mb-2">本项目许可证</h2>
           <p className="text-sm text-fg-muted leading-relaxed">
-            Schema Somatic 采用 <span className="font-medium text-fg-default">Apache License 2.0</span> 开源协议发布。
+            知几 采用 <span className="font-medium text-fg-default">Apache License 2.0</span> 开源协议发布。
             您可以自由使用、修改和分发本软件，但需保留原作者的版权声明和许可证文本。
           </p>
         </div>

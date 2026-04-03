@@ -71,7 +71,7 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
               <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 overflow-hidden">
                 <Image
                   src="/logo.png"
-                  alt="Schema Somatic"
+                  alt="知几"
                   width={32}
                   height={32}
                   className="object-contain"
@@ -84,14 +84,14 @@ export function SidebarNav({ collapsed, onCollapsedChange }: SidebarNavProps) {
             <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 overflow-hidden">
               <Image
                 src="/logo.png"
-                alt="Schema Somatic"
+                alt="知几"
                 width={32}
                 height={32}
                 className="object-contain"
               />
             </div>
             <span className="ml-2 font-semibold text-fg-default truncate">
-              Schema Somatic
+              知几
             </span>
           </div>
         )}
