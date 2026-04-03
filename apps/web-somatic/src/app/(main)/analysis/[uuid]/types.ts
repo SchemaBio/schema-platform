@@ -35,6 +35,11 @@ export interface QCResult {
   captureEfficiency: number;     // 捕获效率 (0-1)
   predictedGender: 'Male' | 'Female' | 'Unknown';  // 性别预测
   contaminationRate: number;     // 污染比例 (0-1)
+  // RNA 特有质控指标（可选）
+  rrnaRatio?: number;            // rRNA 污染率
+  frationRatio?: number;         // 正向/反向reads比例
+  junctionReads?: number;        // 跨剪接Reads数
+  properPairedReads?: number;    // 正确配对reads比例
 }
 
 export type QCMetricKey = keyof QCResult;

@@ -57,7 +57,7 @@ const statsCards = [
     valueColor: 'text-orange-700',
     titleColor: 'text-orange-600',
     changeColor: 'text-orange-500',
-    href: '/analysis/pending',
+    href: '/tasks/pending',
   },
   {
     title: '进行中任务',
@@ -70,7 +70,7 @@ const statsCards = [
     valueColor: 'text-purple-700',
     titleColor: 'text-purple-600',
     changeColor: 'text-purple-500',
-    href: '/analysis/running',
+    href: '/tasks/running',
   },
   {
     title: '已完成任务',
@@ -83,7 +83,7 @@ const statsCards = [
     valueColor: 'text-green-700',
     titleColor: 'text-green-600',
     changeColor: 'text-green-500',
-    href: '/analysis',
+    href: '/tasks',
   },
   {
     title: '平均周转',
@@ -96,7 +96,7 @@ const statsCards = [
     valueColor: 'text-teal-700',
     titleColor: 'text-teal-600',
     changeColor: 'text-teal-500',
-    href: '/analysis',
+    href: '/tasks',
   },
 ];
 
@@ -266,7 +266,7 @@ export default function DashboardPage() {
             <span className="text-sm text-fg-default">样本管理</span>
           </Link>
           <Link
-            href="/analysis"
+            href="/tasks"
             className="px-4 py-2 bg-canvas-default rounded-lg border border-border hover:border-accent-muted hover:shadow-sm transition-all flex items-center gap-2"
           >
             <ListTodo className="w-4 h-4 text-fg-muted" />
@@ -403,7 +403,7 @@ export default function DashboardPage() {
               待分析任务
             </h3>
             <Link
-              href="/analysis/pending"
+              href="/tasks/pending"
               className="text-sm text-accent-fg hover:underline flex items-center gap-1"
             >
               查看全部 <ArrowRight className="w-3 h-3" />

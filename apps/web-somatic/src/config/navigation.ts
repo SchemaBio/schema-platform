@@ -3,17 +3,12 @@ import {
   Plus,
   List,
   Upload,
-  FileSpreadsheet,
   Database,
   HardDrive,
   FlaskConical,
-  Play,
   Clock,
   CheckCircle,
   FileText,
-  FilePlus,
-  FileCheck,
-  Send,
   Settings,
   User,
   Shield,
@@ -23,11 +18,10 @@ import {
   Server,
   TrendingUp,
   BookOpen,
-  History,
   Library,
   LayoutDashboard,
-  TestTube,
   Activity,
+  ListTodo,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -48,26 +42,21 @@ export interface SidebarNavItem {
 export interface SidebarNavConfig {
   dashboard: SidebarNavItem[];
   samples: SidebarNavItem[];
-  lab: SidebarNavItem[];
-  data: SidebarNavItem[];
-  pipeline: SidebarNavItem[];
   analysis: SidebarNavItem[];
-  reports: SidebarNavItem[];
+  pipeline: SidebarNavItem[];
   knowledge: SidebarNavItem[];
   settings: SidebarNavItem[];
 }
 
 /**
  * Main navigation items displayed in the sidebar.
- * 业务流程：概览 → 样本管理 → 实验中心 → 数据管理 → 流程中心 → 报告中心 → 知识中心
+ * 业务流程：概览 → 样本管理 → 任务中心 → 流程中心 → 知识中心
  */
 export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
   { label: '样本管理', href: '/samples', icon: Users },
-  { label: '实验中心', href: '/lab', icon: FlaskConical },
-  { label: '数据管理', href: '/data', icon: HardDrive },
+  { label: '任务中心', href: '/analysis', icon: ListTodo },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
-  { label: '报告中心', href: '/analysis', icon: FileText },
   { label: '知识中心', href: '/knowledge', icon: BookOpen },
 ];
 
@@ -77,21 +66,18 @@ export const mainNavItems: NavItem[] = [
 export const sidebarNavConfig: SidebarNavConfig = {
   // 概览 - 无子菜单
   dashboard: [],
-  // 样本管理 - 实验员操作
+  // 样本管理
   samples: [
     { label: '样本列表', href: '/samples', icon: List },
   ],
-  // 实验中心 - 实验员操作
-  lab: [
-    { label: '上机表', href: '/lab', icon: FileSpreadsheet },
-    { label: '测序仪', href: '/lab/sequencers', icon: Server },
+  // 任务中心（合并报告中心）
+  analysis: [
+    { label: '任务列表', href: '/analysis', icon: List },
+    { label: '进行中', href: '/analysis/running', icon: Clock },
+    { label: '待解读', href: '/analysis/pending', icon: FlaskConical },
+    { label: '已完成', href: '/analysis/completed', icon: CheckCircle },
   ],
-  // 数据管理 - 生信工程师操作
-  data: [
-    { label: '数据匹配', href: '/data', icon: Database },
-    { label: '数据列表', href: '/data/list', icon: List },
-  ],
-  // 流程中心 - 生信工程师操作
+  // 流程中心
   pipeline: [
     { label: '流程列表', href: '/pipeline', icon: List },
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
@@ -101,26 +87,10 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: 'MSI 基线', href: '/pipeline/msi-baseline', icon: Activity },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
-  // 分析中心 - 解读工程师操作
-  analysis: [
-    { label: '任务列表', href: '/analysis', icon: List },
-    // { label: '新建任务', href: '/analysis/new', icon: Play },
-    { label: '进行中', href: '/analysis/running', icon: Clock },
-    { label: '待解读', href: '/analysis/pending', icon: FlaskConical },
-    { label: '已完成', href: '/analysis/completed', icon: CheckCircle },
-  ],
-  // 报告中心 - 解读工程师/审核操作
-  reports: [
-    { label: '报告列表', href: '/reports', icon: List },
-    { label: '生成报告', href: '/reports/new', icon: FilePlus },
-    { label: '待审核', href: '/reports/review', icon: FileCheck },
-    { label: '已发放', href: '/reports/released', icon: Send },
-  ],
-  // 知识中心 - 靶向药物知识库
+  // 知识中心
   knowledge: [
     { label: '知识库概览', href: '/knowledge', icon: List },
     { label: '位点收录库', href: '/knowledge/variants', icon: Library },
-    // { label: '新增位点', href: '/knowledge/new', icon: Plus },
   ],
   // 系统设置
   settings: [

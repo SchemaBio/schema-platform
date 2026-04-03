@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { PageContent } from '@/components/layout';
-import { StorageManagement } from '../components/StorageManagement';
+import { StorageManagement } from '../components';
 
 // 模拟当前用户角色
 const mockUserRole = 'admin'; // 'admin' | 'user'

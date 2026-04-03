@@ -37,7 +37,7 @@ export interface Sample {
   // 批次
   batch: string;
   gender: Gender;
-  age: number;
+  age?: number;
   birthDate: string;
   sampleType: SampleType;
   // 核酸类型

@@ -1,0 +1,185 @@
+'use client';
+
+import * as React from 'react';
+import { Button, Input, Select } from '@schema/ui-kit';
+import { X, Search } from 'lucide-react';
+
+interface Sample {
+  id: string;
+  internalId: string;
+}
+
+interface Pipeline {
+  id: string;
+  name: string;
+  version: string;
+}
+
+// Mock 样本数据
+const mockSamples: Sample[] = [
+  { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', internalId: 'INT-001' },
+  { id: 'b2c3d4e5-f678-90ab-cdef-123456789012', internalId: 'INT-002' },
+  { id: 'c3d4e5f6-7890-abcd-ef12-345678901234', internalId: 'INT-003' },
+  { id: 'd4e5f678-90ab-cdef-1234-567890123456', internalId: 'INT-004' },
+  { id: 'e5f67890-abcd-ef12-3456-789012345678', internalId: 'INT-005' },
+];
+
+// Somatic 分析流程
+const mockPipelines: Pipeline[] = [
+  { id: 'somatic-single', name: '单样本分析', version: 'v1.2.0' },
+  { id: 'somatic-paired', name: '配对样本分析', version: 'v2.0.1' },
+  { id: 'rna-fusion', name: 'RNA融合分析', version: 'v1.2.0' },
+  { id: 'panel-tumor', name: '肿瘤Panel分析', version: 'v1.5.0' },
+];
+
+export interface NewTaskFormData {
+  sampleId: string;
+  internalId: string;
+  pipelineId: string;
+  pipelineName: string;
+  pipelineVersion: string;
+  remark: string;
+}
+
+interface NewTaskModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: NewTaskFormData) => void;
+}
+
+export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
+  const [sampleSearch, setSampleSearch] = React.useState('');
+  const [selectedSample, setSelectedSample] = React.useState<Sample | null>(null);
+  const [selectedPipeline, setSelectedPipeline] = React.useState<string>('');
+  const [remark, setRemark] = React.useState('');
+
+  // 筛选样本
+  const filteredSamples = React.useMemo(() => {
+    if (!sampleSearch) return mockSamples;
+    const query = sampleSearch.toLowerCase();
+    return mockSamples.filter(
+      s => s.id.toLowerCase().includes(query) || s.internalId.toLowerCase().includes(query)
+    );
+  }, [sampleSearch]);
+
+  const handleSubmit = () => {
+    if (!selectedSample || !selectedPipeline) return;
+
+    const pipeline = mockPipelines.find(p => p.id === selectedPipeline);
+    if (!pipeline) return;
+
+    onSubmit({
+      sampleId: selectedSample.id,
+      internalId: selectedSample.internalId,
+      pipelineId: pipeline.id,
+      pipelineName: pipeline.name,
+      pipelineVersion: pipeline.version,
+      remark,
+    });
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setSampleSearch('');
+    setSelectedSample(null);
+    setSelectedPipeline('');
+    setRemark('');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
+
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">新建分析任务</h2>
+          <button
+            onClick={handleClose}
+            className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* 选择样本 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">选择样本 *</label>
+            <div className="relative mb-2">
+              <Input
+                placeholder="搜索样本编号或内部编号..."
+                value={sampleSearch}
+                onChange={(e) => setSampleSearch(e.target.value)}
+                leftElement={<Search className="w-4 h-4" />}
+              />
+            </div>
+            <div className="border border-gray-200 rounded-md max-h-40 overflow-y-auto">
+              {filteredSamples.map(sample => (
+                <div
+                  key={sample.id}
+                  onClick={() => setSelectedSample(sample)}
+                  className={`px-3 py-2 cursor-pointer transition-colors ${
+                    selectedSample?.id === sample.id
+                      ? 'bg-accent-subtle text-accent-fg'
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="text-sm font-mono">{sample.id.substring(0, 8)}...</div>
+                  <div className="text-xs text-gray-500">{sample.internalId}</div>
+                </div>
+              ))}
+              {filteredSamples.length === 0 && (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">
+                  未找到匹配的样本
+                </div>
+              )}
+            </div>
+            {selectedSample && (
+              <div className="mt-2 text-sm text-accent-fg">
+                已选择: {selectedSample.internalId}
+              </div>
+            )}
+          </div>
+
+          {/* 选择流程 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">分析流程 *</label>
+            <Select
+              value={selectedPipeline}
+              onChange={(v) => setSelectedPipeline(Array.isArray(v) ? v[0] : v)}
+              options={mockPipelines.map(p => ({
+                value: p.id,
+                label: `${p.name} (${p.version})`,
+              }))}
+              placeholder="请选择分析流程"
+            />
+          </div>
+
+          {/* 备注 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">备注</label>
+            <Input
+              value={remark}
+              onChange={(e) => setRemark(e.target.value)}
+              placeholder="请输入备注信息（可选）"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <Button variant="secondary" onClick={handleClose}>取消</Button>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={!selectedSample || !selectedPipeline}
+          >
+            创建任务
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

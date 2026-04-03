@@ -177,6 +177,8 @@ export function QCResultTab({ taskId }: QCResultTabProps) {
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
         {QC_METRICS.map((metric) => {
           const value = qcResult[metric.key];
+          // 跳过未定义的值（RNA特有指标可能在DNA样本中不存在）
+          if (value === undefined) return null;
           const status = getMetricStatus(value, metric.thresholds);
           const colors = statusColors[status];
 

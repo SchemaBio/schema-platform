@@ -4,11 +4,11 @@ import * as React from 'react';
 import { Button, Input, DataTable, Tooltip } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
 import { Search, Plus, Download, Upload, Trash2, Pencil, CheckCircle, XCircle } from 'lucide-react';
-import { NewSampleModal } from './components';
+import { NewSampleModal, EditSampleModal } from './components';
 import { mockSamples } from './mock-data';
 import type { Sample } from './types';
 import { GENDER_CONFIG, TUMOR_TYPE_ICONS } from './types';
-import type { NewSampleFormData } from './components';
+import type { NewSampleFormData, EditSampleFormData } from './components';
 
 // 简化的ID显示组件（点击复制，无复制按钮）
 function IdCell({ id }: { id: string }) {
@@ -80,6 +80,7 @@ function MatchedCell({ sample }: { sample: Sample }) {
 export default function SamplesPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isNewSampleModalOpen, setIsNewSampleModalOpen] = React.useState(false);
+  const [editingSample, setEditingSample] = React.useState<Sample | null>(null);
   const [samples, setSamples] = React.useState<Sample[]>(mockSamples);
 
   const handleDownloadTemplate = () => {
@@ -107,6 +108,26 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,BATCH-2024-001,男,58,FFPE,DNA,肺�
   const handleNewSample = (data: NewSampleFormData) => {
     console.log('新建样本:', data);
     setIsNewSampleModalOpen(false);
+  };
+
+  const handleEditSample = (id: string, data: EditSampleFormData) => {
+    setSamples(prev => prev.map(s => {
+      if (s.id !== id) return s;
+      return {
+        ...s,
+        internalId: data.internalId,
+        batch: data.batch,
+        gender: data.gender,
+        age: data.age ? parseInt(data.age) : undefined,
+        birthDate: data.birthDate,
+        sampleType: data.sampleType,
+        nucleicAcidType: data.nucleicAcidType,
+        tumorType: data.tumorType,
+        pairedSampleId: data.pairedSampleId || undefined,
+        remark: data.remark,
+      };
+    }));
+    console.log('编辑样本:', id, data);
   };
 
   const handleDeleteSample = (id: string) => {
@@ -211,7 +232,7 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,BATCH-2024-001,男,58,FFPE,DNA,肺�
         <div className="flex items-center justify-center gap-1">
           <button
             className="p-1.5 rounded text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
-            onClick={() => console.log('编辑样本:', row.id)}
+            onClick={() => setEditingSample(row)}
             aria-label="编辑"
           >
             <Pencil className="w-4 h-4" />
@@ -256,6 +277,13 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,BATCH-2024-001,男,58,FFPE,DNA,肺�
       </div>
 
       <NewSampleModal isOpen={isNewSampleModalOpen} onClose={() => setIsNewSampleModalOpen(false)} onSubmit={handleNewSample} />
+
+      <EditSampleModal
+        isOpen={editingSample !== null}
+        onClose={() => setEditingSample(null)}
+        onSubmit={handleEditSample}
+        sample={editingSample}
+      />
     </div>
   );
 }

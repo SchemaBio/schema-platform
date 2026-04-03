@@ -266,10 +266,10 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
           <div className="space-y-4">
             <InfoCard title="患者信息">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <EditableItem 
-                  label="姓名" 
-                  value={editedSample.name}
-                  onChange={(v) => updateField('name', v)}
+                <EditableItem
+                  label="内部编号"
+                  value={editedSample.internalId}
+                  onChange={(v) => updateField('internalId', v)}
                 />
                 <EditableItem 
                   label="性别" 
@@ -752,7 +752,7 @@ export function SampleDetailPanel({ sampleId }: SampleDetailPanelProps) {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h3 className="text-base font-medium text-fg-default">{sample.name}</h3>
+              <h3 className="text-base font-medium text-fg-default">{sample.internalId}</h3>
               <span className={`text-sm ${genderInfo.color}`}>{genderInfo.label}</span>
               <span className="text-sm text-fg-muted">{sample.age}岁</span>
               <Tag variant="danger">{sample.tumorInfo.tumorType}</Tag>
