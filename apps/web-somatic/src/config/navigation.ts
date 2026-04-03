@@ -1,9 +1,7 @@
 import {
   Users,
   List,
-  HardDrive,
   FileText,
-  Settings,
   User,
   Shield,
   Bot,
@@ -14,6 +12,7 @@ import {
   LayoutDashboard,
   ListTodo,
   History,
+  Settings2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,11 +37,12 @@ export interface SidebarNavConfig {
   pipeline: SidebarNavItem[];
   history: SidebarNavItem[];
   settings: SidebarNavItem[];
+  admin: SidebarNavItem[];
 }
 
 /**
  * Main navigation items displayed in the sidebar.
- * 业务流程：概览 → 样本管理 → 任务中心 → 历史检出 → 流程中心
+ * 业务流程：概览 → 样本管理 → 任务中心 → 历史检出 → 流程中心 → 管理中心
  */
 export const mainNavItems: NavItem[] = [
   { label: '概览', href: '/dashboard', icon: LayoutDashboard },
@@ -50,6 +50,7 @@ export const mainNavItems: NavItem[] = [
   { label: '任务中心', href: '/analysis', icon: ListTodo },
   { label: '历史检出', href: '/history', icon: History },
   { label: '流程中心', href: '/pipeline', icon: Workflow },
+  { label: '管理中心', href: '/admin', icon: Settings2 },
 ];
 
 /**
@@ -79,8 +80,9 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '个人设置', href: '/settings', icon: User },
     { label: 'AI 设置', href: '/settings/ai', icon: Bot },
     { label: '权限管理', href: '/settings/permissions', icon: Shield },
-    { label: '管理员设置', href: '/settings/storage', icon: HardDrive },
   ],
+  // 管理中心 - 无子菜单
+  admin: [],
 };
 
 /**
