@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Library,
   LayoutDashboard,
-  Activity,
   ListTodo,
   History,
   type LucideIcon,
@@ -70,8 +69,7 @@ export const sidebarNavConfig: SidebarNavConfig = {
     { label: '流程列表', href: '/pipeline', icon: List },
     { label: 'BED 文件', href: '/pipeline/bed', icon: FileCode },
     { label: '基因列表', href: '/pipeline/gene-list', icon: Library },
-    { label: 'CNV 基线', href: '/pipeline/baseline', icon: TrendingUp },
-    { label: 'MSI 基线', href: '/pipeline/msi-baseline', icon: Activity },
+    { label: '基线管理', href: '/pipeline/baseline', icon: TrendingUp },
     { label: '报告模板', href: '/pipeline/templates', icon: FileText },
   ],
   // 历史检出 - 无子菜单
