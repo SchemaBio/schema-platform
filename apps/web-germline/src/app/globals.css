@@ -5,6 +5,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 贻鉴品牌色 - 青绿色，象征生命与传承 */
+:root {
+  --color-accent-fg: #1a7f37;
+  --color-accent-emphasis: #1a7f37;
+  --color-accent-muted: rgba(63, 185, 80, 0.4);
+  --color-accent-subtle: #dafbe1;
+}
+
+[data-theme='dark'] {
+  --color-accent-fg: #3fb950;
+  --color-accent-emphasis: #238636;
+  --color-accent-muted: rgba(46, 160, 67, 0.4);
+  --color-accent-subtle: rgba(46, 160, 67, 0.15);
+}
+
 /* Base styles */
 @layer base {
   html {
