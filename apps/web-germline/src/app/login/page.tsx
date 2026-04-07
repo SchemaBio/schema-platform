@@ -177,11 +177,11 @@ export default function LoginPage() {
             <div className="bg-canvas-subtle rounded-md p-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-fg-muted">邮箱：</span>
-                <code className="text-fg-default font-mono">admin@schema.bio</code>
+                <code className="text-fg-default font-mono">admin@schema.local</code>
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-fg-muted">密码：</span>
-                <code className="text-fg-default font-mono">admin123</code>
+                <code className="text-fg-default font-mono">Admin123!</code>
               </div>
             </div>
           </div>
