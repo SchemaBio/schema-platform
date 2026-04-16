@@ -1,111 +1,96 @@
 #!/bin/bash
 # =================================================================
-# SchemaBio 业务实例启动脚本 (V2.0 - 按需拉取 + 镜像固化方案)
+# SchemaBio 业务实例启动脚本 (V3.0 - 零快照、全自动化初始化方案)
 # =================================================================
 
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 COSCLI_BIN="/usr/local/bin/coscli"
+DATA_DEV="/dev/vdb"  # 腾讯云第二块盘默认通常是 /dev/vdb
+MOUNT_PATH="/mnt/data"
 
-# 所有的操作日志记录在 /var/log/schemabio-start.log
 exec >> /var/log/schemabio-start.log 2>&1
+echo "--- [$(date)] Startup sequence V3.0 initiated ---"
 
-echo "--- [$(date)] Startup sequence initiated ---"
-
-# 1. 挂载数据盘 (由空快照创建，假设 Label 为 SCHEMABIO_DATA)
+# 1. 数据盘初始化 (格式化 + Label + 挂载)
 # -----------------------------------------------------------------
-mkdir -p /mnt/data
-mount -L SCHEMABIO_DATA /mnt/data || mount /dev/vdb /mnt/data
+echo "Step 1: Checking data disk $DATA_DEV..."
 
-if ! mountpoint -q /mnt/data; then
-    echo "ERROR: Data disk mount failed. Critical failure."
+# 检查磁盘是否已经有文件系统 (防止重启时重复格式化导致数据丢失)
+if ! blkid $DATA_DEV; then
+    echo "Disk $DATA_DEV is empty. Formatting now..."
+    # -L: 设置标签为 SCHEMABIO_DATA
+    # -i 4096: 增加 Inode 密度以支撑 VEP 百万级碎文件
+    # -F: 强制执行
+    mkfs.ext4 -F -L SCHEMABIO_DATA -i 4096 $DATA_DEV
+else
+    echo "Disk $DATA_DEV already formatted."
+fi
+
+# 执行挂载
+mkdir -p $MOUNT_PATH
+mount -L SCHEMABIO_DATA $MOUNT_PATH || mount $DATA_DEV $MOUNT_PATH
+
+if ! mountpoint -q $MOUNT_PATH; then
+    echo "ERROR: Data disk mount failed. Exiting."
     exit 1
 fi
-echo "Data disk mounted successfully."
 
-# 2. 获取任务参数 (通过腾讯云元数据获取 REF_GENOME 变量)
+# 建立预设目录结构
+mkdir -p $MOUNT_PATH/database
+mkdir -p $MOUNT_PATH/output
+mkdir -p $MOUNT_PATH/temp_workspace
+
+echo "Data disk initialized and mounted at $MOUNT_PATH."
+
+# 2. 获取任务参数 (REF_GENOME)
 # -----------------------------------------------------------------
-# 启动时在自定义数据输入 REF_GENOME=hg19 或 REF_GENOME=hg38
 RAW_USER_DATA=$(curl -s http://metadata.tencentyun.com/latest/meta-data/custom-data)
 TARGET_REF=$(echo "$RAW_USER_DATA" | grep -oP 'REF_GENOME=\K\S+')
 
-# 如果没有获取到参数，默认设为 hg19 (或根据业务需求设为报错退出)
 if [ -z "$TARGET_REF" ]; then
-    echo "Warning: No REF_GENOME specified in UserData, defaulting to hg19."
+    echo "Warning: No REF_GENOME specified, defaulting to hg19."
     TARGET_REF="hg19"
 fi
-echo "Task target detected: $TARGET_REF"
 
-# 3. 按需从 COS 准备数据库 (边下载边解压 VEP + 同步索引)
+# 3. 按需从 COS 准备数据库 (同步 + 管道解压 VEP)
 # -----------------------------------------------------------------
-DB_LOCAL_PATH="/mnt/data/database"
-LOCAL_DIR="$DB_LOCAL_PATH/$TARGET_REF"
+LOCAL_DIR="$MOUNT_PATH/database/$TARGET_REF"
 mkdir -p "$LOCAL_DIR"
 
 case $TARGET_REF in
     "hg19")
         VEP_PKG="homo_sapiens_merged_vep_115_GRCh37.tar.gz"
-        echo "Step 3a: Streaming decompression for VEP hg19 (GRCh37)..."
-        # 管道操作：边下载压缩包边解压，- 代表输出到 stdout，解压到 $LOCAL_DIR 下
+        echo "Syncing hg19: Decompressing VEP cache from COS..."
         $COSCLI_BIN cp cos://schemabio-1327430028/database/hg19/$VEP_PKG - | tar -xz -C "$LOCAL_DIR/"
         
-        echo "Step 3b: Syncing remaining hg19 indices (excluding tar.gz)..."
+        echo "Syncing hg19: Copying genomic indices..."
         $COSCLI_BIN sync cos://schemabio-1327430028/database/hg19/ "$LOCAL_DIR/" --routines 16 --exclude "$VEP_PKG"
         ;;
 
     "hg38")
         VEP_PKG="homo_sapiens_merged_vep_115_GRCh38.tar.gz"
-        echo "Step 3a: Streaming decompression for VEP hg38 (GRCh38)..."
+        echo "Syncing hg38: Decompressing VEP cache from COS..."
         $COSCLI_BIN cp cos://schemabio-1327430028/database/hg38/$VEP_PKG - | tar -xz -C "$LOCAL_DIR/"
         
-        echo "Step 3b: Syncing remaining hg38 indices (excluding tar.gz)..."
+        echo "Syncing hg38: Copying genomic indices..."
         $COSCLI_BIN sync cos://schemabio-1327430028/database/hg38/ "$LOCAL_DIR/" --routines 16 --exclude "$VEP_PKG"
-        ;;
-    *)
-        echo "ERROR: Unsupported REF_GENOME: $TARGET_REF. Skipping data sync."
         ;;
 esac
 
-echo "--- [$(date)] Database preparation finished ---"
+echo "--- [$(date)] Database sync finished ---"
 
-# 4. 配置 Docker 运行环境 (镜像已在系统盘中)
+# 4. Docker 配置 (使用系统盘存储镜像)
 # -----------------------------------------------------------------
-# 探测 GPU 驱动环境，动态生成 daemon.json
+# 注意：这里去掉了 data-root，镜像将保存在系统盘自定义镜像中
 if command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null; then
-    echo "GPU detected: Setting NVIDIA as default runtime."
-    DOCKER_CONFIG=$(cat <<EOT
-{
-  "storage-driver": "overlay2",
-  "registry-mirrors": ["https://mirror.ccs.tencentyun.com"],
-  "default-runtime": "nvidia",
-  "runtimes": {
-    "nvidia": {
-      "path": "nvidia-container-runtime",
-      "runtimeArgs": []
-    }
-  }
-}
-EOT
-)
+    DOCKER_CONFIG='{"storage-driver": "overlay2", "registry-mirrors": ["https://mirror.ccs.tencentyun.com"], "default-runtime": "nvidia", "runtimes": {"nvidia": {"path": "nvidia-container-runtime", "runtimeArgs": []}}}'
 else
-    echo "No GPU detected: Configuring standard CPU Docker."
-    DOCKER_CONFIG=$(cat <<EOT
-{
-  "storage-driver": "overlay2",
-  "registry-mirrors": ["https://mirror.ccs.tencentyun.com"]
-}
-EOT
-)
+    DOCKER_CONFIG='{"storage-driver": "overlay2", "registry-mirrors": ["https://mirror.ccs.tencentyun.com"]}'
 fi
 
 mkdir -p /etc/docker
 echo "$DOCKER_CONFIG" > /etc/docker/daemon.json
-
-# 重启 Docker 使配置生效
 systemctl daemon-reload
 systemctl restart docker
 
-# 检查 40GB 核心分析镜像是否就绪 (替换为你实际的镜像名)
-echo "Verifying local Docker images..."
-docker images
-
-echo "--- [$(date)] Startup sequence completed successfully ---"
+echo "--- [$(date)] All systems ready ---"
