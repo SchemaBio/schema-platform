@@ -35,9 +35,6 @@ Thumbs.db
 **/tests
 **/__tests__
 
-# Backend (not needed for frontend build)
-apps/backend-api
-
 # Misc
 *.env
 *.env.*

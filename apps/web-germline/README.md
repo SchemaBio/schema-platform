@@ -86,7 +86,7 @@ docker run -p 3000:3000 \
 
 ```bash
 cd schema-platform
-docker-compose up -d web-germline backend-germline postgres
+docker-compose up -d web-germline backend postgres
 ```
 
 ## 环境变量
@@ -100,16 +100,7 @@ docker-compose up -d web-germline backend-germline postgres
 
 独立部署时，后端服务通过 Docker 内部网络与前端通信，无需暴露端口。
 
-确保后端 API 启动时配置正确的数据库连接：
-
-```bash
-# 后端 (Germline 模式)
-cd apps/backend-api
-docker build --build-arg ANALYSIS_TYPE=germline -t schema-backend-germline:latest .
-docker run schema-backend-germline:latest
-```
-
-> 注意：后端不需要暴露端口（-p 参数），它会通过 Docker Compose 的内部网络与前端通信。
+后端 API 独立仓库：[Octopus](https://github.com/schemabio/Octopus)
 
 ## 项目结构
 
@@ -140,7 +131,6 @@ apps/web-germline/
 ## 相关文档
 
 - [项目主文档](../../README.md)
-- [后端 API 文档](../backend-api/README.md)
 - [Somatic 前端文档](../web-somatic/README.md)
 
 ## License

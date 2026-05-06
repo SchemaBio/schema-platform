@@ -41,5 +41,3 @@ next-env.d.ts
 .kiro/
 .vscode/
 .claude/
-
-apps/backend-api/config.yaml

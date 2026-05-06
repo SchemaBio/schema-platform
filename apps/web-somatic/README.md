@@ -86,7 +86,7 @@ docker run -p 3000:3000 \
 
 ```bash
 cd schema-platform
-docker-compose up -d web-somatic backend-somatic postgres
+docker-compose up -d web-somatic backend postgres
 ```
 
 ## 环境变量
@@ -98,14 +98,9 @@ docker-compose up -d web-somatic backend-somatic postgres
 
 ## 与后端对接
 
-确保后端 API 已启动并配置正确的 `NEXT_PUBLIC_API_URL`：
+确保后端 API 已启动并配置正确的 `NEXT_PUBLIC_API_URL`。
 
-```bash
-# 后端 (Somatic 模式)
-cd apps/backend-api
-docker build --build-arg ANALYSIS_TYPE=somatic -t schema-backend-somatic:latest .
-docker run -p 8080:8080 schema-backend-somatic:latest
-```
+后端 API 独立仓库：[Octopus](https://github.com/schemabio/Octopus)
 
 ## 项目结构
 
@@ -136,7 +131,6 @@ apps/web-somatic/
 ## 相关文档
 
 - [项目主文档](../../README.md)
-- [后端 API 文档](../backend-api/README.md)
 - [Germline 前端文档](../web-germline/README.md)
 
 ## License

@@ -23,8 +23,7 @@ schema-platform/
 │   └── build-images.yml      # CI/CD 流水线
 ├── apps/
 │   ├── web-germline/         # 遗传病分析前端 (Next.js)
-│   ├── web-somatic/          # 肿瘤分析前端 (Next.js)
-│   └── backend-api/          # 后端 API (Go + Gin)
+│   └── web-somatic/          # 肿瘤分析前端 (Next.js)
 ├── packages/                  # 共享包
 │   ├── ui-kit/              # UI 组件库
 │   ├── types/               # TypeScript 类型定义
@@ -89,8 +88,7 @@ cp .env.example .env
 |------|------|----------|
 | web-germline | 3001 | 外部可访问 |
 | web-somatic | 3002 | 外部可访问 |
-| backend-germline | - | 内部网络 |
-| backend-somatic | - | 内部网络 |
+| backend | - | 内部网络 |
 | postgres | - | 内部网络 |
 
 ## 使用的镜像
@@ -117,8 +115,7 @@ Apache License 2.0
 ```
 apps/
 ├── web-germline/    # 遗传病分析前端 (Next.js)
-├── web-somatic/     # 肿瘤分析前端 (Next.js)
-└── backend-api/     # 后端 API (Go + Gin)
+└── web-somatic/     # 肿瘤分析前端 (Next.js)
 ```
 
 ### 本地开发
@@ -136,7 +133,6 @@ pnpm dev:somatic
 
 ## 文档
 
-- [后端 API 文档](./apps/backend-api/README.md)
 - [Germline 前端文档](./apps/web-germline/README.md)
 - [Somatic 前端文档](./apps/web-somatic/README.md)
 

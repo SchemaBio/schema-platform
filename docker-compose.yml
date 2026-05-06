@@ -33,9 +33,9 @@ services:
       - "${GERMLINE_WEB_PORT:-3001}:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend-germline:8080
+      - NEXT_PUBLIC_API_URL=http://backend:8080
     depends_on:
-      backend-germline:
+      backend:
         condition: service_healthy
 
   # ============================================
@@ -48,55 +48,25 @@ services:
       - "${SOMATIC_WEB_PORT:-3002}:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend-somatic:8080
+      - NEXT_PUBLIC_API_URL=http://backend:8080
     depends_on:
-      backend-somatic:
+      backend:
         condition: service_healthy
 
   # ============================================
-  # 后端 (Germline 模式)
+  # 后端 (Octopus)
   # ============================================
-  backend-germline:
+  backend:
     image: ghcr.io/schemabio/schema-backend:latest
-    profiles: ["germline", "all"]
+    profiles: ["germline", "somatic", "all"]
     environment:
-      - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
-      - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
-      - SCHEMA_DATABASE_USER=${POSTGRES_USER:-postgres}
-      - SCHEMA_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - SCHEMA_DATABASE_DBNAME=${POSTGRES_DB:-schema_platform}
-      - SCHEMA_SERVER_HOST=0.0.0.0
-      - SCHEMA_SERVER_PORT=8080
-      - SCHEMA_ANALYSIS_TYPE=germline
+      - DB_DSN=host=${POSTGRES_HOST:-postgres} user=${POSTGRES_USER:-postgres} password=${POSTGRES_PASSWORD:-postgres} dbname=${POSTGRES_DB:-schema_platform} port=${POSTGRES_PORT:-5432} sslmode=disable TimeZone=Asia/Shanghai
+      - SERVER_PORT=8080
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-
-  # ============================================
-  # 后端 (Somatic 模式)
-  # ============================================
-  backend-somatic:
-    image: ghcr.io/schemabio/schema-backend:latest
-    profiles: ["somatic", "all"]
-    environment:
-      - SCHEMA_DATABASE_HOST=${POSTGRES_HOST:-postgres}
-      - SCHEMA_DATABASE_PORT=${POSTGRES_PORT:-5432}
-      - SCHEMA_DATABASE_USER=${POSTGRES_USER:-postgres}
-      - SCHEMA_DATABASE_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - SCHEMA_DATABASE_DBNAME=${POSTGRES_DB:-schema_platform}
-      - SCHEMA_SERVER_HOST=0.0.0.0
-      - SCHEMA_SERVER_PORT=8080
-      - SCHEMA_ANALYSIS_TYPE=somatic
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3

@@ -7,7 +7,6 @@ on:
     paths:
       - 'apps/web-germline/**'
       - 'apps/web-somatic/**'
-      - 'apps/backend-api/**'
       - 'packages/**'
       - 'pnpm-*.yaml'
       - '.github/workflows/**'
@@ -19,10 +18,6 @@ on:
         default: false
       somatic:
         description: 'Build Somatic image'
-        type: boolean
-        default: false
-      backend:
-        description: 'Build Backend image'
         type: boolean
         default: false
       version:
@@ -44,7 +39,6 @@ jobs:
     outputs:
       germline: ${{ steps.parse.outputs.germline }}
       somatic: ${{ steps.parse.outputs.somatic }}
-      backend: ${{ steps.parse.outputs.backend }}
       version: ${{ steps.parse.outputs.version }}
       is_release: ${{ steps.parse.outputs.is_release }}
     steps:
@@ -64,7 +58,6 @@ jobs:
           # 默认不构建任何镜像
           GERMLINE=false
           SOMATIC=false
-          BACKEND=false
           VERSION=""
           IS_RELEASE=false
           IS_PRERELEASE=false
@@ -81,21 +74,18 @@ jobs:
               # v1.0.0 格式，构建所有
               GERMLINE=true
               SOMATIC=true
-              BACKEND=true
             elif [[ "$TAG_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-germline$ ]]; then
               GERMLINE=true
-              BACKEND=true
             elif [[ "$TAG_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-somatic$ ]]; then
               SOMATIC=true
-              BACKEND=true
             fi
           else
             # 从 commit message 解析
-            # 只识别格式: backend: v1.0.0, germline: v1.0.0, somatic: v1.0.0
+            # 只识别格式: germline: v1.0.0, somatic: v1.0.0
             MSG="${{ steps.commit.outputs.message }}"
 
             # 检查是否是发布提交: scope: v1.0.0
-            if [[ "$MSG" =~ ^(backend|germline|somatic):[[:space:]]+v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            if [[ "$MSG" =~ ^(germline|somatic):[[:space:]]+v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
               SCOPE="${BASH_REMATCH[1]}"
               VERSION="v${BASH_REMATCH[2]}"
               IS_RELEASE=true
@@ -103,14 +93,9 @@ jobs:
               case "$SCOPE" in
                 germline)
                   GERMLINE=true
-                  # Germline 发布只构建前端，不构建后端
                   ;;
                 somatic)
                   SOMATIC=true
-                  # Somatic 发布只构建前端，不构建后端
-                  ;;
-                backend)
-                  BACKEND=true
                   ;;
               esac
             fi
@@ -125,7 +110,6 @@ jobs:
           echo "scope=$SCOPE" >> $GITHUB_OUTPUT
           echo "germline=$GERMLINE" >> $GITHUB_OUTPUT
           echo "somatic=$SOMATIC" >> $GITHUB_OUTPUT
-          echo "backend=$BACKEND" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
@@ -223,56 +207,11 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ============================================
-  # 4. 构建 Backend (通用镜像，通过环境变量区分模式)
-  # ============================================
-  build-backend:
-    name: Build Backend
-    needs: detect-targets
-    if: github.event_name == 'workflow_dispatch' && inputs.backend || (needs.detect-targets.outputs.backend == 'true')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for Backend
-        id: meta-backend
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/schema-backend
-          tags: |
-            type=raw,value=${{ needs.detect-targets.outputs.version }}
-            type=sha
-            type=raw,value=latest,enable=${{ !needs.detect-targets.outputs.is_prerelease }}
-
-      - name: Build and push Backend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/backend-api
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-backend.outputs.tags }}
-          labels: ${{ steps.meta-backend.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ============================================
-  # 5. 汇总
+  # 4. 汇总
   # ============================================
   summary:
     name: Summary
-    needs: [build-germline, build-somatic, build-backend]
+    needs: [build-germline, build-somatic]
     if: always()
     runs-on: ubuntu-latest
 
@@ -291,9 +230,7 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| schema-germline | ${{ needs.build-germline.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| schema-somatic | ${{ needs.build-somatic.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| schema-backend | ${{ needs.build-backend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published Images" >> $GITHUB_STEP_SUMMARY
           echo "- ghcr.io/${{ env.ORGANIZATION }}/schema-germline:${{ needs.detect-targets.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- ghcr.io/${{ env.ORGANIZATION }}/schema-somatic:${{ needs.detect-targets.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ env.ORGANIZATION }}/schema-backend:${{ needs.detect-targets.outputs.version }}" >> $GITHUB_STEP_SUMMARY
