@@ -15,7 +15,7 @@ import {
   Checkbox,
   type Column,
 } from '@schema/ui-kit';
-import { Plus, Pencil, Trash2, Users, FolderOutput, FolderInput, Bot, Save, Eye, EyeOff, TestTube2, CheckCircle, XCircle, Loader2, KeyRound } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, FolderOutput, FolderInput, Bot, Save, Info, Loader2, KeyRound } from 'lucide-react';
 import { useAI } from '@/components/providers/AIProvider';
 
 // 角色定义
@@ -109,9 +109,6 @@ export default function AdminPage() {
     outputBasePath: '/data/results',
     rawDataPath: '/data/raw',
   });
-  const [showApiKey, setShowApiKey] = React.useState(false);
-  const [testingApi, setTestingApi] = React.useState(false);
-  const [apiTestResult, setApiTestResult] = React.useState<'success' | 'error' | null>(null);
   const [saving, setSaving] = React.useState(false);
 
   // 账户操作
@@ -203,16 +200,6 @@ export default function AdminPage() {
     alert(`${editingAccount?.username} 的密码已修改`);
     setIsPasswordModalOpen(false);
     setAccountForm(prev => ({ ...prev, password: '' }));
-  };
-
-  // OpenAI API 测试
-  const handleTestApi = async () => {
-    if (!aiConfig.openaiApiEndpoint) return;
-    setTestingApi(true);
-    setApiTestResult(null);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setApiTestResult(Math.random() > 0.3 ? 'success' : 'error');
-    setTestingApi(false);
   };
 
   // 保存配置
@@ -412,37 +399,7 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-fg-default mb-1.5">API 端点</label>
-                <Input
-                  value={aiConfig.openaiApiEndpoint}
-                  onChange={(e) => setAIConfig({ openaiApiEndpoint: e.target.value })}
-                  placeholder="https://api.openai.com/v1"
-                  className="w-full"
-                  disabled={!aiConfig.aiAssistantEnabled}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-fg-default mb-1.5">API Key</label>
-                <div className="relative">
-                  <Input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={aiConfig.openaiApiKey}
-                    onChange={(e) => setAIConfig({ openaiApiKey: e.target.value })}
-                    placeholder="sk-..."
-                    className="w-full"
-                    disabled={!aiConfig.aiAssistantEnabled}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg-default"
-                  >
-                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-fg-default mb-1.5">模型名称</label>
                 <Input
@@ -454,28 +411,9 @@ export default function AdminPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
-              <Button
-                variant="secondary"
-                size="small"
-                leftIcon={testingApi ? <Loader2 className="w-4 h-4 animate-spin" /> : <TestTube2 className="w-4 h-4" />}
-                onClick={handleTestApi}
-                disabled={testingApi || !aiConfig.openaiApiEndpoint || !aiConfig.aiAssistantEnabled}
-              >
-                {testingApi ? '测试中...' : '测试连接'}
-              </Button>
-              {apiTestResult === 'success' && (
-                <span className="flex items-center gap-1 text-sm text-success-fg">
-                  <CheckCircle className="w-4 h-4" />
-                  连接成功
-                </span>
-              )}
-              {apiTestResult === 'error' && (
-                <span className="flex items-center gap-1 text-sm text-danger-fg">
-                  <XCircle className="w-4 h-4" />
-                  连接失败
-                </span>
-              )}
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border text-sm text-fg-muted">
+              <Info className="w-4 h-4" />
+              API 密钥由服务端统一管理（LLM_API_KEY 环境变量），无需在浏览器中配置。
             </div>
           </div>
         </section>

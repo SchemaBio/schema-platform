@@ -7,13 +7,8 @@
  * AI 服务配置
  */
 export interface AIConfig {
-  /** OpenAI API 端点 */
   openaiApiEndpoint: string;
-  /** OpenAI API Key */
-  openaiApiKey: string;
-  /** 使用的模型名称 */
   openaiModel: string;
-  /** AI 助手是否启用 */
   aiAssistantEnabled: boolean;
 }
 
@@ -39,8 +34,7 @@ export interface ConversationMessage {
  * 默认 AI 配置
  */
 export const DEFAULT_AI_CONFIG: AIConfig = {
-  openaiApiEndpoint: 'https://api.openai.com/v1',
-  openaiApiKey: '',
+  openaiApiEndpoint: '',
   openaiModel: 'gpt-4',
   aiAssistantEnabled: true,
 };

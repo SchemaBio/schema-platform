@@ -1,31 +1,27 @@
 /**
  * Page Agent Wrapper
- * 封装 page-agent 库，用于通过自然语言控制页面
+ * LLM calls are proxied through the backend (no API key on frontend).
  */
-
 import type { AIConfig } from '@/types/ai';
 
-// 动态导入 page-agent，避免 SSR 问题
 let PageAgentClass: typeof import('page-agent').PageAgent | null = null;
 
-/**
- * 动态加载 PageAgent 类
- */
 async function loadPageAgent(): Promise<typeof import('page-agent').PageAgent> {
-  if (PageAgentClass) {
-    return PageAgentClass;
-  }
-
-  // 动态导入
+  if (PageAgentClass) return PageAgentClass;
   const module = await import('page-agent');
   PageAgentClass = module.PageAgent;
   return PageAgentClass;
 }
 
-/**
- * PageAgent 包装类
- * 提供统一的执行接口
- */
+function getProxyBaseURL(): string {
+  if (typeof window === 'undefined') return '/api/v1/ai/proxy';
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+  if (apiBase.startsWith('http')) {
+    return `${apiBase}/v1/ai/proxy`;
+  }
+  return `${window.location.origin}${apiBase}/v1/ai/proxy`;
+}
+
 export class PageAgentWrapper {
   private agent: import('page-agent').PageAgent | null = null;
   private config: AIConfig;
@@ -35,19 +31,18 @@ export class PageAgentWrapper {
     this.config = config;
   }
 
-  /**
-   * 初始化 agent
-   */
   private async init(): Promise<void> {
     if (this.initialized) return;
 
     try {
       const PageAgent = await loadPageAgent();
+      const baseURL = this.config.openaiApiEndpoint || getProxyBaseURL();
+
       this.agent = new PageAgent({
-        model: this.config.openaiModel,
-        baseURL: this.config.openaiApiEndpoint,
-        apiKey: this.config.openaiApiKey,
-        language: 'zh-CN', // 中文
+        model: this.config.openaiModel || 'gpt-4',
+        baseURL,
+        apiKey: 'schema-proxy',
+        language: 'zh-CN',
       });
       this.initialized = true;
     } catch (error) {
@@ -56,29 +51,15 @@ export class PageAgentWrapper {
     }
   }
 
-  /**
-   * 执行自然语言指令
-   * @param command 自然语言指令
-   * @returns 执行结果
-   */
-  async execute(command: string): Promise<{
-    success: boolean;
-    result?: string;
-    error?: string;
-  }> {
+  async execute(command: string): Promise<{ success: boolean; result?: string; error?: string }> {
     try {
       await this.init();
 
       if (!this.agent) {
-        return {
-          success: false,
-          error: 'PageAgent 未初始化',
-        };
+        return { success: false, error: 'PageAgent 未初始化' };
       }
 
-      // 执行指令
       const result = await this.agent.execute(command);
-
       return {
         success: true,
         result: typeof result === 'string' ? result : JSON.stringify(result),
@@ -86,26 +67,16 @@ export class PageAgentWrapper {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
       console.error('PageAgent execution error:', errorMessage);
-
-      return {
-        success: false,
-        error: errorMessage,
-      };
+      return { success: false, error: errorMessage };
     }
   }
 
-  /**
-   * 重置 agent（配置更新时使用）
-   */
   reset(): void {
     this.agent = null;
     this.initialized = false;
   }
 }
 
-/**
- * 创建 PageAgentWrapper 实例
- */
 export function createPageAgent(config: AIConfig): PageAgentWrapper {
   return new PageAgentWrapper(config);
 }

@@ -1,75 +1,177 @@
-# Schema Platform - Docker Compose 配置
+﻿# ============================================================
+# Schema Platform — 部署编排
+# ============================================================
 #
-# 使用方法:
-#   ./start.sh               # 启动所有服务
-#   ./start.sh germline      # 只启动 Germline
-#   ./start.sh somatic       # 只启动 Somatic
-#   ./start.sh --external-db # 使用外部数据库
+# 架构:
+#   postgres ──→ octopus ──→ web-germline (:3001)
+#                    │  └──→ web-somatic  (:3002)
+#                    │
+#              sepiida-server (:9090) ←── sepiida-agent (监控 /mnt/data/output)
+#                    │
+#                    └── postgres
+#
+# 启动:
+#   docker compose --profile all up -d     # 全部
+#   docker compose --profile germline up -d # 仅遗传病
+#   docker compose --profile somatic up -d  # 仅肿瘤
+#
+# 前置条件:
+#   cp .env.example .env && 修改配置
+#
+# 镜像:
+#   docker.schema-bio.com/sepiida-server:latest
+#   docker.schema-bio.com/sepiida-agent:latest
+#   docker.schema-bio.com/octopus:latest
+#   docker.schema-bio.com/web-germline:latest
+#   docker.schema-bio.com/web-somatic:latest
+# ============================================================
 
 services:
-  # ============================================
-  # PostgreSQL 数据库 (内置)
-  # ============================================
+
+  # ==========================================================
+  # PostgreSQL — 所有服务共享
+  # ==========================================================
   postgres:
     image: postgres:18-alpine
     profiles: ["all"]
-    env_file:
-      - .env
+    env_file: .env
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-schema_platform}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-schema_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    # 不暴露端口，仅内部网络使用
+      - ${POSTGRES_DATA_DIR:-./data/postgres}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-schema_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # ============================================
-  # Germline 前端
-  # ============================================
-  web-germline:
-    image: ghcr.io/schemabio/schema-germline:latest
-    profiles: ["germline", "all"]
-    ports:
-      - "${GERMLINE_WEB_PORT:-3001}:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:8080/api
-    depends_on:
-      backend:
-        condition: service_healthy
-
-  # ============================================
-  # Somatic 前端
-  # ============================================
-  web-somatic:
-    image: ghcr.io/schemabio/schema-somatic:latest
-    profiles: ["somatic", "all"]
-    ports:
-      - "${SOMATIC_WEB_PORT:-3002}:3000"
-    environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:8080/api
-    depends_on:
-      backend:
-        condition: service_healthy
-
-  # ============================================
-  # 后端 (Octopus)
-  # ============================================
-  backend:
-    image: ghcr.io/schemabio/schema-backend:latest
+  # ==========================================================
+  # Sepiida Server — 任务状态管理
+  # ==========================================================
+  sepiida-server:
+    image: docker.schema-bio.com/sepiida-server:latest
     profiles: ["germline", "somatic", "all"]
-    environment:
-      - DB_DSN=host=${POSTGRES_HOST:-postgres} user=${POSTGRES_USER:-postgres} password=${POSTGRES_PASSWORD:-postgres} dbname=${POSTGRES_DB:-schema_platform} port=${POSTGRES_PORT:-5432} sslmode=disable TimeZone=Asia/Shanghai
-      - SERVER_PORT=8080
+    command:
+      - "-p"
+      - "9090"
+      - "-d"
+      - "postgres://${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-schema_platform}?user=${POSTGRES_USER:-postgres}&password=${POSTGRES_PASSWORD:-postgres}"
+      - "-agent-key"
+      - "/etc/sepiida/keys/agent-keys.txt"
+      - "-query-key"
+      - "/etc/sepiida/keys/query-keys.txt"
+      - "-key-refresh"
+      - "30"
+    volumes:
+      - /opt/schema/sepiida-keys:/etc/sepiida/keys:ro
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9090/health || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3
 
-volumes:
-  postgres_data:
+  # ==========================================================
+  # Sepiida Agent — 任务状态采集 + 自动归档
+  # ==========================================================
+  sepiida-agent:
+    image: docker.schema-bio.com/sepiida-agent:latest
+    profiles: ["germline", "somatic", "all"]
+    command:
+      - "-s"
+      - "http://sepiida-server:9090"
+      - "-key"
+      - "${SEPIIDA_AGENT_KEY:-agent-dev-key}"
+      - "-id"
+      - "agent-01"
+      - "-i"
+      - "60"
+      - "-w"
+      - "${OUTPUT_DIR:-/mnt/data/output}"
+    volumes:
+      - ${OUTPUT_DIR:-/mnt/data/output}:${OUTPUT_DIR:-/mnt/data/output}
+      - ${ARCHIVE_DIR:-/mnt/data/archive}:${ARCHIVE_DIR:-/mnt/data/archive}
+    depends_on:
+      sepiida-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ==========================================================
+  # Octopus — 后端 API
+  # ==========================================================
+  octopus:
+    image: docker.schema-bio.com/octopus:latest
+    profiles: ["germline", "somatic", "all"]
+    env_file: .env
+    environment:
+      SERVER_PORT: "8080"
+      GIN_MODE: ${GIN_MODE:-release}
+      DB_DSN: host=${POSTGRES_HOST:-postgres} user=${POSTGRES_USER:-postgres} password=${POSTGRES_PASSWORD:-postgres} dbname=${POSTGRES_DB:-schema_platform} port=${POSTGRES_PORT:-5432} sslmode=disable TimeZone=Asia/Shanghai
+      DB_DRIVER: postgres
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRE: ${JWT_EXPIRE:-24h}
+      JWT_REFRESH: ${JWT_REFRESH:-168h}
+      JWT_COOKIE_DOMAIN: ${JWT_COOKIE_DOMAIN:-}
+      JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-false}
+      CLIENT_PASSWORD_HASH_ENABLED: ${CLIENT_PASSWORD_HASH_ENABLED:-false}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3001,http://localhost:3002}
+      OUTPUT_DIR: ${OUTPUT_DIR:-/mnt/data/output}
+      TEMPLATE_DIR: ${TEMPLATE_DIR:-/mnt/data/templates}
+      ARCHIVE_DIR: ${ARCHIVE_DIR:-/mnt/data/archive}
+      DEFAULT_EXECUTOR: ${DEFAULT_EXECUTOR:-local}
+      MINIWDL_PATH: ${MINIWDL_PATH:-miniwdl}
+      SEPIIDA_URL: http://sepiida-server:9090
+      SEPIIDA_QUERY_KEY: ${SEPIIDA_QUERY_KEY:-}
+      SEPIIDA_ENABLED: "true"
+      LLM_ENABLED: ${SCHEMA_AI_ENABLED:-false}
+      LLM_BASE_URL: ${SCHEMA_AI_API_URL:-}
+      LLM_API_KEY: ${SCHEMA_AI_API_KEY:-}
+      LLM_MODEL: ${SCHEMA_AI_MODEL:-gpt-4o}
+      TZ: Asia/Shanghai
+    depends_on:
+      postgres:
+        condition: service_healthy
+      sepiida-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # ==========================================================
+  # Web Germline — 遗传病前端
+  # ==========================================================
+  web-germline:
+    image: docker.schema-bio.com/web-germline:latest
+    profiles: ["germline", "all"]
+    ports:
+      - "${GERMLINE_WEB_PORT:-3001}:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://octopus:8080/api
+      TZ: Asia/Shanghai
+    depends_on:
+      octopus:
+        condition: service_healthy
+
+  # ==========================================================
+  # Web Somatic — 肿瘤前端
+  # ==========================================================
+  web-somatic:
+    image: docker.schema-bio.com/web-somatic:latest
+    profiles: ["somatic", "all"]
+    ports:
+      - "${SOMATIC_WEB_PORT:-3002}:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://octopus:8080/api
+      TZ: Asia/Shanghai
+    depends_on:
+      octopus:
+        condition: service_healthy
+

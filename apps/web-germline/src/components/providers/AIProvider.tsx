@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import type { AIConfig, ConversationMessage } from '@/types/ai';
 import { DEFAULT_AI_CONFIG, AI_STORAGE_KEYS, MAX_HISTORY_MESSAGES } from '@/types/ai';
 import { createPageAgent, PageAgentWrapper } from '@/lib/pageAgent';
-import { encryptStorageValue, decryptStorageValue } from '@/lib/crypto';
 
 interface AIContextType {
   /** AI 配置 */
@@ -44,50 +43,37 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
   const [isExecuting, setIsExecuting] = useState(false);
   const agentRef = useRef<PageAgentWrapper | null>(null);
 
-  // 计算派生状态
-  const isConfigured = Boolean(
-    config.openaiApiEndpoint &&
-    config.openaiApiKey &&
-    config.openaiModel
-  );
+  // 计算派生状态 (API key 由后端代理管理，前端只需 model 和端点)
+  const isConfigured = Boolean(config.openaiModel);
   const isEnabled = config.aiAssistantEnabled && isConfigured;
 
-  // 从 localStorage 加载配置和历史 (encrypted)
+  // 从 localStorage 加载配置和历史
   useEffect(() => {
-    const loadStoredData = async () => {
-      try {
-        const storedConfig = localStorage.getItem(AI_STORAGE_KEYS.CONFIG);
-        const storedHistory = localStorage.getItem(AI_STORAGE_KEYS.HISTORY);
+    try {
+      const storedConfig = localStorage.getItem(AI_STORAGE_KEYS.CONFIG);
+      const storedHistory = localStorage.getItem(AI_STORAGE_KEYS.HISTORY);
 
-        if (storedConfig) {
-          const decrypted = await decryptStorageValue(storedConfig);
-          const parsedConfig = JSON.parse(decrypted);
-          setConfigState({ ...DEFAULT_AI_CONFIG, ...parsedConfig });
-        }
-
-        if (storedHistory) {
-          const parsedHistory = JSON.parse(storedHistory);
-          setHistory(parsedHistory.slice(-MAX_HISTORY_MESSAGES));
-        }
-      } catch (error) {
-        console.error('Failed to load stored AI data:', error);
+      if (storedConfig) {
+        const parsedConfig = JSON.parse(storedConfig);
+        setConfigState({ ...DEFAULT_AI_CONFIG, ...parsedConfig });
       }
-    };
 
-    loadStoredData();
+      if (storedHistory) {
+        const parsedHistory = JSON.parse(storedHistory);
+        setHistory(parsedHistory.slice(-MAX_HISTORY_MESSAGES));
+      }
+    } catch (error) {
+      console.error('Failed to load stored AI data:', error);
+    }
   }, []);
 
-  // 配置变化时保存到 localStorage (encrypted)
+  // 配置变化时保存到 localStorage
   useEffect(() => {
-    const saveConfig = async () => {
-      try {
-        const encrypted = await encryptStorageValue(JSON.stringify(config));
-        localStorage.setItem(AI_STORAGE_KEYS.CONFIG, encrypted);
-      } catch (error) {
-        console.error('Failed to save AI config:', error);
-      }
-    };
-    saveConfig();
+    try {
+      localStorage.setItem(AI_STORAGE_KEYS.CONFIG, JSON.stringify(config));
+    } catch (error) {
+      console.error('Failed to save AI config:', error);
+    }
   }, [config]);
 
   // 历史变化时保存到 localStorage
