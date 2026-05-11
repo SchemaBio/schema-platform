@@ -1,13 +1,5 @@
 import type { Pedigree, PedigreeListItem, PedigreeMember } from './types';
-
-// 生成UUID的辅助函数
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+import { generateUUID } from '@/lib/uuid';
 
 // Mock 家系列表（使用UUID）
 export const mockPedigreeList: PedigreeListItem[] = [

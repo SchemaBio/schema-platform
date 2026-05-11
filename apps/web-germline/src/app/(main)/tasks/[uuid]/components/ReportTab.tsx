@@ -7,6 +7,7 @@ import {
   FileSpreadsheet, Database, FileCode, Upload, Trash2, AlertCircle,
   X, Eye, FileType, CheckCircle2, ArrowLeft
 } from 'lucide-react';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 // 报告状态类型
 type ReportStatus = 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'RELEASED';
@@ -302,10 +303,10 @@ export function ReportTab({ taskId }: ReportTabProps) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleDownloadExcel = () => window.open(`/api/tasks/${taskId}/export/excel`, '_blank');
-  const handleDownloadParquet = () => window.open(`/api/tasks/${taskId}/export/parquet`, '_blank');
-  const handleDownloadVCF = () => window.open(`/api/tasks/${taskId}/export/vcf`, '_blank');
-  const handleDownloadMTVCF = () => window.open(`/api/tasks/${taskId}/export/mt-vcf`, '_blank');
+  const handleDownloadExcel = () => window.open(`/api/v1/tasks/${taskId}/export/excel`, '_blank');
+  const handleDownloadParquet = () => window.open(`/api/v1/tasks/${taskId}/export/parquet`, '_blank');
+  const handleDownloadVCF = () => window.open(`/api/v1/tasks/${taskId}/export/vcf`, '_blank');
+  const handleDownloadMTVCF = () => window.open(`/api/v1/tasks/${taskId}/export/mt-vcf`, '_blank');
 
   // 获取可执行的操作按钮
   const getActionButtons = (record: ReportRecord) => {
@@ -518,7 +519,7 @@ export function ReportTab({ taskId }: ReportTabProps) {
                   </div>
                 </div>
               ) : previewHtml ? (
-                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHTML(previewHtml) }} />
               ) : (
                 <div className="flex items-center justify-center h-full text-fg-muted">无法加载预览内容</div>
               )}

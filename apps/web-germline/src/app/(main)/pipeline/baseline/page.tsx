@@ -3,6 +3,7 @@
 import { Button, Input, Tag } from '@schema/ui-kit';
 import { Plus, Search, Trash2, Check, Upload, Play, Square, RotateCcw, Pencil, X } from 'lucide-react';
 import * as React from 'react';
+import { generateUUID } from '@/lib/uuid';
 
 interface BaselineFile {
   id: string;
@@ -39,15 +40,6 @@ const BED_FILE_OPTIONS = [
   { value: 'IDT_xGen_Exome_v2.bed', label: 'IDT xGen Exome V2' },
   { value: 'Cardio_Panel_v2.bed', label: '心血管 Panel' },
 ];
-
-// 生成随机UUID
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
 
 const mockBaselines: BaselineFile[] = [
   {

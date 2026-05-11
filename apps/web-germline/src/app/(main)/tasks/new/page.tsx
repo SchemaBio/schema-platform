@@ -4,15 +4,7 @@ import * as React from 'react';
 import { PageContent } from '@/components/layout';
 import { Button, Input, Select, FormItem, Checkbox } from '@schema/ui-kit';
 import { Play, Info } from 'lucide-react';
-
-// 生成 UUID
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
+import { generateUUID } from '@/lib/uuid';
 
 interface SampleOption {
   id: string;

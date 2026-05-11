@@ -4,9 +4,10 @@ import * as React from 'react';
 import { Button, Select, Tag, FormItem, Modal, ModalHeader, ModalBody, ModalFooter } from '@schema/ui-kit';
 import {
   FileText, Play, Clock, CheckCircle, Loader2, Download,
-  FileSpreadsheet, Database, Upload, FileArchive, Trash2, AlertCircle,
+  FileSpreadsheet, Database, Upload, FileCode, Trash2, AlertCircle,
   X, Eye, FileType
 } from 'lucide-react';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 // 统一的报告记录类型
 interface ReportRecord {
@@ -246,10 +247,10 @@ export function ReportTab({ taskId }: ReportTabProps) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleDownloadExcel = () => window.open(`/api/analysis/${taskId}/export/excel`, '_blank');
-  const handleDownloadParquet = () => window.open(`/api/analysis/${taskId}/export/parquet`, '_blank');
-  const handleDownloadFusionTable = () => window.open(`/api/analysis/${taskId}/export/fusion`, '_blank');
-  const handleDownloadBAM = () => window.open(`/api/analysis/${taskId}/export/bam`, '_blank');
+  const handleDownloadExcel = () => window.open(`/api/v1/tasks/${taskId}/export/excel`, '_blank');
+  const handleDownloadParquet = () => window.open(`/api/v1/tasks/${taskId}/export/parquet`, '_blank');
+  const handleDownloadVCF = () => window.open(`/api/v1/tasks/${taskId}/export/vcf`, '_blank');
+  const handleDownloadMTVCF = () => window.open(`/api/v1/tasks/${taskId}/export/mt-vcf`, '_blank');
 
   if (loading) {
     return (
@@ -274,14 +275,14 @@ export function ReportTab({ taskId }: ReportTabProps) {
             <Button variant="secondary" size="small" leftIcon={<FileSpreadsheet className="w-4 h-4" />} onClick={handleDownloadExcel}>
               Excel 结果表
             </Button>
-            <Button variant="secondary" size="small" leftIcon={<FileSpreadsheet className="w-4 h-4" />} onClick={handleDownloadFusionTable}>
-              融合结果表
-            </Button>
             <Button variant="secondary" size="small" leftIcon={<Database className="w-4 h-4" />} onClick={handleDownloadParquet}>
               Parquet 文件
             </Button>
-            <Button variant="secondary" size="small" leftIcon={<FileArchive className="w-4 h-4" />} onClick={handleDownloadBAM}>
-              BAM 比对文件
+            <Button variant="secondary" size="small" leftIcon={<FileCode className="w-4 h-4" />} onClick={handleDownloadVCF}>
+              SNP/InDel VCF
+            </Button>
+            <Button variant="secondary" size="small" leftIcon={<FileCode className="w-4 h-4" />} onClick={handleDownloadMTVCF}>
+              线粒体 VCF
             </Button>
           </div>
         </div>
@@ -436,7 +437,7 @@ export function ReportTab({ taskId }: ReportTabProps) {
                   </div>
                 </div>
               ) : previewHtml ? (
-                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHTML(previewHtml) }} />
               ) : (
                 <div className="flex items-center justify-center h-full text-fg-muted">无法加载预览内容</div>
               )}

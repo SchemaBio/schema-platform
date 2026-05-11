@@ -10,7 +10,7 @@ export interface PaginatedResponse<T> {
 // 查询参数
 export interface QueryParams {
   page?: number;
-  pageSize?: number;
+  page_size?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;

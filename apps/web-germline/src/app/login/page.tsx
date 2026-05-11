@@ -40,8 +40,8 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (err) {
       if (err instanceof ApiError) {
-        const data = err.data as { message?: string } | null;
-        setError(data?.message || '登录失败，请检查邮箱和密码');
+        const data = err.data as { error?: string } | null;
+        setError(data?.error || '登录失败，请检查邮箱和密码');
       } else {
         setError('网络错误，请稍后重试');
       }
@@ -170,21 +170,6 @@ export default function LoginPage() {
               {loading ? '登录中...' : '登录'}
             </Button>
           </form>
-
-          {/* Demo 提示 */}
-          <div className="mt-8 pt-6 border-t border-border-default">
-            <p className="text-xs text-fg-muted text-center mb-3">Demo 演示账号</p>
-            <div className="bg-canvas-subtle rounded-md p-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-fg-muted">邮箱：</span>
-                <code className="text-fg-default font-mono">admin@schema.local</code>
-              </div>
-              <div className="flex justify-between mt-1">
-                <span className="text-fg-muted">密码：</span>
-                <code className="text-fg-default font-mono">Admin123!</code>
-              </div>
-            </div>
-          </div>
 
           {/* 移动端底部信息 */}
           <p className="lg:hidden text-center text-xs text-fg-muted mt-8">

@@ -19,7 +19,8 @@ services:
       - "${GERMLINE_WEB_PORT:-3001}:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:8080
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api
+    depends_on:
 
   # ============================================
   # Somatic 前端
@@ -31,7 +32,7 @@ services:
       - "${SOMATIC_WEB_PORT:-3002}:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:8080
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api
 
   # ============================================
   # 后端 (Octopus)

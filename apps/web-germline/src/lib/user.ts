@@ -3,33 +3,78 @@ import type {
   User,
   UserCreateRequest,
   UserUpdateRequest,
-  ChangePasswordRequest,
-  ResetPasswordRequest,
 } from '@/types/user';
 import type { PaginatedResponse, QueryParams } from '@/types/common';
 
+interface BackendPaginatedData<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+interface BackendUser {
+  id: string;
+  email: string;
+  name: string;
+  system_role: string;
+  primary_org_id?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapUser(u: BackendUser): User {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    systemRole: u.system_role as 'SUPER_ADMIN' | 'USER',
+    primaryOrgId: u.primary_org_id,
+    isActive: u.is_active,
+    createdAt: u.created_at,
+    updatedAt: u.updated_at,
+  };
+}
+
+function mapPaginated<T, U>(data: BackendPaginatedData<T>, mapper: (item: T) => U): PaginatedResponse<U> {
+  return {
+    items: data.items.map(mapper),
+    total: data.total,
+    page: data.page,
+    pageSize: data.page_size,
+    totalPages: data.total_pages,
+  };
+}
+
 export const userApi = {
-  // 获取用户列表
-  list: (params?: QueryParams) =>
-    api.get<{ data: PaginatedResponse<User> }>('/v1/users', { params: params as Record<string, string> }),
+  list: async (params?: QueryParams): Promise<PaginatedResponse<User>> => {
+    const data = await api.get<BackendPaginatedData<BackendUser>>('/v1/users', {
+      params: params as Record<string, string>,
+    });
+    return mapPaginated(data, mapUser);
+  },
 
-  // 获取单个用户
-  get: (id: string) =>
-    api.get<{ data: User }>(`/v1/users/${id}`),
+  get: async (id: string): Promise<User> => {
+    const data = await api.get<BackendUser>(`/v1/users/${id}`);
+    return mapUser(data);
+  },
 
-  // 获取当前用户
-  me: () =>
-    api.get<{ data: User }>('/v1/users/me'),
+  me: async (): Promise<User> => {
+    const data = await api.get<BackendUser>('/v1/auth/me');
+    return mapUser(data);
+  },
 
-  // 创建用户
-  create: (data: UserCreateRequest) =>
-    api.post<{ data: User }>('/v1/users', data),
+  create: async (data: UserCreateRequest): Promise<User> => {
+    const result = await api.post<BackendUser>('/v1/users', data);
+    return mapUser(result);
+  },
 
-  // 更新用户
-  update: (id: string, data: UserUpdateRequest) =>
-    api.put<{ data: User }>(`/v1/users/${id}`, data),
+  update: async (id: string, data: UserUpdateRequest): Promise<User> => {
+    const result = await api.put<BackendUser>(`/v1/users/${id}`, data);
+    return mapUser(result);
+  },
 
-  // 删除用户
-  delete: (id: string) =>
-    api.delete(`/v1/users/${id}`),
+  delete: (id: string) => api.delete(`/v1/users/${id}`),
 };

@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, UserOrganizationInfo, OrgRole } from '@/types/user';
 import type { LoginRequest, LoginResponse } from '@/types/auth';
 import { authApi } from '@/lib/auth';
+import { STORAGE_KEYS } from '@/lib/storage';
+import { hashPassword } from '@/lib/crypto';
 
 interface AuthContextType {
   user: User | null;
@@ -21,13 +23,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  USER: 'schema_user',
-  TOKENS: 'schema_tokens',
-  ORGS: 'schema_organizations',
-  CURRENT_ORG: 'schema_current_org',
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [organizations, setOrganizations] = useState<UserOrganizationInfo[]>([]);
@@ -39,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadStoredAuth = () => {
       try {
         const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
-        const storedOrgs = localStorage.getItem(STORAGE_KEYS.ORGS);
+        const storedOrgs = localStorage.getItem(STORAGE_KEYS.ORGANIZATIONS);
         const storedCurrentOrg = localStorage.getItem(STORAGE_KEYS.CURRENT_ORG);
 
         if (storedUser) {
@@ -69,7 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response: LoginResponse = await authApi.login({ email, password });
+      const hashedPassword = await hashPassword(password, email);
+      const response: LoginResponse = await authApi.login({ email, password: hashedPassword });
 
       // Store tokens
       localStorage.setItem(STORAGE_KEYS.TOKENS, JSON.stringify({
@@ -83,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(response.user);
 
       // Store organizations
-      localStorage.setItem(STORAGE_KEYS.ORGS, JSON.stringify(response.organizations));
+      localStorage.setItem(STORAGE_KEYS.ORGANIZATIONS, JSON.stringify(response.organizations));
       setOrganizations(response.organizations);
 
       // Set current org
@@ -102,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.removeItem(STORAGE_KEYS.TOKENS);
-    localStorage.removeItem(STORAGE_KEYS.ORGS);
+    localStorage.removeItem(STORAGE_KEYS.ORGANIZATIONS);
     localStorage.removeItem(STORAGE_KEYS.CURRENT_ORG);
     setUser(null);
     setOrganizations([]);
@@ -142,6 +138,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isSuperAdmin = useCallback((): boolean => {
     return user?.systemRole === 'SUPER_ADMIN';
   }, [user]);
+
+  // Listen for auth-expired event from api.ts refresh failure
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      logout();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    };
+    window.addEventListener('schema:auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('schema:auth-expired', handleAuthExpired);
+  }, [logout]);
 
   const value: AuthContextType = {
     user,
