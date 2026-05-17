@@ -3,9 +3,11 @@
 import * as React from 'react';
 import { Button, Input, DataTable, Tag, Tooltip } from '@schema/ui-kit';
 import type { Column } from '@schema/ui-kit';
-import { Search, Plus, RotateCcw, X, ChevronRight, ChevronLeft, List, Play, Square, Pencil, Trash2, Download, Upload, BookOpen, ChevronDown } from 'lucide-react';
+import { Search, Plus, RotateCcw, X, ChevronRight, ChevronLeft, List, Play, Square, Pencil, Trash2, Download, Upload, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
 import { AnalysisDetailPanel, NewTaskModal, EditTaskModal } from './components';
-import type { NewTaskFormData, EditTaskFormData, AnalysisTask } from './components';
+import type { NewTaskFormData, EditTaskFormData } from './components';
+import type { AnalysisTask } from '@/types/task';
+import { tasksApi } from '@/lib/tasks';
 
 // 简化的ID显示组件（点击复制，无复制按钮）
 function IdCell({ id }: { id: string }) {
@@ -29,71 +31,6 @@ function IdCell({ id }: { id: string }) {
     </Tooltip>
   );
 }
-
-// Mock data
-const mockTasks: AnalysisTask[] = [
-  {
-    id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    internalId: 'INT-001',
-    pipeline: 'WES-Germline-v1',
-    pipelineVersion: 'v1.2.0',
-    status: 'completed',
-    progress: 100,
-    createdAt: '2024-12-20 10:30:45',
-    createdBy: '王工',
-    completedAt: '2024-12-20 14:25:30',
-    remark: '初次分析',
-  },
-  {
-    id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-    sampleId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    internalId: 'INT-001',
-    pipeline: 'WES-Germline-v1',
-    pipelineVersion: 'v1.2.0',
-    status: 'pending_interpretation',
-    progress: 100,
-    createdAt: '2024-12-25 09:00:12',
-    createdBy: '李工',
-    completedAt: '2024-12-25 13:15:45',
-    remark: '重新分析',
-  },
-  {
-    id: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
-    sampleId: 'b2c3d4e5-f678-90ab-cdef-123456789012',
-    internalId: 'INT-002',
-    pipeline: 'Panel-Cardio',
-    pipelineVersion: 'v2.0.1',
-    status: 'running',
-    progress: 65,
-    createdAt: '2024-12-27 14:00:33',
-    createdBy: '王工',
-    remark: '心血管Panel',
-  },
-  {
-    id: 'd4e5f6a7-b8c9-0123-defa-234567890123',
-    sampleId: 'c3d4e5f6-7890-abcd-ef12-345678901234',
-    internalId: 'INT-003',
-    pipeline: 'WES-Germline-v1',
-    pipelineVersion: 'v1.2.0',
-    status: 'queued',
-    progress: 0,
-    createdAt: '2024-12-28 09:30:00',
-    createdBy: '李工',
-  },
-  {
-    id: 'e5f6a7b8-c9d0-1234-efab-345678901234',
-    sampleId: 'd4e5f678-90ab-cdef-1234-567890123456',
-    internalId: 'INT-004',
-    pipeline: 'WES-Germline-v1',
-    pipelineVersion: 'v1.2.0',
-    status: 'failed',
-    progress: 45,
-    createdAt: '2024-12-26 11:00:22',
-    createdBy: '王工',
-    remark: '数据质量问题',
-  },
-];
 
 const statusConfig: Record<AnalysisTask['status'], { label: string; variant: 'neutral' | 'success' | 'warning' | 'danger' | 'info' }> = {
   queued: { label: '排队中', variant: 'neutral' },
@@ -220,6 +157,7 @@ function TaskActionsCell({
   onEdit,
   onDelete,
   onView,
+  isLoading,
 }: {
   task: AnalysisTask;
   onStart: (id: string) => void;
@@ -227,6 +165,7 @@ function TaskActionsCell({
   onEdit: (task: AnalysisTask) => void;
   onDelete: (id: string) => void;
   onView: (task: AnalysisTask) => void;
+  isLoading: boolean;
 }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const deleteConfirmRef = React.useRef<HTMLDivElement>(null);
@@ -297,10 +236,15 @@ function TaskActionsCell({
       {primaryAction && (
         <button
           onClick={primaryAction.onClick}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded transition-colors ${primaryAction.className}`}
+          disabled={isLoading}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''} ${primaryAction.className}`}
         >
-          <primaryAction.icon className="w-3.5 h-3.5" />
-          {primaryAction.label}
+          {isLoading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <primaryAction.icon className="w-3.5 h-3.5" />
+          )}
+          {isLoading ? '处理中' : primaryAction.label}
         </button>
       )}
 
@@ -366,12 +310,43 @@ function TaskActionsCell({
 export default function AnalysisPage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('all');
-  const [tasks, setTasks] = React.useState<AnalysisTask[]>(mockTasks);
+  const [tasks, setTasks] = React.useState<AnalysisTask[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [actionLoading, setActionLoading] = React.useState<string | null>(null);
   const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
   const [activeTabId, setActiveTabId] = React.useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = React.useState(false);
   const [editingTask, setEditingTask] = React.useState<AnalysisTask | null>(null);
+
+  // Fetch tasks on mount and when status filter changes
+  const fetchTasks = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const params: Record<string, string> = { page: '1', page_size: '100' };
+      if (statusFilter !== 'all') params.status = statusFilter;
+      const data = await tasksApi.list(params);
+      setTasks(data.items);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取任务列表失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter]);
+
+  React.useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  // Auto-poll when there are running tasks
+  React.useEffect(() => {
+    const hasRunning = tasks.some(t => t.status === 'running');
+    if (!hasRunning) return;
+    const interval = setInterval(fetchTasks, 10000);
+    return () => clearInterval(interval);
+  }, [tasks, fetchTasks]);
 
   const handleDownloadTemplate = () => {
     const templateContent = `样本编号,内部编号,分析流程,流程版本
@@ -387,53 +362,68 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
     URL.revokeObjectURL(url);
   };
 
-  const handleCreateTask = (data: NewTaskFormData) => {
-    const newTask: AnalysisTask = {
-      id: `task-${Date.now()}`,
-      sampleId: data.sampleId,
-      internalId: data.internalId,
-      pipeline: data.pipelineName,
-      pipelineVersion: data.pipelineVersion,
-      status: 'queued',
-      progress: 0,
-      createdAt: new Date().toLocaleString('zh-CN', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-      }).replace(/\//g, '-'),
-      createdBy: '当前用户',
-      remark: data.remark,
-    };
-    setTasks(prev => [newTask, ...prev]);
+  const handleCreateTask = async (data: NewTaskFormData) => {
+    try {
+      const newTask = await tasksApi.create({
+        sampleId: data.sampleId,
+        internalId: data.internalId,
+        pipelineId: data.pipelineId,
+        pipelineName: data.pipelineName,
+        pipelineVersion: data.pipelineVersion,
+        remark: data.remark,
+      });
+      setTasks(prev => [newTask, ...prev]);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '创建任务失败');
+    }
   };
 
-  const handleEditTask = (id: string, data: EditTaskFormData) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id !== id) return t;
-      return {
-        ...t,
+  const handleEditTask = async (id: string, data: EditTaskFormData) => {
+    try {
+      const updated = await tasksApi.update(id, {
         internalId: data.internalId,
         pipeline: data.pipeline,
         remark: data.remark,
-      };
-    }));
+      });
+      setTasks(prev => prev.map(t => t.id === id ? updated : t));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '更新任务失败');
+    }
   };
 
-  const handleStartTask = (taskId: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id !== taskId) return t;
-      return { ...t, status: 'running', progress: 0 };
-    }));
+  const handleStartTask = async (taskId: string) => {
+    setActionLoading(taskId);
+    try {
+      const updated = await tasksApi.start(taskId);
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '启动任务失败');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleStopTask = (taskId: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id !== taskId) return t;
-      return { ...t, status: 'queued', progress: 0 };
-    }));
+  const handleStopTask = async (taskId: string) => {
+    setActionLoading(taskId);
+    try {
+      await tasksApi.cancel(taskId);
+      setTasks(prev => prev.map(t =>
+        t.id === taskId ? { ...t, status: 'queued' as const, progress: 0 } : t
+      ));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '停止任务失败');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(prev => prev.filter(t => t.id !== taskId));
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await tasksApi.cancel(taskId);
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '删除任务失败');
+    }
   };
 
   const handleOpenTab = React.useCallback((task: AnalysisTask) => {
@@ -569,6 +559,7 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
           onEdit={setEditingTask}
           onDelete={handleDeleteTask}
           onView={handleOpenTab}
+          isLoading={actionLoading === row.id}
         />
       ),
       width: 130,
@@ -670,6 +661,23 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
           <div className="p-6 h-full overflow-auto">
             <h2 className="text-lg font-medium text-fg-default mb-4">任务列表</h2>
 
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-fg-muted" />
+                <span className="ml-2 text-fg-muted">加载中...</span>
+              </div>
+            )}
+
+            {error && !loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <p className="text-danger-fg mb-2">{error}</p>
+                  <Button variant="secondary" onClick={fetchTasks}>重试</Button>
+                </div>
+              </div>
+            )}
+
+            {!loading && !error && (
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
                 <div className="w-64">
@@ -709,6 +717,7 @@ a1b2c3d4-e5f6-7890-abcd-ef1234567890,INT-001,WES-Germline-v1,v1.2.0`;
             />
           </div>
         </div>
+            )}
       )}
 
       {/* 右侧详情面板 */}

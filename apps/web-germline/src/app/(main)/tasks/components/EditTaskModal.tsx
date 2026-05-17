@@ -3,20 +3,9 @@
 import * as React from 'react';
 import { Button, Input } from '@schema/ui-kit';
 import { X } from 'lucide-react';
+import type { AnalysisTask } from '@/types/task';
 
-export interface AnalysisTask {
-  id: string;
-  sampleId: string;
-  internalId: string;
-  pipeline: string;
-  pipelineVersion: string;
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'pending_interpretation';
-  progress: number;
-  createdAt: string;
-  createdBy: string;
-  completedAt?: string;
-  remark?: string;
-}
+export type { AnalysisTask };
 
 interface EditTaskModalProps {
   isOpen: boolean;
